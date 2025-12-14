@@ -1,0 +1,51 @@
+{
+    "name": "simplepark-bv/laravel-invoices",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "keywords": [
+        "simplepark",
+        "laravel",
+        "invoices"
+    ],
+    "authors": [
+        {
+            "name": "Lucas Castelein",
+            "email": "lucas@simplepark.nl"
+        },
+        {
+            "name": "Jasper Demmers",
+            "email": "jasper@simplepark.nl"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "illuminate/support": "^11.0",
+        "laravel/framework": "^10.10.1|^11.0|^12.0"
+    },
+    "require-dev": {
+        "laravel/sail": "^1.26",
+        "orchestra/testbench": "^v8.21.1|^v9.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SimpleParkBv\\LaravelInvoices\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit -c ./phpunit.xml"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SimpleParkBv\\LaravelInvoices\\LaravelInvoicesServiceProvider"
+            ]
+        }
+    }
+}
