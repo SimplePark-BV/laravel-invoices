@@ -4,7 +4,7 @@ namespace SimpleParkBv\LaravelInvoices;
 
 use Illuminate\Support\ServiceProvider;
 
-class LaravelInvoicesServiceProvider extends ServiceProvider
+class InvoiceServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.

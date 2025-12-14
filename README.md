@@ -17,7 +17,7 @@ The service provider will be automatically registered via Laravel's package auto
 Publish the configuration file to customize the package settings:
 
 ```bash
-php artisan vendor:publish --provider="SimpleParkBv\LaravelInvoices\LaravelInvoicesServiceProvider" --tag="invoices-config"
+php artisan vendor:publish --provider="SimpleParkBv\LaravelInvoices\InvoiceServiceProvider" --tag="invoices-config"
 ```
 
 This will create a `config/invoices.php` file where you can customize:
