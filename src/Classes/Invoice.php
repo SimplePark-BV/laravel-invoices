@@ -15,29 +15,14 @@ final class Invoice
      */
     public Collection $items;
 
-    /**
-     * @var \SimpleParkBv\Invoices\Seller
-     */
     public Seller $seller;
 
-    /**
-     * @var \SimpleParkBv\Invoices\Buyer
-     */
     public Buyer $buyer;
 
-    /**
-     * @var \Illuminate\Support\Carbon
-     */
     public Carbon $date;
 
-    /**
-     * @var string
-     */
     public string $date_format;
 
-    /**
-     * @var int
-     */
     public int $pay_until_days;
 
     public function __construct()

@@ -2,26 +2,28 @@
 
 namespace SimpleParkBv\Invoices;
 
+use RuntimeException;
+
 /**
  * Class Seller
- * 
+ *
  * @property string|null $kvk
  * @property string|null $btw
  * @property string|null $iban
  */
 final class Seller extends Party
 {
-    public string|null $kvk;
+    public ?string $kvk;
 
-    public string|null $btw;
+    public ?string $btw;
 
-    public string|null $iban;
+    public ?string $iban;
 
     public function __construct()
     {
         $seller = config('invoices.seller');
 
-        $this->name = $seller['name'] ?? throw new \RuntimeException('Seller name is required');
+        $this->name = $seller['name'] ?? throw new RuntimeException('Seller name is required');
 
         $this->address = $seller['address'] ?? null;
         $this->postal_code = $seller['postal_code'] ?? null;

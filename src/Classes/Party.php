@@ -4,7 +4,7 @@ namespace SimpleParkBv\Invoices;
 
 /**
  * Class Party
- * 
+ *
  * @property string $name
  * @property string|null $address
  * @property string|null $city
@@ -18,19 +18,19 @@ abstract class Party
 {
     public string $name;
 
-    public string|null $address;
+    public ?string $address;
 
-    public string|null $city;
+    public ?string $city;
 
-    public string|null $postal_code;
+    public ?string $postal_code;
 
-    public string|null $country;
+    public ?string $country;
 
-    public string|null $email;
+    public ?string $email;
 
-    public string|null $phone;
+    public ?string $phone;
 
-    public string|null $website;
+    public ?string $website;
 
     public function __construct()
     {
