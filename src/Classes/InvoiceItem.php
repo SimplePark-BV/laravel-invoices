@@ -15,21 +15,26 @@ final class InvoiceItem
 {
     public string $title;
 
-    public ?string $description;
+    public string|null $description;
 
     public float|int $quantity;
 
-    public float|int $price;
+    public float|null $tax_rate;
 
-    public ?float $tax_rate;
+    public float|int $unit_price;
 
-    public function __construct()
-    {
-        // todo
-    }
+    public float|null $tax_percentage;
 
     public static function make(): self
     {
         return new self;
+    }
+
+    /**
+     * Calculate the total for this item (quantity * unit_price).
+     */
+    public function total(): float
+    {
+        return $this->unit_price * $this->quantity;
     }
 }

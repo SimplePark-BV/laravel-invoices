@@ -74,4 +74,19 @@ return [
         'btw' => env('INVOICES_SELLER_BTW', 'NL867555257B01'),
         'iban' => env('INVOICES_SELLER_IBAN', 'NL59 RABO 0107 4988 55'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logo
+    |--------------------------------------------------------------------------
+    |
+    | Default logo path for invoices. Can be absolute path or relative to
+    | the package resources directory. Set to null to disable logo.
+    |
+    | Supported formats: PNG (recommended), JPG, JPEG, GIF, SVG
+    | Note: SVG has limited support in PDFs and may render incorrectly.
+    | PNG is recommended for best compatibility and transparency support.
+    |
+    */
+    'logo' => env('INVOICES_LOGO', __DIR__.'/../resources/images/logo.png'),
 ];
