@@ -55,4 +55,3 @@ return [
         'font' => env('INVOICES_PDF_FONT', 'dejavu-sans'),
     ],
 ];
-

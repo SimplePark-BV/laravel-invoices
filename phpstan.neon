@@ -1,0 +1,14 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - src
+        - tests
+
+    # Rule level
+    level: 8
+
+    excludePaths:
+        - ./*/*/vendor/*
+        - ./*/*/node_modules/*

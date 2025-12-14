@@ -40,3 +40,5 @@ public/hot
 public/storage
 
 .env.testing
+.php-cs-fixer.cache
+.phpstan
