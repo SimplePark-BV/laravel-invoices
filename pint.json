@@ -1,0 +1,12 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "ordered_traits": true,
+        "single_trait_insert_per_statement": true
+    },
+    "exclude": [
+        "vendor",
+        "node_modules"
+    ]
+}
+
