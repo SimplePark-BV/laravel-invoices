@@ -46,5 +46,5 @@ composer install
 ### Running Tests
 
 ```bash
-./vendor/bin/sail test
+./vendor/bin/sail phpunit
 ```
