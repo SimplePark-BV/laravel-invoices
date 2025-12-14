@@ -11,13 +11,11 @@ class LaravelInvoicesServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // merge config if it exists
-        if (file_exists(__DIR__.'/../config/invoices.php')) {
-            $this->mergeConfigFrom(
-                path: __DIR__.'/../config/invoices.php',
-                key: 'invoices',
-            );
-        }
+        // merge config
+        $this->mergeConfigFrom(
+            path: __DIR__.'/../config/invoices.php',
+            key: 'invoices',
+        );
     }
 
     /**
@@ -33,10 +31,8 @@ class LaravelInvoicesServiceProvider extends ServiceProvider
             groups: 'invoices-config',
         );
 
-        // load views if they exist
-        if (is_dir(__DIR__.'/../resources/views')) {
-            $this->loadViewsFrom(__DIR__.'/../resources/views', 'invoices');
-        }
+        // load views
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'invoices');
 
         // publish views
         $this->publishes(

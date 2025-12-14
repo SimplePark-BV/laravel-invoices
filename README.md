@@ -46,5 +46,5 @@ composer install
 ### Running Tests
 
 ```bash
-./vendor/bin/sail exec laravel.test composer test
+./vendor/bin/sail test
 ```

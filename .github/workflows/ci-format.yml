@@ -1,0 +1,40 @@
+name: CI / Format
+run-name: CI | Format
+
+concurrency:
+  group: ${{ github.workflow_ref }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cat << EOF > .env
+          MOLLIE_API_KEY=${{ secrets.MOLLIE_API_KEY }}
+          GOOGLE_CLOUD_PROJECT_ID=${{ secrets.GOOGLE_CLOUD_PROJECT_ID }}
+          EOF
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@2.32.0
+        with:
+          php-version: '8.4'
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run Laravel Pint
+        run: vendor/bin/pint --test
