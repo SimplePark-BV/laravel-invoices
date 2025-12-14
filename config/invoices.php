@@ -54,4 +54,24 @@ return [
         'orientation' => env('INVOICES_PDF_ORIENTATION', 'portrait'),
         'font' => env('INVOICES_PDF_FONT', 'dejavu-sans'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Seller
+    |--------------------------------------------------------------------------
+    |
+    | Default seller information used when creating invoices.
+    |
+    */
+    'seller' => [
+        'name' => env('INVOICES_SELLER_NAME', 'SimplePark B.V.'),
+        'address' => env('INVOICES_SELLER_ADDRESS', 'Valstraat 3'),
+        'postal_code' => env('INVOICES_SELLER_POSTAL_CODE', '5491BH'),
+        'city' => env('INVOICES_SELLER_CITY', 'Sint-Oedenrode'),
+        'country' => env('INVOICES_SELLER_COUNTRY', 'Nederland'),
+        'email' => env('INVOICES_SELLER_EMAIL', 'info@simplepark.nl'),
+        'kvk' => env('INVOICES_SELLER_KVK', '96305827'),
+        'btw' => env('INVOICES_SELLER_BTW', 'NL867555257B01'),
+        'iban' => env('INVOICES_SELLER_IBAN', 'NL59 RABO 0107 4988 55'),
+    ],
 ];
