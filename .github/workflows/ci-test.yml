@@ -45,30 +45,18 @@ jobs:
           /opt/homebrew/opt/mysql@8.0/bin/mysql.server start
           /opt/homebrew/opt/mysql@8.0/bin/mysql -u root -e "CREATE DATABASE IF NOT EXISTS testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-      - name: Copy .env.example to .env
-        run: cp .env.example .env
-
-      - name: Replace DB credentials in .env and .env.testing
-        run: |
-          for f in .env .env.testing; do
-            if [ -f "$f" ]; then
-              sed -i '' 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' "$f"
-              sed -i '' 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' "$f"
-              sed -i '' 's/^DB_PORT=.*/DB_PORT=3306/' "$f"
-              sed -i '' 's/^DB_DATABASE=.*/DB_DATABASE=testing/' "$f"
-              sed -i '' 's/^DB_USERNAME=.*/DB_USERNAME=root/' "$f"
-              sed -i '' 's/^DB_PASSWORD=.*/DB_PASSWORD=/' "$f"
-            fi
-          done
-
       - name: Install Composer dependencies
         uses: ramsey/composer-install@v3
         with:
           dependency-versions: locked
           composer-options: "--optimize-autoloader"
 
-      - name: Run migrations
-        run: php artisan migrate:fresh --force
-
       - name: Run Tests
-        run: vendor/bin/pest --parallel --profile
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: testing
+          DB_USERNAME: root
+          DB_PASSWORD: ''
+        run: vendor/bin/phpunit
