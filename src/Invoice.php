@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\LaravelInvoices;
+namespace SimpleParkBv\Invoices;
 
 use Illuminate\Support\Facades\Log;
 
