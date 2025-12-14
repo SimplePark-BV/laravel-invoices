@@ -212,6 +212,13 @@ final class Invoice
 
         $filename = $filename ?? 'invoice-' . $this->date->format('Ymd') . '.pdf';
 
-        return $this->pdf->stream($filename);
+        $response = $this->pdf->stream($filename);
+        
+        // add cache-busting headers for development
+        $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', '0');
+
+        return $response;
     }
 }

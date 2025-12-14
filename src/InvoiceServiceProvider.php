@@ -23,6 +23,13 @@ class InvoiceServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // share css path and font config with views
+        view()->share('invoiceCssPath', __DIR__.'/../resources/css/invoice.css');
+        view()->share('invoiceFont', config('invoices.pdf.font', 'AvenirNext'));
+        $fontPath = __DIR__.'/../resources/fonts';
+        view()->share('invoiceFontPath', $fontPath);
+        view()->share('invoiceFontFile', config('invoices.pdf.font_file'));
+
         // publish config
         $this->publishes(
             paths: [
@@ -40,6 +47,14 @@ class InvoiceServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/views' => resource_path('views/vendor/invoices'),
             ],
             groups: 'invoices-views',
+        );
+
+        // publish css
+        $this->publishes(
+            paths: [
+                __DIR__.'/../resources/css' => resource_path('css/vendor/invoices'),
+            ],
+            groups: 'invoices-assets',
         );
     }
 }

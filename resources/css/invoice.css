@@ -1,0 +1,203 @@
+:root {
+    --surface-low: #9E9E9E;
+    --surface-high: #616161;
+    --surface-highest: #172240;
+
+    --container-highest: #E0E0E0;
+}
+
+/* invoice base styles */
+.invoice {
+    font-family: var(--invoice-font, AvenirNext), sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--surface-highest);
+    font-weight: 400;
+}
+
+.invoice table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invoice tr {
+    page-break-inside: avoid;
+}
+
+.invoice td {
+    padding: 0;
+}
+
+/* invoice header */
+.invoice__header {
+    margin-bottom: 40px;
+}
+
+.invoice__header {
+    table-layout: auto;
+}
+
+.invoice__header-cell {
+    vertical-align: top;
+}
+
+
+.invoice__logo {
+    height: 50px;
+    width: auto;
+}
+
+.invoice__seller {
+    text-align: left;
+    font-size: 12px;
+    width: 1px;
+    white-space: nowrap;
+    color: var(--surface-high);
+}
+
+.invoice__seller-name {
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--surface-highest);
+}
+
+.invoice__seller-detail {
+    margin-bottom: 18px;
+}
+
+.invoice__seller-detail:last-child {
+    margin-bottom: 0;
+}
+
+/* invoice buyer */
+.invoice__buyer {
+    margin-bottom: 40px;
+    margin-top: -20px;
+    font-size: 12px;
+    color: var(--surface-high);
+}
+
+.invoice__buyer-name {
+    font-weight: 700;
+    color: var(--surface-highest);
+    margin-bottom: 6px;
+}
+
+.invoice__buyer-detail {
+    margin-bottom: 18px;
+}
+
+.invoice__buyer-detail:last-child {
+    margin-bottom: 0;
+}
+
+/* invoice number section */
+.invoice__number-section {
+    margin-bottom: 20px;
+}
+
+.invoice__number-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a202c;
+    margin: 0;
+}
+
+.invoice__number-dates {
+    text-align: right;
+    font-size: 12px;
+}
+
+.invoice__number-dates-table {
+    width: auto;
+    float: right;
+}
+
+.invoice__number-dates-label {
+    text-align: right;
+    padding-right: 20px;
+}
+
+.invoice__number-dates-value {
+    text-align: right;
+}
+
+/* invoice items */
+.invoice__items {
+    width: 100%;
+    margin-top: 30px;
+}
+
+.invoice__items-header {
+    text-align: left;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+}
+
+.invoice__items-header--right {
+    text-align: right;
+}
+
+.invoice__items-cell {
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+}
+
+.invoice__items-row:last-child .invoice__items-cell {
+    border-bottom: none;
+}
+
+.invoice__items-cell--right {
+    text-align: right;
+}
+
+.invoice__items-title {
+    font-weight: 600;
+}
+
+.invoice__items-description {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+/* invoice totals */
+.invoice__totals {
+    width: 40%;
+    float: right;
+    margin-top: 20px;
+}
+
+.invoice__totals-cell {
+    padding: 5px 0;
+    text-align: right;
+}
+
+.invoice__totals-row--final {
+    font-weight: 600;
+    font-size: 16px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 10px;
+    margin-top: 5px;
+}
+
+/* invoice footer */
+.invoice__footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    font-size: 13px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 15px;
+}
+
+.invoice__footer-amount {
+    font-weight: 600;
+}
+
+.invoice__footer-date {
+    font-weight: 600;
+}
