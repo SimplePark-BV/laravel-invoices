@@ -3,7 +3,7 @@
 namespace Tests;
 
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
-use SimpleParkBv\LaravelInvoices\InvoiceServiceProvider;
+use SimpleParkBv\Invoices\InvoiceServiceProvider;
 
 abstract class TestCase extends OrchestraTestCase
 {
