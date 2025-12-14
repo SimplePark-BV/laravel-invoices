@@ -14,12 +14,9 @@ final class Invoice
         // todo
     }
 
-    /**
-     * @return \SimpleParkBv\LaravelInvoices\Invoice
-     */
     public static function make(): self
     {
-        return new self();
+        return new self;
     }
 
     public function download(): void
