@@ -4,7 +4,7 @@ namespace SimpleParkBv\Invoices;
 
 /**
  * Class InvoiceItem
- * 
+ *
  * @property string $title
  * @property string|null $description
  * @property float|int $quantity
@@ -15,13 +15,13 @@ final class InvoiceItem
 {
     public string $title;
 
-    public string|null $description;
+    public ?string $description;
 
     public float|int $quantity;
 
     public float|int $price;
 
-    public float|null $tax_rate;
+    public ?float $tax_rate;
 
     public function __construct()
     {
@@ -30,6 +30,6 @@ final class InvoiceItem
 
     public static function make(): self
     {
-        return new self();
+        return new self;
     }
 }
