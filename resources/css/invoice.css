@@ -13,6 +13,7 @@
     line-height: 1.6;
     color: var(--surface-highest);
     font-weight: 400;
+    padding-bottom: 70px;
 }
 
 .invoice table {
@@ -199,6 +200,7 @@
     height: 50px;
     font-size: 12px;
     border-top: 1px solid var(--container-highest);
+    color: var(--surface-high);
     padding-top: 15px;
 }
 

@@ -2,22 +2,22 @@
 
 namespace SimpleParkBv\Invoices;
 
-use Exception;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\View;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\App;
+use SimpleParkBv\Invoices\Traits\HasInvoiceItems;
+use SimpleParkBv\Invoices\Traits\HasInvoiceLogo;
+use SimpleParkBv\Invoices\Traits\HasInvoiceNumber;
 
 /**
  * Class Invoice
  */
 final class Invoice
 {
-    /**
-     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\InvoiceItem>
-     */
-    public Collection $items;
+    use HasInvoiceItems;
+    use HasInvoiceLogo;
+    use HasInvoiceNumber;
 
     public Seller $seller;
 
@@ -29,13 +29,13 @@ final class Invoice
 
     public int $pay_until_days;
 
-    public string $template = 'invoice.index';
+    public string $language;
 
-    public string|null $logo = null;
+    public string $template = 'invoice.index';
 
     public mixed $pdf = null;
 
-    public string|null $output = null;
+    public ?string $output = null;
 
     /**
      * @var array<string, mixed>
@@ -49,31 +49,25 @@ final class Invoice
 
     public function __construct()
     {
+        $this->initializeHasInvoiceItems();
+        $this->initializeHasInvoiceLogo();
+
         // dates
         $this->date = Carbon::now();
         $this->date_format = 'd-m-Y';
         $this->pay_until_days = config('invoices.default_payment_terms_days', 30);
 
+        // language (default from config)
+        $this->language = config('invoices.default_language', 'nl');
+
         // seller (default from config)
         $this->seller = Seller::make();
-
-        // logo (default from config)
-        $this->logo = config('invoices.logo');
-
-        // items collection
-        $this->items = collect();
 
         // pdf options
         $this->paperOptions = [
             'size' => config('invoices.pdf.paper_size', 'a4'),
             'orientation' => config('invoices.pdf.orientation', 'portrait'),
         ];
-
-        // serial number
-        // todo
-
-        // currency
-        // todo
     }
 
     public static function make(): self
@@ -81,97 +75,48 @@ final class Invoice
         return new self;
     }
 
-    public function addItem(InvoiceItem $item): self
-    {
-        $this->items->push($item);
-
-        return $this;
-    }
-
     /**
-     * @param  array<int, \SimpleParkBv\Invoices\InvoiceItem>  $items
-     */
-    public function addItems(array $items): self
-    {
-        foreach ($items as $item) {
-            $this->addItem($item);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Set the logo path for this invoice.
+     * Set the language for this invoice.
      *
-     * @param  string|null  $logoPath
      * @return $this
      */
-    public function setLogo(?string $logoPath): self
+    public function setLanguage(string $language): self
     {
-        $this->logo = $logoPath;
+        $this->language = $language;
 
         return $this;
     }
 
     /**
-     * Get the logo as a data URI for PDF rendering.
-     * Supports PNG, JPG, JPEG, GIF, and SVG formats.
-     *
-     * Note: SVG support in dompdf is limited and may render incorrectly.
-     * PNG is recommended for best compatibility.
-     *
-     * @return string|null
+     * Get the invoice date formatted according to the invoice date format.
      */
-    public function getLogoDataUri(): ?string
+    public function formattedDate(): string
     {
-        if (! $this->logo || ! file_exists($this->logo)) {
-            return null;
-        }
-        
-        $imageData = file_get_contents($this->logo);
-        $imageInfo = getimagesize($this->logo);
-        
-        if ($imageInfo === false) {
-            return null;
-        }
-
-        $mimeType = $imageInfo['mime'];
-        $base64 = base64_encode($imageData);
-
-        return sprintf('data:%s;base64,%s', $mimeType, $base64);
+        return $this->date->format($this->date_format);
     }
 
     /**
-     * Calculate the subtotal (excluding tax).
+     * Get the due date formatted according to the invoice date format.
      */
-    public function subTotal(): float
+    public function formattedDueDate(): string
     {
-        return $this->items->sum(
-            static fn (InvoiceItem $item): float => $item->unit_price * $item->quantity
-        );
+        return $this->date->copy()->addDays($this->pay_until_days)->format($this->date_format);
     }
 
     /**
-     * Calculate the total tax amount.
+     * Get the payment request message with formatted amount and date.
      */
-    public function taxAmount(): float|null
+    public function paymentRequestMessage(): string
     {
-        return $this->items->sum(function ($item) {
-            if (! $item->tax_percentage) {
-                return null;
-            }
+        /** @var string $message */
+        $message = __('invoices::invoice.payment_request');
+        $amountHtml = '<span class="invoice__footer-amount">'.e($this->formattedTotal()).'</span>';
+        $dateHtml = '<span class="invoice__footer-date">'.e($this->formattedDueDate()).'</span>';
 
-            $taxRate = ($item->tax_percentage ?? 0) / 100;
-            return ($item->unit_price * $item->quantity) * $taxRate;
-        });
-    }
+        /** @var string $result */
+        $result = str_replace([':amount', ':date'], [$amountHtml, $dateHtml], $message);
 
-    /**
-     * Calculate the grand total (subtotal + tax).
-     */
-    public function total(): float
-    {
-        return $this->subTotal() + $this->taxAmount() ?? 0;
+        return $result;
     }
 
     /**
@@ -179,10 +124,20 @@ final class Invoice
      */
     public function render(): self
     {
-        // 'invoice' is the variable name used in the blade view
-        $template = sprintf('invoices::%s', $this->template);
-        $this->pdf = Pdf::loadView($template, ['invoice' => $this])
-            ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
+        // save current locale
+        $originalLocale = App::getLocale();
+
+        // set locale for this invoice
+        App::setLocale($this->language);
+
+        try {
+            // 'invoice' is the variable name used in the blade view
+            $template = sprintf('invoices::%s', $this->template);
+            $this->pdf = Pdf::loadView($template, ['invoice' => $this])
+                ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
+        } finally {
+            App::setLocale($originalLocale);
+        }
 
         return $this;
     }
@@ -196,7 +151,7 @@ final class Invoice
             $this->render();
         }
 
-        $filename = $filename ?? 'invoice-' . $this->date->format('Ymd') . '.pdf';
+        $filename = $filename ?? 'invoice-'.$this->date->format('Ymd').'.pdf';
 
         return $this->pdf->download($filename);
     }
@@ -210,10 +165,10 @@ final class Invoice
             $this->render();
         }
 
-        $filename = $filename ?? 'invoice-' . $this->date->format('Ymd') . '.pdf';
+        $filename = $filename ?? 'invoice-'.$this->date->format('Ymd').'.pdf';
 
         $response = $this->pdf->stream($filename);
-        
+
         // add cache-busting headers for development
         $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->headers->set('Pragma', 'no-cache');

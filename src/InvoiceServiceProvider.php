@@ -56,5 +56,16 @@ class InvoiceServiceProvider extends ServiceProvider
             ],
             groups: 'invoices-assets',
         );
+
+        // load translations
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'invoices');
+
+        // publish translations
+        $this->publishes(
+            paths: [
+                __DIR__.'/../resources/lang' => lang_path('vendor/invoices'),
+            ],
+            groups: 'invoices-lang',
+        );
     }
 }

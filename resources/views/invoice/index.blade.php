@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="{{ $invoice->language }}">
 <head>
     <meta charset="utf-8">
-    <title>Factuur {{ $invoice->number ?? 'Concept' }}</title>
+    <title>{{ __('invoices::invoice.invoice') }} {{ $invoice->getNumber() ?? __('invoices::invoice.concept') }}</title>
     <style>
         :root {
             --invoice-font: {{ $invoiceFont }};

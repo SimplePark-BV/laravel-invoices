@@ -15,15 +15,15 @@ final class InvoiceItem
 {
     public string $title;
 
-    public string|null $description;
+    public ?string $description;
 
     public float|int $quantity;
 
-    public float|null $tax_rate;
+    public ?float $tax_rate;
 
     public float|int $unit_price;
 
-    public float|null $tax_percentage;
+    public ?float $tax_percentage;
 
     public static function make(): self
     {
@@ -36,5 +36,18 @@ final class InvoiceItem
     public function total(): float
     {
         return $this->unit_price * $this->quantity;
+    }
+
+    /**
+     * Get the formatted tax percentage for display.
+     * Returns empty string if tax percentage is null, otherwise returns the percentage with % sign.
+     */
+    public function formattedTaxPercentage(): string
+    {
+        if ($this->tax_percentage === null) {
+            return '';
+        }
+
+        return $this->tax_percentage.'%';
     }
 }

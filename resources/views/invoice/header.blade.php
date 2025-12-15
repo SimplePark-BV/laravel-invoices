@@ -18,9 +18,15 @@
                     {{ $invoice->seller->email }}
                 </div>
                 <div class="invoice__seller-detail">
-                    KVK: {{ $invoice->seller->kvk ?? 'Unknown' }}<br>
-                    Btw: {{ $invoice->seller->btw ?? 'Unknown' }}<br>
-                    Bank: {{ $invoice->seller->iban ?? 'Unknown' }}
+                    @if($invoice->seller->kvk)
+                        {{ __('invoices::invoice.kvk') }} {{ $invoice->seller->kvk }}<br>
+                    @endif
+                    @if($invoice->seller->btw)
+                        {{ __('invoices::invoice.btw') }} {{ $invoice->seller->btw }}<br>
+                    @endif
+                    @if($invoice->seller->iban)
+                        {{ __('invoices::invoice.bank') }} {{ $invoice->seller->iban }}
+                    @endif
                 </div>
             </div>
         </td>
