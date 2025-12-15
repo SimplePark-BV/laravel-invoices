@@ -47,7 +47,9 @@ trait HasInvoiceNumber
     {
         // if both series and sequence are set, combine them
         if ($this->series !== null && $this->sequence !== null) {
-            return $this->series.'.'.$this->sequence;
+            $paddedSequence = str_pad((string) $this->sequence, 8, '0', STR_PAD_LEFT);
+
+            return $this->series.'.'.$paddedSequence;
         }
 
         // if only series is set, return series
@@ -55,9 +57,9 @@ trait HasInvoiceNumber
             return $this->series;
         }
 
-        // if only sequence is set, return sequence as string
+        // if only sequence is set, return sequence as string (padded to 8 digits)
         if ($this->sequence !== null) {
-            return (string) $this->sequence;
+            return str_pad((string) $this->sequence, 8, '0', STR_PAD_LEFT);
         }
 
         // no number can be determined
