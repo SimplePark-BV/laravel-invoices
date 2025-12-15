@@ -7,6 +7,7 @@ use Orchestra\Testbench\TestCase;
 use SimpleParkBv\Invoices\Invoice;
 use SimpleParkBv\Invoices\InvoiceItem;
 use SimpleParkBv\Invoices\InvoiceServiceProvider;
+use SimpleParkBv\Invoices\Buyer;
 
 // manually require classes since autoload doesn't map Classes/ subdirectory
 require_once __DIR__.'/../src/Classes/Party.php';
@@ -33,13 +34,45 @@ class PdfTest extends TestCase
         config()->set('invoices.pdf.paper_size', 'a4');
         config()->set('invoices.pdf.orientation', 'portrait');
 
-        $item = InvoiceItem::make();
-        $item->description = 'Test Item';
-        $item->quantity = 1;
-        $item->unit_price = 100;
-        $item->tax_percentage = 21;
+        $items = [
+            [
+                'title' => 'Parkeersessie in zone 26258',
+                'description' => 'Van 7 december 2025 15:46 tot 17:12 met 91-FS-VV',
+                'quantity' => 1,
+                'unit_price' => 12.05,
+                'tax_percentage' => 0,
+            ],
+            [
+                'title' => 'Parkeersessie in zone 26258',
+                'description' => 'Van 7 december 2025 15:46 tot 17:12 met 91-FS-VV',
+                'quantity' => 1,
+                'unit_price' => 12.05,
+                'tax_percentage' => 0,
+            ],
+            [
+                'title' => 'Servicekosten',
+                'quantity' => 2,
+                'unit_price' => 0.39,
+                'tax_percentage' => 21,
+            ]
+        ];
 
-        $buyer = new \SimpleParkBv\Invoices\Buyer();
+        $invoice = Invoice::make();
+
+        foreach ($items as $array) {
+            $item = InvoiceItem::make();
+
+            $item->title = $array['title'];
+            $item->description = $array['description'] ?? null;
+            $item->quantity = $array['quantity'];
+            $item->unit_price = $array['unit_price'];
+            $item->tax_percentage = $array['tax_percentage'];
+
+            $invoice->addItem($item);
+        }
+
+        $buyer = Buyer::make();
+
         $buyer->name = 'Test Buyer';
         $buyer->address = 'Test Address';
         $buyer->postal_code = '1234AB';
@@ -48,8 +81,6 @@ class PdfTest extends TestCase
         $buyer->phone = null;
 
         // act
-        $invoice = Invoice::make()
-            ->addItem($item);
         $invoice->buyer = $buyer;
         $invoice->render();
 

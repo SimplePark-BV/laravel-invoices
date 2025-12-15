@@ -9,7 +9,7 @@
 /* invoice base styles */
 .invoice {
     font-family: var(--invoice-font, AvenirNext), sans-serif;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.6;
     color: var(--surface-highest);
     font-weight: 400;
@@ -98,8 +98,7 @@
 
 .invoice__number-title {
     font-size: 24px;
-    font-weight: 600;
-    color: #1a202c;
+    font-weight: 700;
     margin: 0;
 }
 
@@ -115,7 +114,6 @@
 
 .invoice__number-dates-label {
     text-align: right;
-    padding-right: 20px;
 }
 
 .invoice__number-dates-value {
@@ -130,9 +128,9 @@
 
 .invoice__items-header {
     text-align: left;
-    padding: 10px 0;
-    border-bottom: 1px solid #e5e7eb;
-    font-weight: 600;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--container-highest);
+    font-weight: 700;
 }
 
 .invoice__items-header--right {
@@ -140,13 +138,13 @@
 }
 
 .invoice__items-cell {
-    padding: 12px 0;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid var(--container-highest);
     vertical-align: top;
 }
 
-.invoice__items-row:last-child .invoice__items-cell {
-    border-bottom: none;
+.invoice__items-cell-no-border {
+    border-bottom: none !important;
 }
 
 .invoice__items-cell--right {
@@ -154,32 +152,42 @@
 }
 
 .invoice__items-title {
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .invoice__items-description {
-    color: #6b7280;
+    color: var(--surface-low);
     font-size: 12px;
 }
 
 /* invoice totals */
 .invoice__totals {
-    width: 40%;
-    float: right;
-    margin-top: 20px;
+    width: 100%;
+    margin-top: 8px;
 }
 
 .invoice__totals-cell {
-    padding: 5px 0;
+    padding: 8px 0 !important;
     text-align: right;
 }
 
+.invoice__totals-cell span {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.invoice__totals-cell span:last-child {
+    margin-bottom: 0;
+}
+
+.invoice__totals-cell-border {
+    padding: 8px 0 !important;
+    text-align: right;
+    border-top: 1px solid var(--container-highest);
+}
+
 .invoice__totals-row--final {
-    font-weight: 600;
-    font-size: 16px;
-    border-top: 1px solid #e5e7eb;
-    padding-top: 10px;
-    margin-top: 5px;
+    font-weight: 700;
 }
 
 /* invoice footer */
@@ -189,15 +197,15 @@
     left: 0;
     right: 0;
     height: 50px;
-    font-size: 13px;
-    border-top: 1px solid #e5e7eb;
+    font-size: 12px;
+    border-top: 1px solid var(--container-highest);
     padding-top: 15px;
 }
 
 .invoice__footer-amount {
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .invoice__footer-date {
-    font-weight: 600;
+    font-weight: 700;
 }

@@ -25,25 +25,27 @@
             </tr>
         @endforeach
     </tbody>
+    <tfoot>
+        <tr>
+            <td class="invoice__items-cell-no-border invoice__items-cell"></td>
+            <td class="invoice__items-cell-no-border invoice__items-cell"></td>
+            <td class="invoice__totals-cell">
+                <span>Subtotaal</span>
+                <span>21% btw</span>
+            </td>
+            <td class="invoice__totals-cell">
+                <span>€ {{ number_format($invoice->subTotal(), 2, ',', '.') }}</span>
+                <span>€ {{ number_format($invoice->taxAmount(), 2, ',', '.') }}</span>
+            </td>
+            <td class="invoice__items-cell-no-border invoice__items-cell"></td>
+        </tr>
+
+        <tr class="invoice__totals-row--final">
+            <td class="invoice__items-cell-no-border invoice__items-cell"></td>
+            <td class="invoice__items-cell-no-border invoice__items-cell"></td>
+            <td class="invoice__totals-cell-border">Totaal</td>
+            <td class="invoice__totals-cell-border">€ {{ number_format($invoice->total(), 2, ',', '.') }}</td>
+            <td class="invoice__items-cell-no-border invoice__items-cell"></td>
+        </tr>
+    </tfoot>
 </table>
-
-{{-- invoice totals section --}}
-<table class="invoice__totals">
-    <tr>
-        <td class="invoice__totals-cell">Subtotaal</td>
-        <td width="35%" class="invoice__totals-cell">€ {{ number_format($invoice->subTotal(), 2, ',', '.') }}</td>
-    </tr>
-    
-    {{-- loop through tax rates if you have multiple, otherwise single line --}}
-    <tr>
-        <td class="invoice__totals-cell">21% btw</td>
-        <td class="invoice__totals-cell">€ {{ number_format($invoice->taxAmount(), 2, ',', '.') }}</td>
-    </tr>
-
-    <tr class="invoice__totals-row--final">
-        <td class="invoice__totals-cell">Totaal</td>
-        <td class="invoice__totals-cell">€ {{ number_format($invoice->total(), 2, ',', '.') }}</td>
-    </tr>
-</table>
-
-<div style="clear: both;"></div>
