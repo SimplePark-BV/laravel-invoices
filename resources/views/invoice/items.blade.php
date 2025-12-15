@@ -31,11 +31,15 @@
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
             <td class="invoice__totals-cell">
                 <span>{{ __('invoices::invoice.subtotal') }}</span>
-                <span>{{ $invoice->formattedTaxPercentage() }}</span>
+                @foreach($invoice->taxGroups() as $taxPercentage)
+                    <span>{{ __('invoices::invoice.tax_percentage', ['percentage' => (int) $taxPercentage]) }}</span>
+                @endforeach
             </td>
             <td class="invoice__totals-cell">
                 <span>€ {{ number_format($invoice->subTotal(), 2, ',', '.') }}</span>
-                <span>€ {{ number_format($invoice->taxAmount() ?? 0, 2, ',', '.') }}</span>
+                @foreach($invoice->taxGroups() as $taxPercentage)
+                    <span>€ {{ number_format($invoice->taxAmountForTaxGroup($taxPercentage), 2, ',', '.') }}</span>
+                @endforeach
             </td>
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
         </tr>
@@ -43,7 +47,7 @@
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
             <td class="invoice__totals-cell-border">{{ __('invoices::invoice.total') }}</td>
-            <td class="invoice__totals-cell-border">€ {{ number_format($invoice->total(), 2, ',', '.') }}</td>
+            <td class="invoice__totals-cell-border">{{ $invoice->formattedTotal() }}</td>
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
         </tr>
     </tfoot>

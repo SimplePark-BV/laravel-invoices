@@ -5,7 +5,8 @@ namespace SimpleParkBv\Invoices\Traits;
 /**
  * Trait HasInvoiceNumber
  *
- * Provides invoice numbering functionality with series and sequence support.
+ * @var ?string $series
+ * @var ?int $sequence
  */
 trait HasInvoiceNumber
 {

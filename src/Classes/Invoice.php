@@ -4,11 +4,15 @@ namespace SimpleParkBv\Invoices;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use SimpleParkBv\Invoices\Traits\HasInvoiceItems;
 use SimpleParkBv\Invoices\Traits\HasInvoiceLogo;
 use SimpleParkBv\Invoices\Traits\HasInvoiceNumber;
+use SimpleParkBv\Invoices\Traits\HasInvoiceFooter;
+use SimpleParkBv\Invoices\Traits\HasInvoiceLanguage;
+use SimpleParkBv\Invoices\Traits\HasInvoiceDates;
+use SimpleParkBv\Invoices\Traits\HasInvoiceTemplate;
+use SimpleParkBv\Invoices\Traits\HasInvoiceBuyer;
 
 /**
  * Class Invoice
@@ -18,20 +22,13 @@ final class Invoice
     use HasInvoiceItems;
     use HasInvoiceLogo;
     use HasInvoiceNumber;
+    use HasInvoiceFooter;
+    use HasInvoiceLanguage;
+    use HasInvoiceDates;
+    use HasInvoiceTemplate;
+    use HasInvoiceBuyer;
 
     public Seller $seller;
-
-    public Buyer $buyer;
-
-    public Carbon $date;
-
-    public string $date_format;
-
-    public int $pay_until_days;
-
-    public string $language;
-
-    public string $template = 'invoice.index';
 
     public mixed $pdf = null;
 
@@ -51,14 +48,8 @@ final class Invoice
     {
         $this->initializeHasInvoiceItems();
         $this->initializeHasInvoiceLogo();
-
-        // dates
-        $this->date = Carbon::now();
-        $this->date_format = 'd-m-Y';
-        $this->pay_until_days = config('invoices.default_payment_terms_days', 30);
-
-        // language (default from config)
-        $this->language = config('invoices.default_language', 'nl');
+        $this->initializeHasInvoiceLanguage();
+        $this->initializeHasInvoiceDates();
 
         // seller (default from config)
         $this->seller = Seller::make();
@@ -73,50 +64,6 @@ final class Invoice
     public static function make(): self
     {
         return new self;
-    }
-
-    /**
-     * Set the language for this invoice.
-     *
-     * @return $this
-     */
-    public function setLanguage(string $language): self
-    {
-        $this->language = $language;
-
-        return $this;
-    }
-
-    /**
-     * Get the invoice date formatted according to the invoice date format.
-     */
-    public function formattedDate(): string
-    {
-        return $this->date->format($this->date_format);
-    }
-
-    /**
-     * Get the due date formatted according to the invoice date format.
-     */
-    public function formattedDueDate(): string
-    {
-        return $this->date->copy()->addDays($this->pay_until_days)->format($this->date_format);
-    }
-
-    /**
-     * Get the payment request message with formatted amount and date.
-     */
-    public function paymentRequestMessage(): string
-    {
-        /** @var string $message */
-        $message = __('invoices::invoice.payment_request');
-        $amountHtml = '<span class="invoice__footer-amount">'.e($this->formattedTotal()).'</span>';
-        $dateHtml = '<span class="invoice__footer-date">'.e($this->formattedDueDate()).'</span>';
-
-        /** @var string $result */
-        $result = str_replace([':amount', ':date'], [$amountHtml, $dateHtml], $message);
-
-        return $result;
     }
 
     /**
