@@ -19,17 +19,35 @@ final class InvoiceItem
 
     public float|int $quantity;
 
-    public float|int $price;
-
     public ?float $tax_rate;
 
-    public function __construct()
-    {
-        // todo
-    }
+    public float|int $unit_price;
+
+    public ?float $tax_percentage;
 
     public static function make(): self
     {
         return new self;
+    }
+
+    /**
+     * Calculate the total for this item (quantity * unit_price).
+     */
+    public function total(): float
+    {
+        return $this->unit_price * $this->quantity;
+    }
+
+    /**
+     * Get the formatted tax percentage for display.
+     * Returns empty string if tax percentage is null, otherwise returns the percentage with % sign.
+     */
+    public function formattedTaxPercentage(): string
+    {
+        if ($this->tax_percentage === null) {
+            return '';
+        }
+
+        return $this->tax_percentage.'%';
     }
 }

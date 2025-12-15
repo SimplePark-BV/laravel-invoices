@@ -11,4 +11,9 @@ final class Buyer extends Party
     {
         // todo
     }
+
+    public static function make(): self
+    {
+        return new self;
+    }
 }
