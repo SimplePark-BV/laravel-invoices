@@ -4,7 +4,7 @@ namespace SimpleParkBv\Invoices\Traits;
 
 /**
  * Trait HasInvoiceLanguage
- * 
+ *
  * @var string $language
  */
 trait HasInvoiceLanguage
@@ -28,4 +28,3 @@ trait HasInvoiceLanguage
         return $this;
     }
 }
-

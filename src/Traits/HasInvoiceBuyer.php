@@ -25,4 +25,3 @@ trait HasInvoiceBuyer
         return $this;
     }
 }
-

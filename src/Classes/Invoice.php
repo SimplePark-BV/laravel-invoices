@@ -5,28 +5,28 @@ namespace SimpleParkBv\Invoices;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
+use SimpleParkBv\Invoices\Traits\HasInvoiceBuyer;
+use SimpleParkBv\Invoices\Traits\HasInvoiceDates;
+use SimpleParkBv\Invoices\Traits\HasInvoiceFooter;
 use SimpleParkBv\Invoices\Traits\HasInvoiceItems;
+use SimpleParkBv\Invoices\Traits\HasInvoiceLanguage;
 use SimpleParkBv\Invoices\Traits\HasInvoiceLogo;
 use SimpleParkBv\Invoices\Traits\HasInvoiceNumber;
-use SimpleParkBv\Invoices\Traits\HasInvoiceFooter;
-use SimpleParkBv\Invoices\Traits\HasInvoiceLanguage;
-use SimpleParkBv\Invoices\Traits\HasInvoiceDates;
 use SimpleParkBv\Invoices\Traits\HasInvoiceTemplate;
-use SimpleParkBv\Invoices\Traits\HasInvoiceBuyer;
 
 /**
  * Class Invoice
  */
 final class Invoice
 {
+    use HasInvoiceBuyer;
+    use HasInvoiceDates;
+    use HasInvoiceFooter;
     use HasInvoiceItems;
+    use HasInvoiceLanguage;
     use HasInvoiceLogo;
     use HasInvoiceNumber;
-    use HasInvoiceFooter;
-    use HasInvoiceLanguage;
-    use HasInvoiceDates;
     use HasInvoiceTemplate;
-    use HasInvoiceBuyer;
 
     public Seller $seller;
 

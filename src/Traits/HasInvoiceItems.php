@@ -15,9 +15,6 @@ trait HasInvoiceItems
      */
     public Collection $items;
 
-    /**
-     * @var float|null
-     */
     public ?float $forcedTotal = null;
 
     public function initializeHasInvoiceItems(): void
@@ -52,7 +49,7 @@ trait HasInvoiceItems
 
     /**
      * Calculate the total tax amount.
-     * 
+     *
      * Sums taxes only for items that have a tax_percentage set (excludes null items).
      * Calculates tax from unit_price which includes tax.
      */
@@ -65,7 +62,7 @@ trait HasInvoiceItems
 
             $taxRate = $item->tax_percentage / 100;
             $itemTotal = $item->unit_price * $item->quantity;
-            
+
             // tax amount = price including tax * taxRate / (1 + taxRate)
             return $itemTotal * $taxRate / (1 + $taxRate);
         });
@@ -84,7 +81,7 @@ trait HasInvoiceItems
 
     /**
      * Calculate the subtotal (total excluding tax).
-     * 
+     *
      * Calculated as: sum of all items - all vats.
      * This ensures: sum of all items = subtotal + vats.
      */
@@ -94,11 +91,23 @@ trait HasInvoiceItems
     }
 
     /**
+     * Get the formatted subtotal with proper rounding to avoid rounding discrepancies.
+     *
+     * Calculated as: total - sum of all rounded tax groups (each rounded to 2 decimals).
+     * This ensures: total = formattedSubTotal + sum of all tax groups (with proper rounding).
+     */
+    public function formattedSubTotal(): float
+    {
+        $total = $this->total();
+        $sumOfRoundedTaxGroups = $this->taxGroups()
+            ->sum(fn (float $taxPercentage): float => round($this->taxAmountForTaxGroup($taxPercentage), 2));
+
+        return round($total - $sumOfRoundedTaxGroups, 2);
+    }
+
+    /**
      * Force a specific total amount that will override the calculated total.
      * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
-     *
-     * @param  float  $amount
-     * @return self
      */
     public function forcedTotal(float $amount): self
     {
@@ -109,10 +118,10 @@ trait HasInvoiceItems
 
     /**
      * Calculate the grand total.
-     * 
+     *
      * Returns the forced total if set via forcedTotal(), otherwise returns the sum of all items (itemsTotal).
      * This ensures accuracy to the cent and allows overriding when needed.
-     * 
+     *
      * WARNING: Do not use this method for calculations (e.g., subtotal + tax = total).
      * When forcedTotal() is set, the returned amount may differ from the calculated sum of items.
      * Use itemsTotal() for calculations that need to match the actual sum of all items.
@@ -149,16 +158,13 @@ trait HasInvoiceItems
             ->pluck('tax_percentage')
             ->filter(static fn (?float $taxPercentage): bool => $taxPercentage !== null && $taxPercentage > 0)
             ->unique()
-            ->sortByDesc(static fn (float $taxPercentage): int => $taxPercentage)
+            ->sortByDesc(static fn (float $taxPercentage): float => $taxPercentage)
             ->values();
     }
 
     /**
      * Calculate the subtotal for items with a specific tax percentage.
      * Calculated as: sum of items in this tax group - tax amount for this group.
-     *
-     * @param  float  $taxPercentage
-     * @return float
      */
     public function subTotalForTaxGroup(float $taxPercentage): float
     {
@@ -172,9 +178,6 @@ trait HasInvoiceItems
     /**
      * Calculate the tax amount for items with a specific tax percentage.
      * Calculates tax from unit_price which includes tax.
-     *
-     * @param  float  $taxPercentage
-     * @return float
      */
     public function taxAmountForTaxGroup(float $taxPercentage): float
     {
@@ -184,6 +187,7 @@ trait HasInvoiceItems
             ->filter(fn (InvoiceItem $item) => $item->tax_percentage === $taxPercentage)
             ->sum(function (InvoiceItem $item) use ($taxRate): float {
                 $itemTotal = $item->unit_price * $item->quantity;
+
                 // tax amount = price including tax * taxRate / (1 + taxRate)
                 return $itemTotal * $taxRate / (1 + $taxRate);
             });

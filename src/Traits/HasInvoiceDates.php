@@ -6,7 +6,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * Trait HasInvoiceDates
- * 
+ *
  * @var \Illuminate\Support\Carbon $date
  * @var string $date_format
  * @var int $pay_until_days
@@ -45,7 +45,6 @@ trait HasInvoiceDates
     /**
      * Set the invoice date.
      *
-     * @param  \Illuminate\Support\Carbon|string  $date
      * @return $this
      */
     public function date(Carbon $date): self
@@ -55,4 +54,3 @@ trait HasInvoiceDates
         return $this;
     }
 }
-

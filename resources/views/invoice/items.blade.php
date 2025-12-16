@@ -36,7 +36,7 @@
                 @endforeach
             </td>
             <td class="invoice__totals-cell">
-                <span>€ {{ number_format($invoice->subTotal(), 2, ',', '.') }}</span>
+                <span>€ {{ number_format($invoice->formattedSubTotal(), 2, ',', '.') }}</span>
                 @foreach($invoice->taxGroups() as $taxPercentage)
                     <span>€ {{ number_format($invoice->taxAmountForTaxGroup($taxPercentage), 2, ',', '.') }}</span>
                 @endforeach

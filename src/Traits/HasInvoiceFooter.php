@@ -23,4 +23,3 @@ trait HasInvoiceFooter
         return $result;
     }
 }
-

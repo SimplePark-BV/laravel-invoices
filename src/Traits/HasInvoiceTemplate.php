@@ -23,4 +23,3 @@ trait HasInvoiceTemplate
         return $this;
     }
 }
-
