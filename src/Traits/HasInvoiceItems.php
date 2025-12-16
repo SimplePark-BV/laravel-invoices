@@ -15,9 +15,12 @@ trait HasInvoiceItems
      */
     public Collection $items;
 
+    public ?float $forcedTotal = null;
+
     public function initializeHasInvoiceItems(): void
     {
         $this->items = collect();
+        $this->forcedTotal = null;
     }
 
     /**
@@ -46,24 +49,30 @@ trait HasInvoiceItems
 
     /**
      * Calculate the total tax amount.
+     *
+     * Sums taxes only for items that have a tax_percentage set (excludes null items).
+     * Calculates tax from unit_price which includes tax.
      */
-    public function taxAmount(): ?float
+    public function taxAmount(): float
     {
         return $this->items->sum(function ($item) {
-            if (! $item->tax_percentage) {
-                return null;
+            if ($item->tax_percentage === null || $item->tax_percentage <= 0) {
+                return 0;
             }
 
-            $taxRate = ($item->tax_percentage ?? 0) / 100;
+            $taxRate = $item->tax_percentage / 100;
+            $itemTotal = $item->unit_price * $item->quantity;
 
-            return ($item->unit_price * $item->quantity) * $taxRate;
+            // tax amount = price including tax * taxRate / (1 + taxRate)
+            return $itemTotal * $taxRate / (1 + $taxRate);
         });
     }
 
     /**
-     * Calculate the subtotal (excluding tax).
+     * Get the sum of all items (unit_price * quantity for all items).
+     * This is the total before subtracting VATs.
      */
-    public function subTotal(): float
+    public function itemsTotal(): float
     {
         return $this->items->sum(
             static fn (InvoiceItem $item): float => $item->unit_price * $item->quantity
@@ -71,11 +80,60 @@ trait HasInvoiceItems
     }
 
     /**
-     * Calculate the grand total (subtotal + tax).
+     * Calculate the subtotal (total excluding tax).
+     *
+     * Calculated as: sum of all items - all vats.
+     * This ensures: sum of all items = subtotal + vats.
+     */
+    public function subTotal(): float
+    {
+        return $this->itemsTotal() - $this->taxAmount();
+    }
+
+    /**
+     * Get the formatted subtotal with proper rounding to avoid rounding discrepancies.
+     *
+     * Calculated as: total - sum of all rounded tax groups (each rounded to 2 decimals).
+     * This ensures: total = formattedSubTotal + sum of all tax groups (with proper rounding).
+     */
+    public function formattedSubTotal(): float
+    {
+        $total = $this->total();
+        $sumOfRoundedTaxGroups = $this->taxGroups()
+            ->sum(fn (float $taxPercentage): float => round($this->taxAmountForTaxGroup($taxPercentage), 2));
+
+        return round($total - $sumOfRoundedTaxGroups, 2);
+    }
+
+    /**
+     * Force a specific total amount that will override the calculated total.
+     * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
+     */
+    public function forcedTotal(float $amount): self
+    {
+        $this->forcedTotal = $amount;
+
+        return $this;
+    }
+
+    /**
+     * Calculate the grand total.
+     *
+     * Returns the forced total if set via forcedTotal(), otherwise returns the sum of all items (itemsTotal).
+     * This ensures accuracy to the cent and allows overriding when needed.
+     *
+     * WARNING: Do not use this method for calculations (e.g., subtotal + tax = total).
+     * When forcedTotal() is set, the returned amount may differ from the calculated sum of items.
+     * Use itemsTotal() for calculations that need to match the actual sum of all items.
      */
     public function total(): float
     {
-        return $this->subTotal() + ($this->taxAmount() ?? 0);
+        if ($this->forcedTotal !== null) {
+            return $this->forcedTotal;
+        }
+
+        // always calculate from items directly to ensure precision to the cent
+        return $this->itemsTotal();
     }
 
     /**
@@ -89,39 +147,49 @@ trait HasInvoiceItems
     }
 
     /**
-     * Calculate the effective tax percentage based on subtotal and tax amount.
-     * Returns null if tax amount is null (no tax applicable), 0 if subtotal is 0.
+     * Get all unique tax percentages from items, excluding null values.
+     * Returns a collection sorted in ascending order.
+     *
+     * @return \Illuminate\Support\Collection<int, float>
      */
-    public function taxPercentage(): ?int
+    public function taxGroups(): Collection
     {
-        $subTotal = $this->subTotal();
-        $taxAmount = $this->taxAmount();
-
-        // if tax amount is null, tax is not applicable
-        if ($taxAmount === null) {
-            return null;
-        }
-
-        // if subtotal is 0, can't calculate percentage
-        if ($subTotal <= 0) {
-            return 0;
-        }
-
-        return (int) round(($taxAmount / $subTotal) * 100, 0);
+        return $this->items
+            ->pluck('tax_percentage')
+            ->filter(static fn (?float $taxPercentage): bool => $taxPercentage !== null && $taxPercentage > 0)
+            ->unique()
+            ->sortByDesc(static fn (float $taxPercentage): float => $taxPercentage)
+            ->values();
     }
 
     /**
-     * Get the formatted tax percentage for display.
-     * Returns an empty string if tax is not applicable (null), otherwise returns translated percentage.
+     * Calculate the subtotal for items with a specific tax percentage.
+     * Calculated as: sum of items in this tax group - tax amount for this group.
      */
-    public function formattedTaxPercentage(): string
+    public function subTotalForTaxGroup(float $taxPercentage): float
     {
-        $taxPercentage = $this->taxPercentage();
+        $itemsTotal = $this->items
+            ->filter(fn (InvoiceItem $item) => $item->tax_percentage === $taxPercentage)
+            ->sum(fn (InvoiceItem $item): float => $item->unit_price * $item->quantity);
 
-        if ($taxPercentage === null) {
-            return '';
-        }
+        return $itemsTotal - $this->taxAmountForTaxGroup($taxPercentage);
+    }
 
-        return __('invoices::invoice.tax_percentage', ['percentage' => $taxPercentage]);
+    /**
+     * Calculate the tax amount for items with a specific tax percentage.
+     * Calculates tax from unit_price which includes tax.
+     */
+    public function taxAmountForTaxGroup(float $taxPercentage): float
+    {
+        $taxRate = $taxPercentage / 100;
+
+        return $this->items
+            ->filter(fn (InvoiceItem $item) => $item->tax_percentage === $taxPercentage)
+            ->sum(function (InvoiceItem $item) use ($taxRate): float {
+                $itemTotal = $item->unit_price * $item->quantity;
+
+                // tax amount = price including tax * taxRate / (1 + taxRate)
+                return $itemTotal * $taxRate / (1 + $taxRate);
+            });
     }
 }
