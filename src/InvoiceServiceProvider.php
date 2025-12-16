@@ -2,6 +2,7 @@
 
 namespace SimpleParkBv\Invoices;
 
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class InvoiceServiceProvider extends ServiceProvider
@@ -23,12 +24,14 @@ class InvoiceServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // share css path and font config with views
-        view()->share('invoiceCssPath', __DIR__.'/../resources/css/invoice.css');
-        view()->share('invoiceFont', config('invoices.pdf.font', 'AvenirNext'));
-        $fontPath = __DIR__.'/../resources/fonts';
-        view()->share('invoiceFontPath', $fontPath);
-        view()->share('invoiceFontFile', config('invoices.pdf.font_file'));
+        // share css path and font config with views using view composer
+        // using view composer for better isolation and testability
+        View::composer('invoices::*', function ($view): void {
+            $view->with('invoiceCssPath', __DIR__.'/../resources/css/invoice.css');
+            $view->with('invoiceFont', config('invoices.pdf.font', 'AvenirNext'));
+            $view->with('invoiceFontPath', __DIR__.'/../resources/fonts');
+            $view->with('invoiceFontFile', config('invoices.pdf.font_file'));
+        });
 
         // publish config
         $this->publishes(

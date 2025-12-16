@@ -3,8 +3,10 @@
 namespace SimpleParkBv\Invoices;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
+use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Traits\HasInvoiceBuyer;
 use SimpleParkBv\Invoices\Traits\HasInvoiceDates;
 use SimpleParkBv\Invoices\Traits\HasInvoiceFooter;
@@ -30,7 +32,7 @@ final class Invoice
 
     public Seller $seller;
 
-    public mixed $pdf = null;
+    public ?DomPDF $pdf = null;
 
     public ?string $output = null;
 
@@ -67,10 +69,181 @@ final class Invoice
     }
 
     /**
+     * Create an invoice from an array of data.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function fromArray(array $data): self
+    {
+        $invoice = self::make();
+
+        // set buyer if provided
+        if (isset($data['buyer']) && is_array($data['buyer'])) {
+            $buyer = Buyer::make();
+            
+            foreach ($data['buyer'] as $key => $value) {
+                if (property_exists($buyer, $key)) {
+                    $buyer->$key = $value;
+                }
+            }
+
+            $invoice->buyer($buyer);
+        }
+
+        // set date if provided
+        if (isset($data['date'])) {
+            $invoice->date($data['date']);
+        }
+
+        // set items if provided
+        if (isset($data['items']) && is_array($data['items'])) {
+            foreach ($data['items'] as $itemData) {
+                $item = InvoiceItem::make();
+
+                if (isset($itemData['title'])) {
+                    $item->title = $itemData['title'];
+                }
+
+                if (isset($itemData['description'])) {
+                    $item->description = $itemData['description'];
+                }
+
+                if (isset($itemData['quantity'])) {
+                    $item->quantity = $itemData['quantity'];
+                }
+
+                if (isset($itemData['unit_price'])) {
+                    $item->unit_price = $itemData['unit_price'];
+                }
+
+                if (isset($itemData['tax_percentage'])) {
+                    $item->tax_percentage = $itemData['tax_percentage'];
+                }
+
+                $invoice->addItem($item);
+            }
+        }
+
+        // set invoice number if provided
+        if (isset($data['series'])) {
+            $invoice->series($data['series']);
+        }
+
+        if (isset($data['sequence'])) {
+            $invoice->sequence($data['sequence']);
+        }
+
+        // set language if provided
+        if (isset($data['language'])) {
+            $invoice->setLanguage($data['language']);
+        }
+
+        // set forced total if provided
+        if (isset($data['forced_total'])) {
+            $invoice->forcedTotal($data['forced_total']);
+        }
+
+        return $invoice;
+    }
+
+    /**
+     * Convert the invoice to an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'buyer' => isset($this->buyer) ? [
+                'name' => $this->buyer->name,
+                'address' => $this->buyer->address,
+                'city' => $this->buyer->city,
+                'postal_code' => $this->buyer->postal_code,
+                'country' => $this->buyer->country,
+                'email' => $this->buyer->email,
+                'phone' => $this->buyer->phone,
+                'website' => $this->buyer->website,
+            ] : null,
+            'date' => $this->date->toIso8601String(),
+            'items' => $this->items->map(fn ($item) => [
+                'title' => $item->title,
+                'description' => $item->description,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'tax_percentage' => $item->tax_percentage,
+            ])->toArray(),
+            'series' => $this->series,
+            'sequence' => $this->sequence,
+            'language' => $this->language,
+            'forced_total' => $this->forcedTotal,
+        ];
+    }
+
+    /**
+     * Validate the invoice before rendering.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
+     */
+    public function validate(): void
+    {
+        // buyer must be set
+        if (! isset($this->buyer)) {
+            throw new InvalidInvoiceException('Buyer is required for invoice');
+        }
+
+        // at least one item must exist
+        if ($this->items->isEmpty()) {
+            throw new InvalidInvoiceException('Invoice must have at least one item');
+        }
+
+        // validate all items
+        foreach ($this->items as $index => $item) {
+            if (empty($item->title)) {
+                throw new InvalidInvoiceException("Item at index {$index} must have a title");
+            }
+
+            if ($item->quantity <= 0) {
+                throw new InvalidInvoiceException("Item at index {$index} must have a quantity greater than 0");
+            }
+
+            if ($item->unit_price < 0) {
+                throw new InvalidInvoiceException("Item at index {$index} must have a unit_price greater than or equal to 0");
+            }
+
+            if ($item->tax_percentage !== null && ($item->tax_percentage < 0 || $item->tax_percentage > 100)) {
+                throw new InvalidInvoiceException("Item at index {$index} must have a tax_percentage between 0 and 100, or null");
+            }
+        }
+    }
+
+    /**
+     * Check if the PDF has been rendered.
+     */
+    public function isRendered(): bool
+    {
+        return $this->pdf !== null;
+    }
+
+    /**
+     * Clear the PDF instance to free memory.
+     */
+    public function clearPdf(): self
+    {
+        $this->pdf = null;
+
+        return $this;
+    }
+
+    /**
      * Generate the PDF instance.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
      */
     public function render(): self
     {
+        // validate invoice before rendering
+        $this->validate();
+
         // save current locale
         $originalLocale = App::getLocale();
 

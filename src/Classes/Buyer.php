@@ -7,11 +7,6 @@ namespace SimpleParkBv\Invoices;
  */
 final class Buyer extends Party
 {
-    public function __construct()
-    {
-        // todo
-    }
-
     public static function make(): self
     {
         return new self;

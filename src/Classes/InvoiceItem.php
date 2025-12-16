@@ -2,6 +2,8 @@
 
 namespace SimpleParkBv\Invoices;
 
+use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
+
 /**
  * Class InvoiceItem
  *
@@ -28,6 +30,84 @@ final class InvoiceItem
     public static function make(): self
     {
         return new self;
+    }
+
+    /**
+     * Set the title of the item.
+     *
+     * @return $this
+     */
+    public function title(string $title): self
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * Set the description of the item.
+     *
+     * @return $this
+     */
+    public function description(?string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * Set the quantity of the item.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     */
+    public function quantity(float|int $quantity): self
+    {
+        if ($quantity <= 0) {
+            throw new InvalidInvoiceItemException('Quantity must be greater than 0');
+        }
+
+        $this->quantity = $quantity;
+
+        return $this;
+    }
+
+    /**
+     * Set the unit price of the item.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     */
+    public function unitPrice(float|int $unitPrice): self
+    {
+        if ($unitPrice < 0) {
+            throw new InvalidInvoiceItemException('Unit price must be greater than or equal to 0');
+        }
+
+        $this->unit_price = $unitPrice;
+
+        return $this;
+    }
+
+    /**
+     * Set the tax percentage of the item.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     */
+    public function taxPercentage(?float $taxPercentage): self
+    {
+        if ($taxPercentage !== null && ($taxPercentage < 0 || $taxPercentage > 100)) {
+            throw new InvalidInvoiceItemException('Tax percentage must be between 0 and 100, or null');
+        }
+
+        $this->tax_percentage = $taxPercentage;
+
+        return $this;
     }
 
     /**

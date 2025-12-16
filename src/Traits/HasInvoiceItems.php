@@ -4,6 +4,8 @@ namespace SimpleParkBv\Invoices\Traits;
 
 use Illuminate\Support\Collection;
 use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Services\CurrencyFormatter;
+use SimpleParkBv\Invoices\Services\TaxCalculator;
 
 /**
  * Trait HasInvoiceItems
@@ -55,17 +57,7 @@ trait HasInvoiceItems
      */
     public function taxAmount(): float
     {
-        return $this->items->sum(function ($item) {
-            if ($item->tax_percentage === null || $item->tax_percentage <= 0) {
-                return 0;
-            }
-
-            $taxRate = $item->tax_percentage / 100;
-            $itemTotal = $item->unit_price * $item->quantity;
-
-            // tax amount = price including tax * taxRate / (1 + taxRate)
-            return $itemTotal * $taxRate / (1 + $taxRate);
-        });
+        return TaxCalculator::calculateTaxAmount($this->items);
     }
 
     /**
@@ -141,25 +133,18 @@ trait HasInvoiceItems
      */
     public function formattedTotal(): string
     {
-        $currencySymbol = config('invoices.currency_symbol', '€');
-
-        return $currencySymbol.' '.number_format($this->total(), 2, ',', '.');
+        return CurrencyFormatter::format($this->total());
     }
 
     /**
      * Get all unique tax percentages from items, excluding null values.
-     * Returns a collection sorted in ascending order.
+     * Returns a collection sorted in descending order.
      *
      * @return \Illuminate\Support\Collection<int, float>
      */
     public function taxGroups(): Collection
     {
-        return $this->items
-            ->pluck('tax_percentage')
-            ->filter(static fn (?float $taxPercentage): bool => $taxPercentage !== null && $taxPercentage > 0)
-            ->unique()
-            ->sortByDesc(static fn (float $taxPercentage): float => $taxPercentage)
-            ->values();
+        return TaxCalculator::extractTaxGroups($this->items);
     }
 
     /**
@@ -168,11 +153,7 @@ trait HasInvoiceItems
      */
     public function subTotalForTaxGroup(float $taxPercentage): float
     {
-        $itemsTotal = $this->items
-            ->filter(fn (InvoiceItem $item) => $item->tax_percentage === $taxPercentage)
-            ->sum(fn (InvoiceItem $item): float => $item->unit_price * $item->quantity);
-
-        return $itemsTotal - $this->taxAmountForTaxGroup($taxPercentage);
+        return TaxCalculator::calculateSubTotalForTaxGroup($this->items, $taxPercentage);
     }
 
     /**
@@ -181,15 +162,6 @@ trait HasInvoiceItems
      */
     public function taxAmountForTaxGroup(float $taxPercentage): float
     {
-        $taxRate = $taxPercentage / 100;
-
-        return $this->items
-            ->filter(fn (InvoiceItem $item) => $item->tax_percentage === $taxPercentage)
-            ->sum(function (InvoiceItem $item) use ($taxRate): float {
-                $itemTotal = $item->unit_price * $item->quantity;
-
-                // tax amount = price including tax * taxRate / (1 + taxRate)
-                return $itemTotal * $taxRate / (1 + $taxRate);
-            });
+        return TaxCalculator::calculateTaxForGroup($this->items, $taxPercentage);
     }
 }

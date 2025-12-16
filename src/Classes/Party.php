@@ -31,9 +31,4 @@ abstract class Party
     public ?string $phone;
 
     public ?string $website;
-
-    public function __construct()
-    {
-        // todo
-    }
 }
