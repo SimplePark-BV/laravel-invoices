@@ -548,7 +548,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $invoice->pdf = new \stdClass(); // mock pdf object
+        $invoice->pdf = new \stdClass; // mock pdf object
 
         // act
         $result = $invoice->clearPdf();

@@ -2,7 +2,6 @@
 
 namespace Tests\Traits;
 
-use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Mockery;
