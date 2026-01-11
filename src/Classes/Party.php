@@ -107,13 +107,13 @@ abstract class Party implements PartyInterface
     {
         return [
             'name' => $this->name,
-            'address' => $this->address,
-            'city' => $this->city,
-            'postal_code' => $this->postal_code,
-            'country' => $this->country,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'website' => $this->website,
+            'address' => isset($this->address) ? $this->address : null,
+            'city' => isset($this->city) ? $this->city : null,
+            'postal_code' => isset($this->postal_code) ? $this->postal_code : null,
+            'country' => isset($this->country) ? $this->country : null,
+            'email' => isset($this->email) ? $this->email : null,
+            'phone' => isset($this->phone) ? $this->phone : null,
+            'website' => isset($this->website) ? $this->website : null,
         ];
     }
 }

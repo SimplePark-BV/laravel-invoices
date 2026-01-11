@@ -155,24 +155,9 @@ final class Invoice implements InvoiceInterface
     public function toArray(): array
     {
         return [
-            'buyer' => isset($this->buyer) ? [
-                'name' => $this->buyer->name,
-                'address' => $this->buyer->address,
-                'city' => $this->buyer->city,
-                'postal_code' => $this->buyer->postal_code,
-                'country' => $this->buyer->country,
-                'email' => $this->buyer->email,
-                'phone' => $this->buyer->phone,
-                'website' => $this->buyer->website,
-            ] : null,
+            'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
             'date' => $this->date->toIso8601String(),
-            'items' => $this->items->map(fn ($item) => [
-                'title' => $item->title,
-                'description' => $item->description,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'tax_percentage' => $item->tax_percentage,
-            ])->toArray(),
+            'items' => $this->items->map(static fn (InvoiceItem $item) => $item->toArray())->toArray(),
             'series' => $this->series,
             'sequence' => $this->sequence,
             'language' => $this->language,
@@ -199,7 +184,11 @@ final class Invoice implements InvoiceInterface
 
         // validate all items
         foreach ($this->items as $index => $item) {
-            $item->validate($index);
+            try {
+                $item->validate($index);
+            } catch (\SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException $e) {
+                throw new InvalidInvoiceException($e->getMessage(), 0, $e);
+            }
         }
     }
 
@@ -242,6 +231,9 @@ final class Invoice implements InvoiceInterface
             $template = sprintf('invoices::%s', $this->template);
             $this->pdf = Pdf::loadView($template, ['invoice' => $this])
                 ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
+        } catch (\Throwable $e) {
+            $this->pdf = null;
+            throw new InvalidInvoiceException('Failed to render PDF: '.$e->getMessage(), 0, $e);
         } finally {
             App::setLocale($originalLocale);
         }

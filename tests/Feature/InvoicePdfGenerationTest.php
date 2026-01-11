@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
@@ -222,10 +223,9 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
-        $mockPdf = $this->mockPdfInstance();
         Pdf::shouldReceive('loadView')
             ->once()
-            ->andReturn(null); // simulate render failure
+            ->andThrow(new \Exception('PDF generation failed')); // simulate render failure
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -312,10 +312,9 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
-        $mockPdf = $this->mockPdfInstance();
         Pdf::shouldReceive('loadView')
             ->once()
-            ->andReturn(null); // simulate render failure
+            ->andThrow(new Exception('PDF generation failed')); // simulate render failure
 
         // assert
         $this->expectException(InvalidInvoiceException::class);

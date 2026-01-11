@@ -464,7 +464,7 @@ final class InvoiceTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: string, 1: callable(\SimpleParkBv\Invoices\Invoice): void, 2: string}>
+     * @return array<string, array{0: string, 1: callable, 2: string}>
      */
     public static function validation_errors_data_provider(): array
     {

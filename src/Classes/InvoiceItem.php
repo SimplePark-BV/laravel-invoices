@@ -123,7 +123,7 @@ final class InvoiceItem implements InvoiceItemInterface
      */
     public function formattedTaxPercentage(): string
     {
-        if ($this->tax_percentage === null) {
+        if (! isset($this->tax_percentage) || $this->tax_percentage === null) {
             return '';
         }
 
@@ -151,8 +151,24 @@ final class InvoiceItem implements InvoiceItemInterface
             throw new InvalidInvoiceItemException("{$prefix} must have a unit_price greater than or equal to 0");
         }
 
-        if ($this->tax_percentage !== null && ($this->tax_percentage < 0 || $this->tax_percentage > 100)) {
+        if (isset($this->tax_percentage) && ($this->tax_percentage < 0 || $this->tax_percentage > 100)) {
             throw new InvalidInvoiceItemException("{$prefix} must have a tax_percentage between 0 and 100, or null");
         }
+    }
+
+    /**
+     * Convert the invoice item to an array representation.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'title' => $this->title,
+            'description' => isset($this->description) ? $this->description : null,
+            'quantity' => $this->quantity,
+            'unit_price' => $this->unit_price,
+            'tax_percentage' => isset($this->tax_percentage) ? $this->tax_percentage : null,
+        ];
     }
 }
