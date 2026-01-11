@@ -163,6 +163,12 @@ final class InvoiceValidationTest extends TestCase
             'valid tax percentage' => [
                 ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 21],
             ],
+            'tax percentage zero' => [
+                ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 0],
+            ],
+            'tax percentage hundred' => [
+                ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 100],
+            ],
         ];
     }
 

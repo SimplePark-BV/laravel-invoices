@@ -54,7 +54,6 @@ final class InvoicePdfGenerationTest extends TestCase
         // arrange
         $invoice = $this->create_valid_invoice();
         $invoice->setLanguage('en');
-        $originalLocale = App::getLocale();
         App::setLocale('nl'); // set different locale
 
         $mockPdf = $this->mockPdfInstance();
@@ -212,7 +211,7 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice = $this->create_valid_invoice();
         Pdf::shouldReceive('loadView')
             ->once()
-            ->andThrow(new \Exception('PDF generation failed')); // simulate render failure
+            ->andThrow(new Exception('PDF generation failed')); // simulate render failure
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -269,9 +268,11 @@ final class InvoicePdfGenerationTest extends TestCase
         $response = $invoice->stream();
 
         // assert
-        // verified in mock expectation - ensure invoice was rendered and response returned
         $this->assertTrue($invoice->isRendered());
         $this->assertInstanceOf(Response::class, $response);
+        $this->assertEquals('no-cache, no-store, must-revalidate', $response->headers->get('Cache-Control'));
+        $this->assertEquals('no-cache', $response->headers->get('Pragma'));
+        $this->assertEquals('0', $response->headers->get('Expires'));
     }
 
     #[Test]

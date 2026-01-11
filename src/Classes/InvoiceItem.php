@@ -123,7 +123,7 @@ final class InvoiceItem implements InvoiceItemInterface
      */
     public function formattedTaxPercentage(): string
     {
-        if (! isset($this->tax_percentage) || $this->tax_percentage === null) {
+        if ($this->tax_percentage === null) {
             return '';
         }
 
@@ -165,10 +165,10 @@ final class InvoiceItem implements InvoiceItemInterface
     {
         return [
             'title' => $this->title,
-            'description' => isset($this->description) ? $this->description : null,
+            'description' => $this->description ?? null,
             'quantity' => $this->quantity,
             'unit_price' => $this->unit_price,
-            'tax_percentage' => isset($this->tax_percentage) ? $this->tax_percentage : null,
+            'tax_percentage' => $this->tax_percentage ?? null,
         ];
     }
 }

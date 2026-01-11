@@ -5,6 +5,7 @@ namespace Tests\Traits;
 use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Mockery;
+use ReflectionClass;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 trait MocksPdfGeneration
@@ -69,8 +70,20 @@ trait MocksPdfGeneration
             ->once()
             ->andReturnSelf();
 
-        // Use reflection to set the headers property
-        $reflection = new \ReflectionClass($mockResponse);
+        // allow get() calls to return the expected header values
+        /** @phpstan-ignore-next-line method.notFound */
+        $mockHeaders->shouldReceive('get')
+            ->andReturnUsing(function (string $key) {
+                return match ($key) {
+                    'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                    'Pragma' => 'no-cache',
+                    'Expires' => '0',
+                    default => null,
+                };
+            });
+
+        // use reflection to set the headers property
+        $reflection = new ReflectionClass($mockResponse);
         $property = $reflection->getProperty('headers');
         $property->setAccessible(true);
         $property->setValue($mockResponse, $mockHeaders);

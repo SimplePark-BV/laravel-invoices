@@ -36,11 +36,7 @@
             "SimpleParkBv\\Invoices\\": "src/"
         },
         "classmap": [
-            "src/Classes",
-            "src/Traits",
-            "src/Contracts",
-            "src/Exceptions",
-            "src/Services"
+            "src/Classes"
         ]
     },
     "autoload-dev": {

@@ -47,7 +47,7 @@ abstract class Party implements PartyInterface
      */
     public function getAddress(): ?string
     {
-        return isset($this->address) ? $this->address : null;
+        return $this->address ?? null;
     }
 
     /**
@@ -55,7 +55,7 @@ abstract class Party implements PartyInterface
      */
     public function getCity(): ?string
     {
-        return isset($this->city) ? $this->city : null;
+        return $this->city ?? null;
     }
 
     /**
@@ -63,7 +63,7 @@ abstract class Party implements PartyInterface
      */
     public function getPostalCode(): ?string
     {
-        return isset($this->postal_code) ? $this->postal_code : null;
+        return $this->postal_code ?? null;
     }
 
     /**
@@ -71,7 +71,7 @@ abstract class Party implements PartyInterface
      */
     public function getCountry(): ?string
     {
-        return isset($this->country) ? $this->country : null;
+        return $this->country ?? null;
     }
 
     /**
@@ -79,7 +79,7 @@ abstract class Party implements PartyInterface
      */
     public function getEmail(): ?string
     {
-        return isset($this->email) ? $this->email : null;
+        return $this->email ?? null;
     }
 
     /**
@@ -87,7 +87,7 @@ abstract class Party implements PartyInterface
      */
     public function getPhone(): ?string
     {
-        return isset($this->phone) ? $this->phone : null;
+        return $this->phone ?? null;
     }
 
     /**
@@ -95,7 +95,7 @@ abstract class Party implements PartyInterface
      */
     public function getWebsite(): ?string
     {
-        return isset($this->website) ? $this->website : null;
+        return $this->website ?? null;
     }
 
     /**
@@ -107,13 +107,13 @@ abstract class Party implements PartyInterface
     {
         return [
             'name' => $this->name,
-            'address' => isset($this->address) ? $this->address : null,
-            'city' => isset($this->city) ? $this->city : null,
-            'postal_code' => isset($this->postal_code) ? $this->postal_code : null,
-            'country' => isset($this->country) ? $this->country : null,
-            'email' => isset($this->email) ? $this->email : null,
-            'phone' => isset($this->phone) ? $this->phone : null,
-            'website' => isset($this->website) ? $this->website : null,
+            'address' => $this->address ?? null,
+            'city' => $this->city ?? null,
+            'postal_code' => $this->postal_code ?? null,
+            'country' => $this->country ?? null,
+            'email' => $this->email ?? null,
+            'phone' => $this->phone ?? null,
+            'website' => $this->website ?? null,
         ];
     }
 }
