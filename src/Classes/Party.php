@@ -47,7 +47,7 @@ abstract class Party implements PartyInterface
      */
     public function getAddress(): ?string
     {
-        return $this->address;
+        return $this->address ?? null;
     }
 
     /**
@@ -55,7 +55,7 @@ abstract class Party implements PartyInterface
      */
     public function getCity(): ?string
     {
-        return $this->city;
+        return $this->city ?? null;
     }
 
     /**
@@ -63,7 +63,7 @@ abstract class Party implements PartyInterface
      */
     public function getPostalCode(): ?string
     {
-        return $this->postal_code;
+        return $this->postal_code ?? null;
     }
 
     /**
@@ -71,7 +71,7 @@ abstract class Party implements PartyInterface
      */
     public function getCountry(): ?string
     {
-        return $this->country;
+        return $this->country ?? null;
     }
 
     /**
@@ -79,7 +79,7 @@ abstract class Party implements PartyInterface
      */
     public function getEmail(): ?string
     {
-        return $this->email;
+        return $this->email ?? null;
     }
 
     /**
@@ -87,7 +87,7 @@ abstract class Party implements PartyInterface
      */
     public function getPhone(): ?string
     {
-        return $this->phone;
+        return $this->phone ?? null;
     }
 
     /**
@@ -95,7 +95,7 @@ abstract class Party implements PartyInterface
      */
     public function getWebsite(): ?string
     {
-        return $this->website;
+        return $this->website ?? null;
     }
 
     /**
@@ -107,13 +107,13 @@ abstract class Party implements PartyInterface
     {
         return [
             'name' => $this->name,
-            'address' => $this->address,
-            'city' => $this->city,
-            'postal_code' => $this->postal_code,
-            'country' => $this->country,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'website' => $this->website,
+            'address' => $this->address ?? null,
+            'city' => $this->city ?? null,
+            'postal_code' => $this->postal_code ?? null,
+            'country' => $this->country ?? null,
+            'email' => $this->email ?? null,
+            'phone' => $this->phone ?? null,
+            'website' => $this->website ?? null,
         ];
     }
 }
