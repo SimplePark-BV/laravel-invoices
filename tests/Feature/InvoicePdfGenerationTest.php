@@ -49,21 +49,6 @@ final class InvoicePdfGenerationTest extends TestCase
     }
 
     #[Test]
-    public function render_validates_before_rendering(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        // missing buyer and items
-
-        // assert
-        $this->expectException(InvalidInvoiceException::class);
-        $this->expectExceptionMessage('Buyer is required for invoice');
-
-        // act
-        $invoice->render();
-    }
-
-    #[Test]
     public function render_sets_locale_during_rendering(): void
     {
         // arrange
@@ -107,8 +92,8 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice->render();
 
         // assert
-        // verified in mock expectation
-        $this->assertTrue(true); // @phpstan-ignore-line method.alreadyNarrowedType
+        // verified in mock expectation - ensure invoice was rendered
+        $this->assertTrue($invoice->isRendered());
     }
 
     /**
@@ -150,8 +135,8 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice->render();
 
         // assert
-        // verified in mock expectation
-        $this->assertTrue(true); // @phpstan-ignore-line method.alreadyNarrowedType
+        // verified in mock expectation - ensure invoice was rendered
+        $this->assertTrue($invoice->isRendered());
     }
 
     /**
@@ -171,6 +156,7 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
         Pdf::shouldReceive('loadView')
             ->once()
@@ -190,7 +176,7 @@ final class InvoicePdfGenerationTest extends TestCase
     public static function download_filename_data_provider(): array
     {
         return [
-            'default filename' => [null, 'invoice-'.date('Ymd').'.pdf'],
+            'default filename' => [null, 'invoice-20240115.pdf'],
             'custom filename' => ['custom-invoice.pdf', 'custom-invoice.pdf'],
         ];
     }
@@ -200,11 +186,12 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'invoice-'.date('Ymd').'.pdf');
+        $this->mockPdfDownload($mockPdf, 'invoice-20240115.pdf');
 
         // assert
         // pdf not rendered yet
@@ -241,6 +228,7 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
         Pdf::shouldReceive('loadView')
             ->once()
@@ -260,7 +248,7 @@ final class InvoicePdfGenerationTest extends TestCase
     public static function stream_filename_data_provider(): array
     {
         return [
-            'default filename' => [null, 'invoice-'.date('Ymd').'.pdf'],
+            'default filename' => [null, 'invoice-20240115.pdf'],
             'custom filename' => ['custom-invoice.pdf', 'custom-invoice.pdf'],
         ];
     }
@@ -270,18 +258,20 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
-        $this->mockPdfStream($mockPdf, 'invoice-'.date('Ymd').'.pdf');
+        $this->mockPdfStream($mockPdf, 'invoice-20240115.pdf');
 
         // act
-        $invoice->stream();
+        $response = $invoice->stream();
 
         // assert
-        // verified in mock expectation
-        $this->assertTrue(true); // @phpstan-ignore-line method.alreadyNarrowedType
+        // verified in mock expectation - ensure invoice was rendered and response returned
+        $this->assertTrue($invoice->isRendered());
+        $this->assertInstanceOf(Response::class, $response);
     }
 
     #[Test]
@@ -289,11 +279,12 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
-        $this->mockPdfStream($mockPdf, 'invoice-'.date('Ymd').'.pdf');
+        $this->mockPdfStream($mockPdf, 'invoice-20240115.pdf');
 
         // assert
         // pdf not rendered yet

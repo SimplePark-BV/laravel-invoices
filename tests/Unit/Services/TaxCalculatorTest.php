@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit;
+namespace Tests\Unit\Services;
 
 use Illuminate\Support\Collection;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -76,6 +76,18 @@ final class TaxCalculatorTest extends TestCase
             'quantity greater than one' => [
                 [['title' => 'Item', 'quantity' => 3, 'unit_price' => 121.00, 'tax_percentage' => 21]],
                 63.00, // 363 total, tax = 363 * 0.21 / 1.21 = 63
+            ],
+            'empty collection' => [
+                [],
+                0.00,
+            ],
+            'very large numbers' => [
+                [['title' => 'Item', 'quantity' => 1, 'unit_price' => 999999999.99, 'tax_percentage' => 21]],
+                173553719.01, // tax = 999999999.99 * 0.21 / 1.21 ≈ 173553719.01
+            ],
+            'precision edge case' => [
+                [['title' => 'Item', 'quantity' => 0.33, 'unit_price' => 121.00, 'tax_percentage' => 21]],
+                6.93, // 39.93 total, tax = 39.93 * 0.21 / 1.21 ≈ 6.93
             ],
         ];
     }
@@ -259,5 +271,32 @@ final class TaxCalculatorTest extends TestCase
         $item->tax_percentage = $taxPercentage;
 
         return $item;
+    }
+
+    #[Test]
+    public function calculate_tax_amount_with_empty_collection(): void
+    {
+        // arrange
+        $items = collect([]);
+
+        // act
+        $taxAmount = TaxCalculator::calculateTaxAmount($items);
+
+        // assert
+        $this->assertEquals(0.00, $taxAmount);
+    }
+
+    #[Test]
+    public function extract_tax_groups_with_empty_collection(): void
+    {
+        // arrange
+        $items = collect([]);
+
+        // act
+        $taxGroups = TaxCalculator::extractTaxGroups($items);
+
+        // assert
+        $this->assertInstanceOf(Collection::class, $taxGroups);
+        $this->assertCount(0, $taxGroups);
     }
 }
