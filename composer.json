@@ -34,10 +34,7 @@
     "autoload": {
         "psr-4": {
             "SimpleParkBv\\Invoices\\": "src/"
-        },
-        "classmap": [
-            "src/Classes"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

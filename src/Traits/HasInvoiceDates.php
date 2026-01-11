@@ -45,11 +45,12 @@ trait HasInvoiceDates
     /**
      * Set the invoice date.
      *
+     *
      * @return $this
      */
-    public function date(Carbon $date): self
+    public function date(Carbon|string $date): self
     {
-        $this->date = $date;
+        $this->date = is_string($date) ? Carbon::parse($date) : $date;
 
         return $this;
     }

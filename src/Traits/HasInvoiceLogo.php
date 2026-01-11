@@ -37,19 +37,27 @@ trait HasInvoiceLogo
      */
     public function getLogoDataUri(): ?string
     {
-        if (! $this->logo || ! file_exists($this->logo)) {
+        if (! $this->logo) {
             return null;
         }
 
-        $imageData = file_get_contents($this->logo);
+        // validate file path to prevent directory traversal
+        $realPath = realpath($this->logo);
+        if ($realPath === false || ! file_exists($realPath)) {
+            return null;
+        }
+
+        // validate file type
+        $allowedMimeTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/svg+xml'];
+        $imageInfo = getimagesize($realPath);
+
+        if ($imageInfo === false || ! in_array($imageInfo['mime'], $allowedMimeTypes, true)) {
+            return null;
+        }
+
+        $imageData = file_get_contents($realPath);
 
         if ($imageData === false) {
-            return null;
-        }
-
-        $imageInfo = getimagesize($this->logo);
-
-        if ($imageInfo === false) {
             return null;
         }
 
