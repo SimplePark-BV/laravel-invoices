@@ -80,7 +80,7 @@ final class Invoice
         // set buyer if provided
         if (isset($data['buyer']) && is_array($data['buyer'])) {
             $buyer = Buyer::make();
-            
+
             foreach ($data['buyer'] as $key => $value) {
                 if (property_exists($buyer, $key)) {
                     $buyer->$key = $value;
@@ -271,6 +271,10 @@ final class Invoice
             $this->render();
         }
 
+        if (! $this->pdf) {
+            throw new InvalidInvoiceException('Failed to render PDF');
+        }
+
         $filename = $filename ?? 'invoice-'.$this->date->format('Ymd').'.pdf';
 
         return $this->pdf->download($filename);
@@ -283,6 +287,10 @@ final class Invoice
     {
         if (! $this->pdf) {
             $this->render();
+        }
+
+        if (! $this->pdf) {
+            throw new InvalidInvoiceException('Failed to render PDF');
         }
 
         $filename = $filename ?? 'invoice-'.$this->date->format('Ymd').'.pdf';
