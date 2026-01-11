@@ -13,8 +13,8 @@ final class CurrencyFormatter
     public static function format(float $amount, ?string $currencySymbol = null, ?string $decimalSeparator = null, ?string $thousandsSeparator = null): string
     {
         $currencySymbol = $currencySymbol ?? config('invoices.currency_symbol', '€');
-        $decimalSeparator = $decimalSeparator ?? ',';
-        $thousandsSeparator = $thousandsSeparator ?? '.';
+        $decimalSeparator = $decimalSeparator ?? config('invoices.decimal_separator', ',');
+        $thousandsSeparator = $thousandsSeparator ?? config('invoices.thousands_separator', '.');
 
         return $currencySymbol.' '.number_format($amount, 2, $decimalSeparator, $thousandsSeparator);
     }
@@ -32,7 +32,7 @@ final class CurrencyFormatter
      */
     public static function getDecimalSeparator(): string
     {
-        return ',';
+        return config('invoices.decimal_separator', ',');
     }
 
     /**
@@ -40,6 +40,6 @@ final class CurrencyFormatter
      */
     public static function getThousandsSeparator(): string
     {
-        return '.';
+        return config('invoices.thousands_separator', '.');
     }
 }

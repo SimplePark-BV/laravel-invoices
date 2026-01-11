@@ -76,7 +76,7 @@ The package supports a fluent interface for building invoices:
 $invoice = Invoice::make()
     ->series('2024')
     ->sequence(123)
-    ->dateFromString('2024-01-15')
+    ->date('2024-01-15')
     ->setLanguage('en');
 
 $item = InvoiceItem::make()
@@ -120,14 +120,14 @@ $invoice->forcedTotal(100.00);
 
 ### Date Handling
 
-You can set dates using Carbon instances or strings:
+The `date()` method (from the `HasInvoiceDates` trait) accepts both Carbon instances and strings. Strings are automatically parsed using `Carbon::parse()`:
 
 ```php
 // using Carbon
 $invoice->date(Carbon::now());
 
-// using string
-$invoice->dateFromString('2024-01-15');
+// using string (parsed with Carbon::parse)
+$invoice->date('2024-01-15');
 ```
 
 ### Invoice Number
@@ -203,8 +203,7 @@ $array = $invoice->toArray();
 - `addItems(array $items)` - Add multiple items
 - `series(?string $series)` - Set invoice series
 - `sequence(?int $sequence)` - Set invoice sequence number
-- `date(Carbon $date)` - Set invoice date (Carbon instance)
-- `dateFromString(string $date)` - Set invoice date (string)
+- `date(Carbon|string $date)` - Set invoice date (accepts Carbon instance or string, strings are parsed with Carbon::parse)
 - `setLanguage(string $language)` - Set invoice language
 - `setLogo(?string $logoPath)` - Set custom logo path
 - `template(string $template)` - Set custom template
