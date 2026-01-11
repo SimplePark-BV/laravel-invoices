@@ -107,9 +107,12 @@ final class InvoicePdfGenerationTest extends TestCase
 
         // assert
         // verified in mock expectation
-        $this->assertTrue(true);
+        $this->assertTrue(true); // @phpstan-ignore-line method.alreadyNarrowedType
     }
 
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
     public static function template_data_provider(): array
     {
         return [
@@ -147,9 +150,12 @@ final class InvoicePdfGenerationTest extends TestCase
 
         // assert
         // verified in mock expectation
-        $this->assertTrue(true);
+        $this->assertTrue(true); // @phpstan-ignore-line method.alreadyNarrowedType
     }
 
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
     public static function paper_config_data_provider(): array
     {
         return [
@@ -177,6 +183,9 @@ final class InvoicePdfGenerationTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
     }
 
+    /**
+     * @return array<string, array{0: string|null, 1: string}>
+     */
     public static function download_filename_data_provider(): array
     {
         return [
@@ -245,6 +254,9 @@ final class InvoicePdfGenerationTest extends TestCase
         $this->assertInstanceOf(Response::class, $response);
     }
 
+    /**
+     * @return array<string, array{0: string|null, 1: string}>
+     */
     public static function stream_filename_data_provider(): array
     {
         return [
@@ -269,7 +281,7 @@ final class InvoicePdfGenerationTest extends TestCase
 
         // assert
         // verified in mock expectation
-        $this->assertTrue(true);
+        $this->assertTrue(true); // @phpstan-ignore-line method.alreadyNarrowedType
     }
 
     #[Test]

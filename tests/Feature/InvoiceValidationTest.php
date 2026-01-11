@@ -62,6 +62,9 @@ final class InvoiceValidationTest extends TestCase
         $invoice->validate();
     }
 
+    /**
+     * @param  array<string, mixed>  $itemData
+     */
     #[Test]
     #[DataProvider('invalid_item_data_provider')]
     public function invalid_items_throw_exception(array $itemData, string $expectedMessage): void
@@ -87,6 +90,9 @@ final class InvoiceValidationTest extends TestCase
         $invoice->validate();
     }
 
+    /**
+     * @return array<string, array{0: array<string, mixed>, 1: string}>
+     */
     public static function invalid_item_data_provider(): array
     {
         return [
@@ -117,6 +123,9 @@ final class InvoiceValidationTest extends TestCase
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $itemData
+     */
     #[Test]
     #[DataProvider('valid_item_data_provider')]
     public function valid_items_pass_validation(array $itemData): void
@@ -139,6 +148,9 @@ final class InvoiceValidationTest extends TestCase
         $invoice->validate();
     }
 
+    /**
+     * @return array<string, array{0: array<string, mixed>}>
+     */
     public static function valid_item_data_provider(): array
     {
         return [

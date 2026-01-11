@@ -36,6 +36,9 @@ final class InvoiceItemTest extends TestCase
         $this->assertEquals($expected, $item->$property);
     }
 
+    /**
+     * @return array<string, array{0: string, 1: mixed, 2: string, 3: mixed}>
+     */
     public static function valid_setter_data_provider(): array
     {
         return [
@@ -68,6 +71,9 @@ final class InvoiceItemTest extends TestCase
         $item->quantity($quantity);
     }
 
+    /**
+     * @return array<string, array{0: mixed}>
+     */
     public static function invalid_quantity_data_provider(): array
     {
         return [
@@ -105,6 +111,9 @@ final class InvoiceItemTest extends TestCase
         $item->taxPercentage($taxPercentage);
     }
 
+    /**
+     * @return array<string, array{0: mixed}>
+     */
     public static function invalid_tax_percentage_data_provider(): array
     {
         return [
@@ -129,6 +138,9 @@ final class InvoiceItemTest extends TestCase
         $this->assertEquals($expected, $total);
     }
 
+    /**
+     * @return array<string, array{0: float|int, 1: float|int, 2: float}>
+     */
     public static function total_calculation_data_provider(): array
     {
         return [
@@ -152,6 +164,9 @@ final class InvoiceItemTest extends TestCase
         $this->assertEquals($expected, $formatted);
     }
 
+    /**
+     * @return array<string, array{0: float|null, 1: string}>
+     */
     public static function formatted_tax_percentage_data_provider(): array
     {
         return [

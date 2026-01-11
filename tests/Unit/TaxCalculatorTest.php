@@ -11,6 +11,9 @@ use Tests\TestCase;
 
 final class TaxCalculatorTest extends TestCase
 {
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     */
     #[Test]
     #[DataProvider('calculate_tax_amount_data_provider')]
     public function calculate_tax_amount(array $items, float $expected): void
@@ -33,6 +36,9 @@ final class TaxCalculatorTest extends TestCase
         $this->assertEquals($expected, round($taxAmount, 2));
     }
 
+    /**
+     * @return array<string, array{0: array<int, array<string, mixed>>, 1: float}>
+     */
     public static function calculate_tax_amount_data_provider(): array
     {
         return [
@@ -74,6 +80,10 @@ final class TaxCalculatorTest extends TestCase
         ];
     }
 
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @param  array<int, float>  $expectedGroups
+     */
     #[Test]
     #[DataProvider('extract_tax_groups_data_provider')]
     public function extract_tax_groups(array $items, array $expectedGroups, int $expectedCount): void
@@ -100,6 +110,9 @@ final class TaxCalculatorTest extends TestCase
         }
     }
 
+    /**
+     * @return array<string, array{0: array<int, array<string, mixed>>, 1: array<int, float>, 2: int}>
+     */
     public static function extract_tax_groups_data_provider(): array
     {
         return [
@@ -151,6 +164,9 @@ final class TaxCalculatorTest extends TestCase
         $this->assertEquals(9.0, $taxGroups->get(2));
     }
 
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     */
     #[Test]
     #[DataProvider('calculate_tax_for_group_data_provider')]
     public function calculate_tax_for_group(array $items, float $taxPercentage, float $expected): void
@@ -167,6 +183,9 @@ final class TaxCalculatorTest extends TestCase
         $this->assertEquals($expected, round($tax, 2));
     }
 
+    /**
+     * @return array<string, array{0: array<int, array<string, mixed>>, 1: float, 2: float}>
+     */
     public static function calculate_tax_for_group_data_provider(): array
     {
         return [
@@ -187,6 +206,9 @@ final class TaxCalculatorTest extends TestCase
         ];
     }
 
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     */
     #[Test]
     #[DataProvider('calculate_subtotal_for_tax_group_data_provider')]
     public function calculate_subtotal_for_tax_group(array $items, float $taxPercentage, float $expected): void
@@ -203,6 +225,9 @@ final class TaxCalculatorTest extends TestCase
         $this->assertEquals($expected, round($subTotal, 2));
     }
 
+    /**
+     * @return array<string, array{0: array<int, array<string, mixed>>, 1: float, 2: float}>
+     */
     public static function calculate_subtotal_for_tax_group_data_provider(): array
     {
         return [

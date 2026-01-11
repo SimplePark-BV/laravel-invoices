@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
+use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use SimpleParkBv\Invoices\Buyer;
@@ -98,7 +99,7 @@ final class InvoiceTest extends TestCase
         $array = $invoice->toArray();
 
         // assert
-        $this->assertIsArray($array);
+        $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
         $this->assertArrayHasKey('buyer', $array);
         $this->assertArrayHasKey('date', $array);
         $this->assertArrayHasKey('items', $array);
@@ -141,6 +142,9 @@ final class InvoiceTest extends TestCase
         $this->assertEquals($expectedFormat, $invoice->date->format('Y-m-d'));
     }
 
+    /**
+     * @return array<string, array{0: mixed, 1: string}>
+     */
     public static function date_handling_data_provider(): array
     {
         return [
@@ -191,6 +195,9 @@ final class InvoiceTest extends TestCase
         $this->assertCount(2, $invoice->items);
     }
 
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     */
     #[Test]
     #[DataProvider('items_total_data_provider')]
     public function items_total(array $items, float $expected): void
@@ -212,6 +219,9 @@ final class InvoiceTest extends TestCase
         $this->assertEquals($expected, $total);
     }
 
+    /**
+     * @return array<string, array{0: array<int, array<string, mixed>>, 1: float}>
+     */
     public static function items_total_data_provider(): array
     {
         return [
@@ -273,6 +283,9 @@ final class InvoiceTest extends TestCase
         $this->assertEquals($expected, $total);
     }
 
+    /**
+     * @return array<string, array{0: float|null, 1: float}>
+     */
     public static function total_data_provider(): array
     {
         return [
@@ -377,6 +390,9 @@ final class InvoiceTest extends TestCase
         $this->assertEquals($expected, round($tax, 2));
     }
 
+    /**
+     * @return array<string, array{0: float, 1: float}>
+     */
     public static function tax_amount_for_group_data_provider(): array
     {
         return [
@@ -447,6 +463,9 @@ final class InvoiceTest extends TestCase
         $invoice->validate();
     }
 
+    /**
+     * @return array<string, array{0: string, 1: callable(\SimpleParkBv\Invoices\Invoice): void, 2: string}>
+     */
     public static function validation_errors_data_provider(): array
     {
         return [
@@ -548,7 +567,9 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $invoice->pdf = new \stdClass; // mock pdf object
+        /** @var \Barryvdh\DomPDF\PDF&\Mockery\MockInterface $mockPdf */
+        $mockPdf = Mockery::mock(\Barryvdh\DomPDF\PDF::class);
+        $invoice->pdf = $mockPdf; // mock pdf object
 
         // act
         $result = $invoice->clearPdf();

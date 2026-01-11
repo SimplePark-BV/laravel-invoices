@@ -10,6 +10,7 @@ trait MocksPdfGeneration
 {
     protected function mockPdfInstance(string $paperSize = 'a4', string $orientation = 'portrait'): DomPDF
     {
+        /** @var \Barryvdh\DomPDF\PDF&\Mockery\MockInterface $mockPdf */
         $mockPdf = Mockery::mock(DomPDF::class);
         $mockPdf->shouldReceive('setPaper')
             ->once()
@@ -21,10 +22,12 @@ trait MocksPdfGeneration
 
     protected function mockPdfDownload(DomPDF $mockPdf, string $filename): Response
     {
+        /** @var \Illuminate\Http\Response&\Mockery\MockInterface $mockResponse */
         $mockResponse = Mockery::mock(Response::class);
         $mockResponse->shouldReceive('getContent')
             ->andReturn('PDF content');
 
+        /** @var \Barryvdh\DomPDF\PDF&\Mockery\MockInterface $mockPdf */
         $mockPdf->shouldReceive('download')
             ->once()
             ->with($filename)
@@ -35,18 +38,22 @@ trait MocksPdfGeneration
 
     protected function mockPdfStream(DomPDF $mockPdf, string $filename): Response
     {
+        /** @var \Illuminate\Http\Response&\Mockery\MockInterface $mockResponse */
         $mockResponse = Mockery::mock(Response::class);
-        $mockResponse->headers = Mockery::mock();
-        $mockResponse->headers->shouldReceive('set')
+        /** @var \Mockery\MockInterface $mockHeaders */
+        $mockHeaders = Mockery::mock();
+        $mockResponse->headers = $mockHeaders; // @phpstan-ignore-line property.notFound
+        $mockHeaders->shouldReceive('set')
             ->with('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->once();
-        $mockResponse->headers->shouldReceive('set')
+        $mockHeaders->shouldReceive('set')
             ->with('Pragma', 'no-cache')
             ->once();
-        $mockResponse->headers->shouldReceive('set')
+        $mockHeaders->shouldReceive('set')
             ->with('Expires', '0')
             ->once();
 
+        /** @var \Barryvdh\DomPDF\PDF&\Mockery\MockInterface $mockPdf */
         $mockPdf->shouldReceive('stream')
             ->once()
             ->with($filename)
