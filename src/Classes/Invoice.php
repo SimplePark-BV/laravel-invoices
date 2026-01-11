@@ -15,11 +15,12 @@ use SimpleParkBv\Invoices\Traits\HasInvoiceLanguage;
 use SimpleParkBv\Invoices\Traits\HasInvoiceLogo;
 use SimpleParkBv\Invoices\Traits\HasInvoiceNumber;
 use SimpleParkBv\Invoices\Traits\HasInvoiceTemplate;
+use SimpleParkBv\Invoices\Contracts\InvoiceInterface;
 
 /**
  * Class Invoice
  */
-final class Invoice
+final class Invoice implements InvoiceInterface
 {
     use HasInvoiceBuyer;
     use HasInvoiceDates;

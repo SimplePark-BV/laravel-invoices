@@ -3,6 +3,7 @@
 namespace SimpleParkBv\Invoices;
 
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
+use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 
 /**
  * Class InvoiceItem
@@ -10,18 +11,16 @@ use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
  * @property string $title
  * @property string|null $description
  * @property float|int $quantity
- * @property float|int $price
- * @property float|null $tax_rate
+ * @property float|int $unit_price
+ * @property float|null $tax_percentage
  */
-final class InvoiceItem
+final class InvoiceItem implements InvoiceItemInterface
 {
     public string $title;
 
     public ?string $description;
 
     public float|int $quantity;
-
-    public ?float $tax_rate;
 
     public float|int $unit_price;
 

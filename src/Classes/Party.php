@@ -2,6 +2,8 @@
 
 namespace SimpleParkBv\Invoices;
 
+use SimpleParkBv\Invoices\Contracts\PartyInterface;
+
 /**
  * Class Party
  *
@@ -14,7 +16,7 @@ namespace SimpleParkBv\Invoices;
  * @property string|null $phone
  * @property string|null $website
  */
-abstract class Party
+abstract class Party implements PartyInterface
 {
     public string $name;
 
