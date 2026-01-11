@@ -6,6 +6,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
+use SimpleParkBv\Invoices\Contracts\InvoiceInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Traits\HasInvoiceBuyer;
 use SimpleParkBv\Invoices\Traits\HasInvoiceDates;
@@ -15,7 +16,6 @@ use SimpleParkBv\Invoices\Traits\HasInvoiceLanguage;
 use SimpleParkBv\Invoices\Traits\HasInvoiceLogo;
 use SimpleParkBv\Invoices\Traits\HasInvoiceNumber;
 use SimpleParkBv\Invoices\Traits\HasInvoiceTemplate;
-use SimpleParkBv\Invoices\Contracts\InvoiceInterface;
 
 /**
  * Class Invoice
@@ -102,23 +102,23 @@ final class Invoice implements InvoiceInterface
                 $item = InvoiceItem::make();
 
                 if (isset($itemData['title'])) {
-                    $item->title = $itemData['title'];
+                    $item->title($itemData['title']);
                 }
 
                 if (isset($itemData['description'])) {
-                    $item->description = $itemData['description'];
+                    $item->description($itemData['description']);
                 }
 
                 if (isset($itemData['quantity'])) {
-                    $item->quantity = $itemData['quantity'];
+                    $item->quantity($itemData['quantity']);
                 }
 
                 if (isset($itemData['unit_price'])) {
-                    $item->unit_price = $itemData['unit_price'];
+                    $item->unitPrice($itemData['unit_price']);
                 }
 
                 if (isset($itemData['tax_percentage'])) {
-                    $item->tax_percentage = $itemData['tax_percentage'];
+                    $item->taxPercentage($itemData['tax_percentage']);
                 }
 
                 $invoice->addItem($item);
@@ -199,21 +199,7 @@ final class Invoice implements InvoiceInterface
 
         // validate all items
         foreach ($this->items as $index => $item) {
-            if (empty($item->title)) {
-                throw new InvalidInvoiceException("Item at index {$index} must have a title");
-            }
-
-            if ($item->quantity <= 0) {
-                throw new InvalidInvoiceException("Item at index {$index} must have a quantity greater than 0");
-            }
-
-            if ($item->unit_price < 0) {
-                throw new InvalidInvoiceException("Item at index {$index} must have a unit_price greater than or equal to 0");
-            }
-
-            if ($item->tax_percentage !== null && ($item->tax_percentage < 0 || $item->tax_percentage > 100)) {
-                throw new InvalidInvoiceException("Item at index {$index} must have a tax_percentage between 0 and 100, or null");
-            }
+            $item->validate($index);
         }
     }
 

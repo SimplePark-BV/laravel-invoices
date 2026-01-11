@@ -2,8 +2,8 @@
 
 namespace SimpleParkBv\Invoices;
 
-use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
 use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
+use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
 
 /**
  * Class InvoiceItem
@@ -128,5 +128,31 @@ final class InvoiceItem implements InvoiceItemInterface
         }
 
         return $this->tax_percentage.'%';
+    }
+
+    /**
+     * Validate the invoice item.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     */
+    public function validate(?int $index = null): void
+    {
+        $prefix = $index !== null ? "Item at index {$index}" : 'Item';
+
+        if (empty($this->title)) {
+            throw new InvalidInvoiceItemException("{$prefix} must have a title");
+        }
+
+        if ($this->quantity <= 0) {
+            throw new InvalidInvoiceItemException("{$prefix} must have a quantity greater than 0");
+        }
+
+        if ($this->unit_price < 0) {
+            throw new InvalidInvoiceItemException("{$prefix} must have a unit_price greater than or equal to 0");
+        }
+
+        if ($this->tax_percentage !== null && ($this->tax_percentage < 0 || $this->tax_percentage > 100)) {
+            throw new InvalidInvoiceItemException("{$prefix} must have a tax_percentage between 0 and 100, or null");
+        }
     }
 }

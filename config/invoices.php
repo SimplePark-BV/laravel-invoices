@@ -23,6 +23,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Decimal Separator
+    |--------------------------------------------------------------------------
+    |
+    | The character used to separate the decimal part of currency amounts.
+    | Common values: ',' (European) or '.' (US/UK).
+    |
+    */
+    'decimal_separator' => env('INVOICES_DECIMAL_SEPARATOR', ','),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Thousands Separator
+    |--------------------------------------------------------------------------
+    |
+    | The character used to separate thousands in currency amounts.
+    | Common values: '.' (European) or ',' (US/UK).
+    |
+    */
+    'thousands_separator' => env('INVOICES_THOUSANDS_SEPARATOR', '.'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Tax Rate
     |--------------------------------------------------------------------------
     |
@@ -30,6 +52,22 @@ return [
     |
     */
     'default_tax_rate' => env('INVOICES_DEFAULT_TAX_RATE', 21),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Calculation Precision
+    |--------------------------------------------------------------------------
+    |
+    | Precision settings for tax calculations to prevent rounding drift.
+    | These values control how many decimal places are used when rounding
+    | monetary values and tax percentages.
+    |
+    */
+    'precision' => [
+        'monetary' => env('INVOICES_PRECISION_MONETARY', 2),
+        'tax_percentage' => env('INVOICES_PRECISION_TAX_PERCENTAGE', 2),
+        'tax_percentage_epsilon' => env('INVOICES_PRECISION_TAX_PERCENTAGE_EPSILON', 0.005),
+    ],
 
     /*
     |--------------------------------------------------------------------------
