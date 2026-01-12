@@ -192,7 +192,7 @@ final class InvoiceTest extends TestCase
         $invoice->addItem($item);
         $invoice->series('INV');
         $invoice->sequence(1);
-        $invoice->setLanguage('en');
+        $invoice->language('en');
 
         // act
         $array = $invoice->toArray();
@@ -767,7 +767,7 @@ final class InvoiceTest extends TestCase
         $this->expectExceptionMessage("Language 'invalid' is not supported");
 
         // act
-        $invoice->setLanguage('invalid');
+        $invoice->language('invalid');
     }
 
     #[Test]
@@ -777,7 +777,7 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::make();
 
         // act
-        $result = $invoice->setLanguage('en');
+        $result = $invoice->language('en');
 
         // assert
         $this->assertSame($invoice, $result);
@@ -837,7 +837,7 @@ final class InvoiceTest extends TestCase
         }
 
         // act
-        $result = $invoice->setLogo($logoPath);
+        $result = $invoice->logo($logoPath);
 
         // assert
         $this->assertSame($invoice, $result);

@@ -21,7 +21,7 @@ trait HasInvoiceLogo
      *
      * @return $this
      */
-    public function setLogo(?string $logoPath): self
+    public function logo(?string $logoPath): self
     {
         $this->logo = $logoPath;
 
