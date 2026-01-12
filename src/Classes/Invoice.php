@@ -232,7 +232,9 @@ final class Invoice implements InvoiceInterface
             // 'invoice' is the variable name used in the blade view
             $template = sprintf('invoices::%s', $this->template);
             $this->pdf = Pdf::loadView($template, ['invoice' => $this])
-                ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
+                ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation'])
+                ->setOption('isRemoteEnabled', true)
+                ->setOption('enable-local-file-access', true);
         } catch (\Throwable $e) {
             $this->pdf = null;
             throw new InvalidInvoiceException('Failed to render PDF: '.$e->getMessage(), 0, $e);

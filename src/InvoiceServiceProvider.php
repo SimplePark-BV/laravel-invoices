@@ -27,9 +27,13 @@ class InvoiceServiceProvider extends ServiceProvider
         // share css path and font config with views using view composer
         // using view composer for better isolation and testability
         View::composer('invoices::*', function ($view): void {
-            $view->with('invoiceCssPath', __DIR__.'/../resources/css/invoice.css');
+            $fontPath = realpath(__DIR__.'/../resources/fonts');
+            $cssPath = realpath(__DIR__.'/../resources/css/invoice.css');
+            
+            $view->with('invoiceCssPath', $cssPath ?: __DIR__.'/../resources/css/invoice.css');
             $view->with('invoiceFont', config('invoices.pdf.font', 'AvenirNext'));
-            $view->with('invoiceFontPath', __DIR__.'/../resources/fonts');
+            // Use absolute path for fonts - DomPDF requires absolute file system paths
+            $view->with('invoiceFontPath', $fontPath ?: __DIR__.'/../resources/fonts');
             $view->with('invoiceFontFile', config('invoices.pdf.font_file'));
         });
 
@@ -56,6 +60,14 @@ class InvoiceServiceProvider extends ServiceProvider
         $this->publishes(
             paths: [
                 __DIR__.'/../resources/css' => resource_path('css/vendor/invoices'),
+            ],
+            groups: 'invoices-assets',
+        );
+
+        // publish fonts
+        $this->publishes(
+            paths: [
+                __DIR__.'/../resources/fonts' => resource_path('fonts/vendor/invoices'),
             ],
             groups: 'invoices-assets',
         );
