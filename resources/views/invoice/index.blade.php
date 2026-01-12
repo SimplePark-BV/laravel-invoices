@@ -7,30 +7,33 @@
         :root {
             --invoice-font: {{ $invoiceFont }};
         }
-        @font-face {
-            font-family: 'AvenirNext';
-            src: url('{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-Medium.ttf') format('truetype');
-            font-weight: 400 500;
-            font-style: normal;
-        }
-        @font-face {
-            font-family: 'AvenirNext';
-            src: url('{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-MediumItalic.ttf') format('truetype');
-            font-weight: 400 500;
-            font-style: italic;
-        }
-        @font-face {
-            font-family: 'AvenirNext';
-            src: url('{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-DemiBold.ttf') format('truetype');
-            font-weight: 600 700;
-            font-style: normal;
-        }
-        @font-face {
-            font-family: 'AvenirNext';
-            src: url('{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-DemiBoldItalic.ttf') format('truetype');
-            font-weight: 600 700;
-            font-style: italic;
-        }
+        @php
+            // Prefer base64 data URIs, fallback to file:// protocol
+            $useDataUris = isset($invoiceFontDataUris) && !empty($invoiceFontDataUris);
+            $fontSources = $useDataUris ? $invoiceFontDataUris : ($invoiceFontFilePaths ?? []);
+        @endphp
+        
+        @if(!empty($fontSources))
+            @foreach(['AvenirNext-Medium', 'AvenirNext-MediumItalic', 'AvenirNext-DemiBold', 'AvenirNext-DemiBoldItalic'] as $fontKey)
+                @if(isset($fontSources[$fontKey]))
+                    @php
+                        $font = $fontSources[$fontKey];
+                        if ($useDataUris) {
+                            $fontUrl = $font['data'];
+                        } else {
+                            // Use file:// protocol with absolute path for DomPDF
+                            $fontUrl = 'file://' . $font['path'];
+                        }
+                    @endphp
+                    @font-face {
+                        font-family: 'AvenirNext';
+                        src: url('{{ $fontUrl }}') format('truetype');
+                        font-weight: {{ $font['weight'] }};
+                        font-style: {{ $font['style'] }};
+                    }
+                @endif
+            @endforeach
+        @endif
         {!! file_get_contents($invoiceCssPath) !!}
     </style>
 </head>

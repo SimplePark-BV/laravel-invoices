@@ -27,13 +27,50 @@ class InvoiceServiceProvider extends ServiceProvider
         // share css path and font config with views using view composer
         // using view composer for better isolation and testability
         View::composer('invoices::*', function ($view): void {
-            $fontPath = realpath(__DIR__.'/../resources/fonts');
-            $cssPath = realpath(__DIR__.'/../resources/css/invoice.css');
+            $fontDir = __DIR__.'/../resources/fonts';
+            $fontPath = realpath($fontDir) ?: $fontDir;
+            $cssPath = realpath(__DIR__.'/../resources/css/invoice.css') ?: __DIR__.'/../resources/css/invoice.css';
             
-            $view->with('invoiceCssPath', $cssPath ?: __DIR__.'/../resources/css/invoice.css');
+            // Try base64 data URIs first (most reliable for embedded fonts)
+            // Fallback to file paths if base64 fails
+            $fontDataUris = [];
+            $fontFilePaths = [];
+            $fontFiles = [
+                'AvenirNext-Medium' => ['file' => 'AvenirNext-Medium.ttf', 'weight' => '400 500', 'style' => 'normal'],
+                'AvenirNext-MediumItalic' => ['file' => 'AvenirNext-MediumItalic.ttf', 'weight' => '400 500', 'style' => 'italic'],
+                'AvenirNext-DemiBold' => ['file' => 'AvenirNext-DemiBold.ttf', 'weight' => '600 700', 'style' => 'normal'],
+                'AvenirNext-DemiBoldItalic' => ['file' => 'AvenirNext-DemiBoldItalic.ttf', 'weight' => '600 700', 'style' => 'italic'],
+            ];
+            
+            foreach ($fontFiles as $key => $font) {
+                $fontFilePath = $fontPath.'/'.$font['file'];
+                $realFontPath = realpath($fontFilePath);
+                
+                if ($realFontPath && file_exists($realFontPath)) {
+                    // Store absolute file path for file:// protocol fallback
+                    $fontFilePaths[$key] = [
+                        'path' => str_replace('\\', '/', $realFontPath),
+                        'weight' => $font['weight'],
+                        'style' => $font['style'],
+                    ];
+                    
+                    // Try to load as base64 data URI
+                    $fontData = @file_get_contents($realFontPath);
+                    if ($fontData !== false && strlen($fontData) > 0) {
+                        // Use font/truetype MIME type which DomPDF recognizes
+                        $fontDataUris[$key] = [
+                            'data' => 'data:font/truetype;base64,'.base64_encode($fontData),
+                            'weight' => $font['weight'],
+                            'style' => $font['style'],
+                        ];
+                    }
+                }
+            }
+            
+            $view->with('invoiceCssPath', $cssPath);
             $view->with('invoiceFont', config('invoices.pdf.font', 'AvenirNext'));
-            // Use absolute path for fonts - DomPDF requires absolute file system paths
-            $view->with('invoiceFontPath', $fontPath ?: __DIR__.'/../resources/fonts');
+            $view->with('invoiceFontDataUris', $fontDataUris);
+            $view->with('invoiceFontFilePaths', $fontFilePaths);
             $view->with('invoiceFontFile', config('invoices.pdf.font_file'));
         });
 
