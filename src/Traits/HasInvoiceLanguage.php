@@ -66,7 +66,7 @@ trait HasInvoiceLanguage
      *
      * @throws \RuntimeException
      */
-    public function setLanguage(string $language): self
+    public function language(string $language): self
     {
         $availableLanguages = $this->getAvailableLanguages();
 

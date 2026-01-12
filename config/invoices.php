@@ -85,7 +85,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Default language for invoices. Supported: 'nl' (Dutch), 'en' (English).
-    | Can be overridden per invoice using setLanguage() method.
+    | Can be overridden per invoice using language() method.
     |
     */
     'default_language' => env('INVOICES_DEFAULT_LANGUAGE', 'nl'),

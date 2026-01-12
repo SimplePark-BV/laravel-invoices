@@ -43,7 +43,7 @@ $invoice = Invoice::make()
     ->series('2024')
     ->sequence(1)
     ->date(Carbon::now())
-    ->setLanguage('nl');
+    ->language('nl');
 
 // set buyer
 $buyer = Buyer::make();
@@ -77,7 +77,7 @@ $invoice = Invoice::make()
     ->series('2024')
     ->sequence(123)
     ->date('2024-01-15')
-    ->setLanguage('en');
+    ->language('en');
 
 $item = InvoiceItem::make()
     ->title('Service')
@@ -204,8 +204,8 @@ $array = $invoice->toArray();
 - `series(?string $series)` - Set invoice series
 - `sequence(?int $sequence)` - Set invoice sequence number
 - `date(Carbon|string $date)` - Set invoice date (accepts Carbon instance or string, strings are parsed with Carbon::parse)
-- `setLanguage(string $language)` - Set invoice language
-- `setLogo(?string $logoPath)` - Set custom logo path
+- `language(string $language)` - Set invoice language
+- `logo(?string $logoPath)` - Set custom logo path
 - `template(string $template)` - Set custom template
 - `forcedTotal(float $amount)` - Override calculated total
 - `validate()` - Validate invoice data

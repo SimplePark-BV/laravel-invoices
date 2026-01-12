@@ -53,7 +53,7 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
-        $invoice->setLanguage('en');
+        $invoice->language('en');
         App::setLocale('nl'); // set different locale
 
         $mockPdf = $this->mockPdfInstance();

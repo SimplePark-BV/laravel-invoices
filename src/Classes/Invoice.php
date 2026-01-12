@@ -136,7 +136,7 @@ final class Invoice implements InvoiceInterface
 
         // set language if provided
         if (isset($data['language'])) {
-            $invoice->setLanguage($data['language']);
+            $invoice->language($data['language']);
         }
 
         // set forced total if provided
