@@ -221,17 +221,25 @@ final class Invoice implements InvoiceInterface
     {
         // validate invoice before rendering
         $this->validate();
-
+    
         // save current locale
         $originalLocale = App::getLocale();
-
+    
         // set locale for this invoice
         App::setLocale($this->language);
-
+    
         try {
             // 'invoice' is the variable name used in the blade view
             $template = sprintf('invoices::%s', $this->template);
-            $this->pdf = Pdf::loadView($template, ['invoice' => $this])
+            
+            // get the package root directory to allow dompdf to access fonts
+            $packageRoot = realpath(__DIR__.'/../../');
+            
+            $this->pdf = Pdf::setOptions([
+                    'chroot' => $packageRoot,
+                    'isRemoteEnabled' => false,
+                ])
+                ->loadView($template, ['invoice' => $this])
                 ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
         } catch (\Throwable $e) {
             $this->pdf = null;
@@ -239,7 +247,7 @@ final class Invoice implements InvoiceInterface
         } finally {
             App::setLocale($originalLocale);
         }
-
+    
         return $this;
     }
 
