@@ -10,7 +10,7 @@ trait HasInvoiceFooter
     /**
      * Get the payment request message with formatted amount and date.
      *
-     * If the invoice is finalized, returns a message explaining this is a draft.
+     * If the invoice is not yet issued, returns a concept/draft message instead.
      */
     public function getFooterMessage(): string
     {

@@ -14,10 +14,8 @@ trait MocksPdfGeneration
     /**
      * Mock the Pdf facade chain: setOptions() -> loadView() -> setPaper()
      * This sets up setOptions() to return the facade itself so it can chain to loadView()
-     *
-     * @param  \Barryvdh\DomPDF\PDF|null  $mockPdf  The mock PDF instance (optional, for cases where loadView expectations are set separately)
      */
-    protected function mockPdfFacadeChain(?DomPDF $mockPdf = null): void
+    protected function mockPdfFacadeChain(): void
     {
         // mock setOptions to return the facade itself so it can chain
         // this allows Pdf::setOptions()->loadView() to work
