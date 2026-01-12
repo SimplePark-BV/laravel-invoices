@@ -6,13 +6,13 @@ namespace SimpleParkBv\Invoices\Traits;
  * Trait HasInvoiceNumber
  *
  * @var ?string $series
- * @var ?int $sequence
+ * @var int|string|null $sequence
  */
 trait HasInvoiceNumber
 {
     public ?string $series = null;
 
-    public ?int $sequence = null;
+    public int|string|null $sequence = null;
 
     /**
      * Set the series for this invoice.
@@ -31,7 +31,7 @@ trait HasInvoiceNumber
      *
      * @return $this
      */
-    public function sequence(?int $sequence): self
+    public function sequence(int|string|null $sequence): self
     {
         $this->sequence = $sequence;
 
@@ -48,7 +48,13 @@ trait HasInvoiceNumber
     {
         // if both series and sequence are set, combine them
         if ($this->series !== null && $this->sequence !== null) {
-            $paddedSequence = str_pad((string) $this->sequence, 8, '0', STR_PAD_LEFT);
+            // if sequence is numeric (int or numeric string), pad it
+            if (is_numeric($this->sequence)) {
+                $paddedSequence = str_pad((string) $this->sequence, 8, '0', STR_PAD_LEFT);
+            } else {
+                // for non-numeric strings, use as-is
+                $paddedSequence = (string) $this->sequence;
+            }
 
             return $this->series.'.'.$paddedSequence;
         }
@@ -58,9 +64,13 @@ trait HasInvoiceNumber
             return $this->series;
         }
 
-        // if only sequence is set, return sequence as string (padded to 8 digits)
+        // if only sequence is set, return sequence as string (padded to 8 digits if numeric)
         if ($this->sequence !== null) {
-            return str_pad((string) $this->sequence, 8, '0', STR_PAD_LEFT);
+            if (is_numeric($this->sequence)) {
+                return str_pad((string) $this->sequence, 8, '0', STR_PAD_LEFT);
+            }
+
+            return (string) $this->sequence;
         }
 
         // no number can be determined
