@@ -709,6 +709,113 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
+    public function serial_setter(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+
+        // act
+        $result = $invoice->serial('INV.00000123');
+
+        // assert
+        $this->assertSame($invoice, $result);
+        $this->assertEquals('INV.00000123', $invoice->serial);
+    }
+
+    #[Test]
+    public function get_number_with_serial(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+        $invoice->serial('INV.00000123');
+
+        // act
+        $number = $invoice->getNumber();
+
+        // assert
+        $this->assertEquals('INV.00000123', $number);
+    }
+
+    #[Test]
+    public function serial_overrides_series_sequence(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+        $invoice->series('INV');
+        $invoice->sequence(456);
+        $invoice->serial('CUSTOM.999');
+
+        // act
+        $number = $invoice->getNumber();
+
+        // assert
+        $this->assertEquals('CUSTOM.999', $number);
+        // verify series and sequence are still set but ignored
+        $this->assertEquals('INV', $invoice->series);
+        $this->assertEquals(456, $invoice->sequence);
+    }
+
+    #[Test]
+    public function serial_in_from_array(): void
+    {
+        // arrange
+        $data = [
+            'serial' => 'INV.00000123',
+        ];
+
+        // act
+        $invoice = Invoice::fromArray($data);
+
+        // assert
+        $this->assertEquals('INV.00000123', $invoice->serial);
+        $this->assertEquals('INV.00000123', $invoice->getNumber());
+    }
+
+    #[Test]
+    public function serial_in_to_array(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+        $invoice->serial('INV.00000123');
+
+        // act
+        $array = $invoice->toArray();
+
+        // assert
+        $this->assertArrayHasKey('serial', $array);
+        $this->assertEquals('INV.00000123', $array['serial']);
+    }
+
+    #[Test]
+    public function serial_null_in_to_array(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+
+        // act
+        $array = $invoice->toArray();
+
+        // assert
+        $this->assertArrayHasKey('serial', $array);
+        $this->assertNull($array['serial']);
+    }
+
+    #[Test]
+    public function get_number_without_serial_falls_back_to_series_sequence(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+        $invoice->series('INV');
+        $invoice->sequence(123);
+
+        // act
+        $number = $invoice->getNumber();
+
+        // assert
+        $this->assertEquals('INV.00000123', $number);
+    }
+
+    #[Test]
     #[DataProvider('formatted_date_data_provider')]
     public function formatted_date(string $dateFormat, string $expected): void
     {
