@@ -138,5 +138,5 @@ return [
     | PNG is recommended for best compatibility and transparency support.
     |
     */
-    'logo' => env('INVOICES_LOGO', __DIR__.'/../resources/images/logo.png'),
+    'logo' => env('INVOICES_LOGO', null),
 ];
