@@ -9,9 +9,16 @@ trait HasInvoiceFooter
 {
     /**
      * Get the payment request message with formatted amount and date.
+     *
+     * If the invoice is finalized, returns a message explaining this is a draft.
      */
     public function getFooterMessage(): string
     {
+        // if invoice is not issued, show concept message
+        if (! $this->isIssued()) {
+            return __('invoices::invoice.concept_message');
+        }
+
         /** @var string $message */
         $message = __('invoices::invoice.payment_request');
         $amountHtml = '<span class="invoice__footer-amount">'.e($this->getFormattedTotal()).'</span>';

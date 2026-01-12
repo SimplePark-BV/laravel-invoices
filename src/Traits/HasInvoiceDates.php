@@ -43,6 +43,17 @@ trait HasInvoiceDates
     }
 
     /**
+     * Check if the invoice has been issued (is official).
+     * An invoice is issued when it has an issue date set.
+     *
+     * @return bool True if the invoice has been issued, false if it's a concept/draft
+     */
+    public function isIssued(): bool
+    {
+        return $this->date !== null;
+    }
+
+    /**
      * Set the invoice issue date (when the invoice is created/issued).
      *
      * @param  Carbon|string|null  $date  The invoice issue date (null to remove the date)
