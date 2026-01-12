@@ -7,13 +7,13 @@ use Illuminate\Support\Carbon;
 /**
  * Trait HasInvoiceDates
  *
- * @var \Illuminate\Support\Carbon $date
+ * @var \Illuminate\Support\Carbon|null $date The invoice issue date (when the invoice is created/issued)
  * @var string $date_format
  * @var int $pay_until_days
  */
 trait HasInvoiceDates
 {
-    public Carbon $date;
+    public ?Carbon $date = null;
 
     public string $date_format;
 
@@ -21,7 +21,7 @@ trait HasInvoiceDates
 
     public function initializeHasInvoiceDates(): void
     {
-        $this->date = Carbon::now();
+        $this->date = null;
         $this->date_format = 'd-m-Y';
         $this->pay_until_days = config('invoices.default_payment_terms_days', 30);
     }
@@ -29,28 +29,45 @@ trait HasInvoiceDates
     /**
      * Get the invoice date formatted according to the invoice date format.
      */
-    public function getFormattedDate(): string
+    public function getFormattedDate(): ?string
     {
-        return $this->date->format($this->date_format);
+        return $this->date?->format($this->date_format);
     }
 
     /**
      * Get the due date formatted according to the invoice date format.
      */
-    public function getFormattedDueDate(): string
+    public function getFormattedDueDate(): ?string
     {
-        return $this->date->copy()->addDays($this->pay_until_days)->format($this->date_format);
+        return $this->date?->copy()->addDays($this->pay_until_days)->format($this->date_format);
     }
 
     /**
-     * Set the invoice date.
+     * Check if the invoice has been issued (is official).
+     * An invoice is issued when it has an issue date set.
      *
+     * @return bool True if the invoice has been issued, false if it's a concept/draft
+     */
+    public function isIssued(): bool
+    {
+        return $this->date !== null;
+    }
+
+    /**
+     * Set the invoice issue date (when the invoice is created/issued).
      *
+     * @param  Carbon|string|null  $date  The invoice issue date (null to remove the date)
      * @return $this
      */
-    public function date(Carbon|string $date): self
+    public function date(Carbon|string|null $date): self
     {
-        $this->date = is_string($date) ? Carbon::parse($date) : $date;
+        if ($date === null) {
+            $this->date = null;
+        } elseif (is_string($date)) {
+            $this->date = Carbon::parse($date);
+        } else {
+            $this->date = $date;
+        }
 
         return $this;
     }

@@ -2,6 +2,7 @@
 
 namespace Tests\Traits;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Mockery;
@@ -10,6 +11,21 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 trait MocksPdfGeneration
 {
+    /**
+     * Mock the Pdf facade chain: setOptions() -> loadView() -> setPaper()
+     * This sets up setOptions() to return the facade itself so it can chain to loadView()
+     */
+    protected function mockPdfFacadeChain(): void
+    {
+        // mock setOptions to return the facade itself so it can chain
+        // this allows Pdf::setOptions()->loadView() to work
+        // we use zeroOrMoreTimes() to allow it to work with other expectations
+        /** @phpstan-ignore-next-line method.notFound */
+        Pdf::shouldReceive('setOptions')
+            ->zeroOrMoreTimes()
+            ->andReturnSelf();
+    }
+
     protected function mockPdfInstance(string $paperSize = 'a4', string $orientation = 'portrait'): DomPDF
     {
         /** @var \Barryvdh\DomPDF\PDF&\Mockery\MockInterface $mockPdf */

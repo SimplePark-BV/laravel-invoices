@@ -6,6 +6,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
+use RuntimeException;
 use SimpleParkBv\Invoices\Contracts\InvoiceInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Traits\HasInvoiceBuyer;
@@ -158,7 +159,7 @@ final class Invoice implements InvoiceInterface
     {
         return [
             'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
-            'date' => $this->date->toIso8601String(),
+            'date' => $this->date?->toIso8601String(),
             'items' => $this->items->map(static fn (InvoiceItem $item) => $item->toArray())->toArray(),
             'series' => $this->series,
             'sequence' => $this->sequence,
@@ -231,7 +232,21 @@ final class Invoice implements InvoiceInterface
         try {
             // 'invoice' is the variable name used in the blade view
             $template = sprintf('invoices::%s', $this->template);
-            $this->pdf = Pdf::loadView($template, ['invoice' => $this])
+
+            // get the package root directory to allow dompdf to access fonts
+            $packageRoot = realpath(__DIR__.'/../../');
+
+            if ($packageRoot === false) {
+                throw new RuntimeException(
+                    'Failed to resolve package root directory. The path '.__DIR__.'/../../ could not be resolved to a valid directory.'
+                );
+            }
+
+            $this->pdf = Pdf::setOptions([
+                'chroot' => $packageRoot,
+                'isRemoteEnabled' => false,
+            ])
+                ->loadView($template, ['invoice' => $this])
                 ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
         } catch (\Throwable $e) {
             $this->pdf = null;
@@ -256,7 +271,7 @@ final class Invoice implements InvoiceInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'invoice-'.$this->date->format('Ymd').'.pdf';
+        $filename = $filename ?? 'invoice-'.($this->date?->format('Ymd') ?? 'concept').'.pdf';
 
         return $this->pdf->download($filename);
     }
@@ -274,7 +289,7 @@ final class Invoice implements InvoiceInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'invoice-'.$this->date->format('Ymd').'.pdf';
+        $filename = $filename ?? 'invoice-'.($this->date?->format('Ymd') ?? 'concept').'.pdf';
 
         $response = $this->pdf->stream($filename);
 

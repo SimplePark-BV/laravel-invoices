@@ -9,26 +9,26 @@
         }
         @font-face {
             font-family: 'AvenirNext';
-            src: url('{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-Medium.ttf') format('truetype');
-            font-weight: 400 500;
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-Medium.ttf') format('truetype');
+            font-weight: 400;
             font-style: normal;
         }
         @font-face {
             font-family: 'AvenirNext';
-            src: url('{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-MediumItalic.ttf') format('truetype');
-            font-weight: 400 500;
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-MediumItalic.ttf') format('truetype');
+            font-weight: 400;
             font-style: italic;
         }
         @font-face {
             font-family: 'AvenirNext';
-            src: url('{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-DemiBold.ttf') format('truetype');
-            font-weight: 600 700;
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-DemiBold.ttf') format('truetype');
+            font-weight: 700;
             font-style: normal;
         }
         @font-face {
             font-family: 'AvenirNext';
-            src: url('{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-DemiBoldItalic.ttf') format('truetype');
-            font-weight: 600 700;
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-DemiBoldItalic.ttf') format('truetype');
+            font-weight: 700;
             font-style: italic;
         }
         {!! file_get_contents($invoiceCssPath) !!}

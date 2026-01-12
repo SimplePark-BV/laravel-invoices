@@ -4,6 +4,8 @@
         <td class="invoice__header-cell">
             @if($invoice->getLogoDataUri())
                 <img class="invoice__logo" src="{{ $invoice->getLogoDataUri() }}" alt="Logo">
+            @else
+                <div class="invoice__logo-placeholder"></div>
             @endif
         </td>
 

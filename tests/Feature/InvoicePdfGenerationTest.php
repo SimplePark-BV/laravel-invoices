@@ -35,6 +35,9 @@ final class InvoicePdfGenerationTest extends TestCase
         // arrange
         $invoice = $this->create_valid_invoice();
         $mockPdf = $this->mockPdfInstance();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->with('invoices::invoice.index', ['invoice' => $invoice])
@@ -57,6 +60,9 @@ final class InvoicePdfGenerationTest extends TestCase
         App::setLocale('nl'); // set different locale
 
         $mockPdf = $this->mockPdfInstance();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturnUsing(function ($view, $data) use ($mockPdf) {
@@ -82,6 +88,9 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice = $this->create_valid_invoice();
         $invoice->template = $template;
         $mockPdf = $this->mockPdfInstance();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->with($expectedTemplate, ['invoice' => $invoice])
@@ -126,6 +135,8 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice->items([$item]);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
@@ -157,6 +168,9 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice = $this->create_valid_invoice();
         $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
@@ -187,6 +201,9 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice = $this->create_valid_invoice();
         $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
@@ -209,6 +226,9 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->andThrow(new Exception('PDF generation failed')); // simulate render failure
@@ -227,11 +247,15 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
-        $invoice->date('2024-01-15'); // Fixed date for consistent testing
+        $invoice->date('2024-01-15'); // fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
+
         $this->mockPdfStream($mockPdf, $expectedFilename);
 
         // act
@@ -259,9 +283,13 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice = $this->create_valid_invoice();
         $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
+
         $this->mockPdfStream($mockPdf, 'invoice-20240115.pdf');
 
         // act
@@ -282,9 +310,13 @@ final class InvoicePdfGenerationTest extends TestCase
         $invoice = $this->create_valid_invoice();
         $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
+
+        $this->mockPdfFacadeChain();
+
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
+
         $this->mockPdfStream($mockPdf, 'invoice-20240115.pdf');
 
         // assert
@@ -304,6 +336,7 @@ final class InvoicePdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
+        $this->mockPdfFacadeChain();
         Pdf::shouldReceive('loadView')
             ->once()
             ->andThrow(new Exception('PDF generation failed')); // simulate render failure
