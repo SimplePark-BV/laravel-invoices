@@ -123,7 +123,7 @@ final class InvoicePdfGenerationTest extends TestCase
         $item->title = 'Item';
         $item->quantity = 1;
         $item->unit_price = 10.00;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
         Pdf::shouldReceive('loadView')

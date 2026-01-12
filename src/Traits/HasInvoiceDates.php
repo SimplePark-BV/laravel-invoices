@@ -29,7 +29,7 @@ trait HasInvoiceDates
     /**
      * Get the invoice date formatted according to the invoice date format.
      */
-    public function formattedDate(): string
+    public function getFormattedDate(): string
     {
         return $this->date->format($this->date_format);
     }
@@ -37,7 +37,7 @@ trait HasInvoiceDates
     /**
      * Get the due date formatted according to the invoice date format.
      */
-    public function formattedDueDate(): string
+    public function getFormattedDueDate(): string
     {
         return $this->date->copy()->addDays($this->pay_until_days)->format($this->date_format);
     }

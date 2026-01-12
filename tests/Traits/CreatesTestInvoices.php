@@ -20,7 +20,7 @@ trait CreatesTestInvoices
         $item->title = 'Test Item';
         $item->quantity = 1;
         $item->unit_price = 10.00;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         return $invoice;
     }

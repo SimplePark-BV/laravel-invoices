@@ -26,25 +26,13 @@ trait HasInvoiceItems
     }
 
     /**
-     * Add a single item to the invoice.
-     */
-    public function addItem(InvoiceItem $item): self
-    {
-        $this->items->push($item);
-
-        return $this;
-    }
-
-    /**
-     * Add multiple items to the invoice.
+     * Set all items for the invoice (replaces existing items).
      *
      * @param  array<int, \SimpleParkBv\Invoices\InvoiceItem>  $items
      */
-    public function addItems(array $items): self
+    public function items(array $items): self
     {
-        foreach ($items as $item) {
-            $this->addItem($item);
-        }
+        $this->items = collect($items);
 
         return $this;
     }
@@ -55,7 +43,7 @@ trait HasInvoiceItems
      * Sums taxes only for items that have a tax_percentage set (excludes null items).
      * Calculates tax from unit_price which includes tax.
      */
-    public function taxAmount(): float
+    public function getTaxAmount(): float
     {
         return TaxCalculator::calculateTaxAmount($this->items);
     }
@@ -64,7 +52,7 @@ trait HasInvoiceItems
      * Get the sum of all items (unit_price * quantity for all items).
      * This is the total before subtracting VATs.
      */
-    public function itemsTotal(): float
+    public function getItemsTotal(): float
     {
         return $this->items->sum(
             static fn (InvoiceItem $item): float => $item->unit_price * $item->quantity
@@ -77,9 +65,9 @@ trait HasInvoiceItems
      * Calculated as: sum of all items - all vats.
      * This ensures: sum of all items = subtotal + vats.
      */
-    public function subTotal(): float
+    public function getSubTotal(): float
     {
-        return $this->itemsTotal() - $this->taxAmount();
+        return $this->getItemsTotal() - $this->getTaxAmount();
     }
 
     /**
@@ -88,11 +76,11 @@ trait HasInvoiceItems
      * Calculated as: total - sum of all rounded tax groups (each rounded to 2 decimals).
      * This ensures: total = formattedSubTotal + sum of all tax groups (with proper rounding).
      */
-    public function formattedSubTotal(): float
+    public function getFormattedSubTotal(): float
     {
-        $total = $this->total();
-        $sumOfRoundedTaxGroups = $this->taxGroups()
-            ->sum(fn (float $taxPercentage): float => round($this->taxAmountForTaxGroup($taxPercentage), 2));
+        $total = $this->getTotal();
+        $sumOfRoundedTaxGroups = $this->getTaxGroups()
+            ->sum(fn (float $taxPercentage): float => round($this->getTaxAmountForTaxGroup($taxPercentage), 2));
 
         return round($total - $sumOfRoundedTaxGroups, 2);
     }
@@ -111,29 +99,29 @@ trait HasInvoiceItems
     /**
      * Calculate the grand total.
      *
-     * Returns the forced total if set via forcedTotal(), otherwise returns the sum of all items (itemsTotal).
+     * Returns the forced total if set via forcedTotal(), otherwise returns the sum of all items (getItemsTotal).
      * This ensures accuracy to the cent and allows overriding when needed.
      *
      * WARNING: Do not use this method for calculations (e.g., subtotal + tax = total).
      * When forcedTotal() is set, the returned amount may differ from the calculated sum of items.
-     * Use itemsTotal() for calculations that need to match the actual sum of all items.
+     * Use getItemsTotal() for calculations that need to match the actual sum of all items.
      */
-    public function total(): float
+    public function getTotal(): float
     {
         if ($this->forcedTotal !== null) {
             return $this->forcedTotal;
         }
 
         // always calculate from items directly to ensure precision to the cent
-        return $this->itemsTotal();
+        return $this->getItemsTotal();
     }
 
     /**
      * Get the formatted total amount with currency symbol.
      */
-    public function formattedTotal(): string
+    public function getFormattedTotal(): string
     {
-        return CurrencyFormatter::format($this->total());
+        return CurrencyFormatter::format($this->getTotal());
     }
 
     /**
@@ -142,7 +130,7 @@ trait HasInvoiceItems
      *
      * @return \Illuminate\Support\Collection<int, float>
      */
-    public function taxGroups(): Collection
+    public function getTaxGroups(): Collection
     {
         return TaxCalculator::extractTaxGroups($this->items);
     }
@@ -151,7 +139,7 @@ trait HasInvoiceItems
      * Calculate the subtotal for items with a specific tax percentage.
      * Calculated as: sum of items in this tax group - tax amount for this group.
      */
-    public function subTotalForTaxGroup(float $taxPercentage): float
+    public function getSubTotalForTaxGroup(float $taxPercentage): float
     {
         return TaxCalculator::calculateSubTotalForTaxGroup($this->items, $taxPercentage);
     }
@@ -160,7 +148,7 @@ trait HasInvoiceItems
      * Calculate the tax amount for items with a specific tax percentage.
      * Calculates tax from unit_price which includes tax.
      */
-    public function taxAmountForTaxGroup(float $taxPercentage): float
+    public function getTaxAmountForTaxGroup(float $taxPercentage): float
     {
         return TaxCalculator::calculateTaxForGroup($this->items, $taxPercentage);
     }

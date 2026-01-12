@@ -132,7 +132,7 @@ final class InvoiceItemTest extends TestCase
         $item->unit_price = $unitPrice;
 
         // act
-        $total = $item->total();
+        $total = $item->getTotal();
 
         // assert
         $this->assertEquals($expected, $total);
@@ -202,7 +202,7 @@ final class InvoiceItemTest extends TestCase
         $item->unit_price = 999999999.99;
 
         // act
-        $total = $item->total();
+        $total = $item->getTotal();
 
         // assert
         $this->assertEquals(999999999.99, $total);
@@ -218,7 +218,7 @@ final class InvoiceItemTest extends TestCase
         $item->unit_price = 3.00;
 
         // act
-        $total = $item->total();
+        $total = $item->getTotal();
 
         // assert
         // 0.33 * 3.00 = 0.99 (precision test)
@@ -234,7 +234,7 @@ final class InvoiceItemTest extends TestCase
         $item->tax_percentage = $taxPercentage;
 
         // act
-        $formatted = $item->formattedTaxPercentage();
+        $formatted = $item->getFormattedTaxPercentage();
 
         // assert
         $this->assertEquals($expected, $formatted);

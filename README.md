@@ -62,7 +62,7 @@ $item = InvoiceItem::make()
     ->unitPrice(50.00)
     ->taxPercentage(21.0);
 
-$invoice->addItem($item);
+$invoice->items([$item]);
 
 // generate and download PDF
 return $invoice->download('invoice.pdf');
@@ -85,7 +85,7 @@ $item = InvoiceItem::make()
     ->unitPrice(100.00)
     ->taxPercentage(21.0);
 
-$invoice->addItem($item);
+$invoice->items([$item]);
 ```
 
 ### Multiple Items
@@ -104,7 +104,7 @@ $items = [
         ->taxPercentage(9.0),
 ];
 
-$invoice->addItems($items);
+$invoice->items($items);
 ```
 
 ### Forced Total
@@ -114,8 +114,8 @@ Sometimes you need to override the calculated total to match an external system:
 ```php
 $invoice->forcedTotal(100.00);
 
-// total() will return 100.00
-// itemsTotal() will still return the calculated sum
+// getTotal() will return 100.00
+// getItemsTotal() will still return the calculated sum
 ```
 
 ### Date Handling
@@ -199,8 +199,7 @@ $array = $invoice->toArray();
 - `fromArray(array $data)` - Create invoice from array
 - `toArray()` - Convert invoice to array
 - `buyer(Buyer $buyer)` - Set the buyer
-- `addItem(InvoiceItem $item)` - Add a single item
-- `addItems(array $items)` - Add multiple items
+- `items(array $items)` - Set all items for the invoice (replaces existing items)
 - `series(?string $series)` - Set invoice series
 - `sequence(?int $sequence)` - Set invoice sequence number
 - `date(Carbon|string $date)` - Set invoice date (accepts Carbon instance or string, strings are parsed with Carbon::parse)
@@ -214,16 +213,16 @@ $array = $invoice->toArray();
 - `stream(?string $filename)` - Stream PDF in browser
 - `isRendered()` - Check if PDF has been rendered
 - `clearPdf()` - Clear PDF instance to free memory
-- `itemsTotal()` - Get sum of all items
-- `taxAmount()` - Calculate total tax amount
-- `subTotal()` - Calculate subtotal (excluding tax)
-- `total()` - Get grand total
-- `formattedTotal()` - Get formatted total with currency
-- `taxGroups()` - Get unique tax percentages
-- `taxAmountForTaxGroup(float $taxPercentage)` - Get tax amount for specific tax group
-- `subTotalForTaxGroup(float $taxPercentage)` - Get subtotal for specific tax group
-- `formattedDate()` - Get formatted invoice date
-- `formattedDueDate()` - Get formatted due date
+- `getItemsTotal()` - Get sum of all items
+- `getTaxAmount()` - Calculate total tax amount
+- `getSubTotal()` - Calculate subtotal (excluding tax)
+- `getTotal()` - Get grand total
+- `getFormattedTotal()` - Get formatted total with currency
+- `getTaxGroups()` - Get unique tax percentages
+- `getTaxAmountForTaxGroup(float $taxPercentage)` - Get tax amount for specific tax group
+- `getSubTotalForTaxGroup(float $taxPercentage)` - Get subtotal for specific tax group
+- `getFormattedDate()` - Get formatted invoice date
+- `getFormattedDueDate()` - Get formatted due date
 - `getNumber()` - Get invoice number
 
 #### InvoiceItem Methods
@@ -234,8 +233,8 @@ $array = $invoice->toArray();
 - `quantity(float|int $quantity)` - Set quantity
 - `unitPrice(float|int $unitPrice)` - Set unit price
 - `taxPercentage(?float $taxPercentage)` - Set tax percentage
-- `total()` - Calculate item total (quantity * unit_price)
-- `formattedTaxPercentage()` - Get formatted tax percentage
+- `getTotal()` - Calculate item total (quantity * unit_price)
+- `getFormattedTaxPercentage()` - Get formatted tax percentage
 
 ## Validation Requirements
 

@@ -112,7 +112,7 @@ final class InvoiceItem implements InvoiceItemInterface
     /**
      * Calculate the total for this item (quantity * unit_price).
      */
-    public function total(): float
+    public function getTotal(): float
     {
         return $this->unit_price * $this->quantity;
     }
@@ -121,7 +121,7 @@ final class InvoiceItem implements InvoiceItemInterface
      * Get the formatted tax percentage for display.
      * Returns empty string if tax percentage is null, otherwise returns the percentage with % sign.
      */
-    public function formattedTaxPercentage(): string
+    public function getFormattedTaxPercentage(): string
     {
         if ($this->tax_percentage === null) {
             return '';
