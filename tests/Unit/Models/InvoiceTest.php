@@ -303,13 +303,15 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
+        $invoiceItems = [];
         foreach ($items as $itemData) {
             $item = InvoiceItem::make();
             $item->title = $itemData['title'];
             $item->quantity = $itemData['quantity'];
             $item->unit_price = $itemData['unit_price'];
-            $invoice->items([$item]);
+            $invoiceItems[] = $item;
         }
+        $invoice->items($invoiceItems);
 
         // act
         $total = $invoice->getItemsTotal();
