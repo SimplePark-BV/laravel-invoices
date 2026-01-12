@@ -158,7 +158,7 @@ final class Invoice implements InvoiceInterface
     {
         return [
             'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
-            'date' => $this->date->toIso8601String(),
+            'date' => $this->date?->toIso8601String(),
             'items' => $this->items->map(static fn (InvoiceItem $item) => $item->toArray())->toArray(),
             'series' => $this->series,
             'sequence' => $this->sequence,
@@ -221,24 +221,24 @@ final class Invoice implements InvoiceInterface
     {
         // validate invoice before rendering
         $this->validate();
-    
+
         // save current locale
         $originalLocale = App::getLocale();
-    
+
         // set locale for this invoice
         App::setLocale($this->language);
-    
+
         try {
             // 'invoice' is the variable name used in the blade view
             $template = sprintf('invoices::%s', $this->template);
-            
+
             // get the package root directory to allow dompdf to access fonts
             $packageRoot = realpath(__DIR__.'/../../');
-            
+
             $this->pdf = Pdf::setOptions([
-                    'chroot' => $packageRoot,
-                    'isRemoteEnabled' => false,
-                ])
+                'chroot' => $packageRoot,
+                'isRemoteEnabled' => false,
+            ])
                 ->loadView($template, ['invoice' => $this])
                 ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
         } catch (\Throwable $e) {
@@ -247,7 +247,7 @@ final class Invoice implements InvoiceInterface
         } finally {
             App::setLocale($originalLocale);
         }
-    
+
         return $this;
     }
 
@@ -264,7 +264,7 @@ final class Invoice implements InvoiceInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'invoice-'.$this->date->format('Ymd').'.pdf';
+        $filename = $filename ?? 'invoice-'.($this->date?->format('Ymd') ?? 'concept').'.pdf';
 
         return $this->pdf->download($filename);
     }
@@ -282,7 +282,7 @@ final class Invoice implements InvoiceInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'invoice-'.$this->date->format('Ymd').'.pdf';
+        $filename = $filename ?? 'invoice-'.($this->date?->format('Ymd') ?? 'concept').'.pdf';
 
         $response = $this->pdf->stream($filename);
 

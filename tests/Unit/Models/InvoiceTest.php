@@ -65,6 +65,7 @@ final class InvoiceTest extends TestCase
         // assert
         $this->assertInstanceOf(Buyer::class, $invoice->buyer);
         $this->assertEquals('Test Buyer', $invoice->buyer->name);
+        $this->assertNotNull($invoice->date);
         $this->assertEquals('2024-01-15', $invoice->date->format('Y-m-d'));
         $this->assertCount(1, $invoice->items);
         $this->assertEquals('INV', $invoice->series);
@@ -238,6 +239,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
+        $this->assertNotNull($invoice->date);
         $this->assertEquals($expectedFormat, $invoice->date->format('Y-m-d'));
     }
 

@@ -10,7 +10,7 @@
 .invoice {
     font-family: var(--invoice-font, AvenirNext), sans-serif;
     font-size: 12px;
-    line-height: 1.6;
+    line-height: 1.2;
     color: var(--surface-highest);
     font-weight: 400;
     padding-bottom: 70px;
@@ -46,6 +46,12 @@
 .invoice__logo {
     height: 50px;
     width: auto;
+}
+
+.invoice__logo-placeholder {
+    width: 200px;
+    height: 50px;
+    background-color: var(--container-highest);
 }
 
 .invoice__seller {
