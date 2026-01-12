@@ -8,11 +8,11 @@
             <table class="invoice__number-dates-table">
                 <tr>
                     <td class="invoice__number-dates-label">{{ __('invoices::invoice.invoice_date') }}</td>
-                    <td class="invoice__number-dates-value">{{ $invoice->formattedDate() }}</td>
+                    <td class="invoice__number-dates-value">{{ $invoice->getFormattedDate() }}</td>
                 </tr>
                 <tr>
                     <td class="invoice__number-dates-label">{{ __('invoices::invoice.due_date') }}</td>
-                    <td class="invoice__number-dates-value">{{ $invoice->formattedDueDate() }}</td>
+                    <td class="invoice__number-dates-value">{{ $invoice->getFormattedDueDate() }}</td>
                 </tr>
             </table>
         </td>

@@ -20,8 +20,8 @@
                     @endif
                 </td>
                 <td class="invoice__items-cell invoice__items-cell--right">€ {{ number_format($item->unit_price, 2, ',', '.') }}</td>
-                <td class="invoice__items-cell invoice__items-cell--right">€ {{ number_format($item->total(), 2, ',', '.') }}</td>
-                <td class="invoice__items-cell invoice__items-cell--right">{{ $item->formattedTaxPercentage() }}</td>
+                <td class="invoice__items-cell invoice__items-cell--right">€ {{ number_format($item->getTotal(), 2, ',', '.') }}</td>
+                <td class="invoice__items-cell invoice__items-cell--right">{{ $item->getFormattedTaxPercentage() }}</td>
             </tr>
         @endforeach
     </tbody>
@@ -31,14 +31,14 @@
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
             <td class="invoice__totals-cell">
                 <span>{{ __('invoices::invoice.subtotal') }}</span>
-                @foreach($invoice->taxGroups() as $taxPercentage)
+                @foreach($invoice->getTaxGroups() as $taxPercentage)
                     <span>{{ __('invoices::invoice.tax_percentage', ['percentage' => (int) $taxPercentage]) }}</span>
                 @endforeach
             </td>
             <td class="invoice__totals-cell">
-                <span>€ {{ number_format($invoice->formattedSubTotal(), 2, ',', '.') }}</span>
-                @foreach($invoice->taxGroups() as $taxPercentage)
-                    <span>€ {{ number_format($invoice->taxAmountForTaxGroup($taxPercentage), 2, ',', '.') }}</span>
+                <span>€ {{ number_format($invoice->getFormattedSubTotal(), 2, ',', '.') }}</span>
+                @foreach($invoice->getTaxGroups() as $taxPercentage)
+                    <span>€ {{ number_format($invoice->getTaxAmountForTaxGroup($taxPercentage), 2, ',', '.') }}</span>
                 @endforeach
             </td>
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
@@ -47,7 +47,7 @@
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
             <td class="invoice__totals-cell-border">{{ __('invoices::invoice.total') }}</td>
-            <td class="invoice__totals-cell-border">{{ $invoice->formattedTotal() }}</td>
+            <td class="invoice__totals-cell-border">{{ $invoice->getFormattedTotal() }}</td>
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>
         </tr>
     </tfoot>

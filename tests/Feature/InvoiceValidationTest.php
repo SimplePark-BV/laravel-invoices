@@ -35,7 +35,7 @@ final class InvoiceValidationTest extends TestCase
         $item->title = 'Test Item';
         $item->quantity = 1;
         $item->unit_price = 10.00;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -80,7 +80,7 @@ final class InvoiceValidationTest extends TestCase
         $item->quantity = $itemData['quantity'] ?? 1;
         $item->unit_price = $itemData['unit_price'] ?? 10.00;
         $item->tax_percentage = $itemData['tax_percentage'] ?? null;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -141,7 +141,7 @@ final class InvoiceValidationTest extends TestCase
         $item->quantity = $itemData['quantity'];
         $item->unit_price = $itemData['unit_price'];
         $item->tax_percentage = $itemData['tax_percentage'] ?? null;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         // act & assert
         $this->expectNotToPerformAssertions();
@@ -201,7 +201,7 @@ final class InvoiceValidationTest extends TestCase
         $item1->title = ''; // invalid: empty title
         $item1->quantity = 1;
         $item1->unit_price = 10.00;
-        $invoice->addItem($item1);
+        $invoice->items([$item1]);
 
         // assert
         // should throw exception for first invalid item
@@ -225,13 +225,12 @@ final class InvoiceValidationTest extends TestCase
         $item1->title = 'Valid Item';
         $item1->quantity = 1;
         $item1->unit_price = 10.00;
-        $invoice->addItem($item1);
 
         $item2 = InvoiceItem::make();
         $item2->title = 'Invalid Item';
         $item2->quantity = 0; // invalid: zero quantity
         $item2->unit_price = 10.00;
-        $invoice->addItem($item2);
+        $invoice->items([$item1, $item2]);
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -255,21 +254,19 @@ final class InvoiceValidationTest extends TestCase
         $item1->quantity = 1;
         $item1->unit_price = 10.00;
         $item1->tax_percentage = 21;
-        $invoice->addItem($item1);
 
         $item2 = InvoiceItem::make();
         $item2->title = 'Item 2';
         $item2->quantity = 2;
         $item2->unit_price = 20.00;
         $item2->tax_percentage = null;
-        $invoice->addItem($item2);
 
         $item3 = InvoiceItem::make();
         $item3->title = 'Item 3';
         $item3->quantity = 0.5;
         $item3->unit_price = 0;
         $item3->tax_percentage = 0;
-        $invoice->addItem($item3);
+        $invoice->items([$item1, $item2, $item3]);
 
         // act & assert
         $this->expectNotToPerformAssertions();

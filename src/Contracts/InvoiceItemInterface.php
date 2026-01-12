@@ -10,10 +10,10 @@ interface InvoiceItemInterface
     /**
      * Calculate the total for this item (quantity * unit_price).
      */
-    public function total(): float;
+    public function getTotal(): float;
 
     /**
      * Get the formatted tax percentage for display.
      */
-    public function formattedTaxPercentage(): string;
+    public function getFormattedTaxPercentage(): string;
 }

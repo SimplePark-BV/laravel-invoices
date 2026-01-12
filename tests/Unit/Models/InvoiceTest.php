@@ -160,7 +160,7 @@ final class InvoiceTest extends TestCase
         $item->title = 'Test Item';
         $item->quantity = 1;
         $item->unit_price = 10.00;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         // act
         $array = $invoice->toArray();
@@ -189,7 +189,7 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::make();
         $invoice->buyer($buyer);
         $invoice->date('2024-01-15');
-        $invoice->addItem($item);
+        $invoice->items([$item]);
         $invoice->series('INV');
         $invoice->sequence(1);
         $invoice->language('en');
@@ -263,7 +263,7 @@ final class InvoiceTest extends TestCase
         $item->unit_price = 10.00;
 
         // act
-        $result = $invoice->addItem($item);
+        $result = $invoice->items([$item]);
 
         // assert
         $this->assertSame($invoice, $result);
@@ -287,7 +287,7 @@ final class InvoiceTest extends TestCase
         $item2->unit_price = 20.00;
 
         // act
-        $result = $invoice->addItems([$item1, $item2]);
+        $result = $invoice->items([$item1, $item2]);
 
         // assert
         $this->assertSame($invoice, $result);
@@ -308,11 +308,11 @@ final class InvoiceTest extends TestCase
             $item->title = $itemData['title'];
             $item->quantity = $itemData['quantity'];
             $item->unit_price = $itemData['unit_price'];
-            $invoice->addItem($item);
+            $invoice->items([$item]);
         }
 
         // act
-        $total = $invoice->itemsTotal();
+        $total = $invoice->getItemsTotal();
 
         // assert
         $this->assertEquals($expected, $total);
@@ -348,14 +348,14 @@ final class InvoiceTest extends TestCase
         $item->quantity = 2;
         $item->unit_price = 121.00; // 100 + 21% tax
         $item->tax_percentage = 21;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         // act
-        $subTotal = $invoice->subTotal();
+        $subTotal = $invoice->getSubTotal();
 
         // assert
         // itemsTotal = 242, taxAmount = 242 * 0.21 / 1.21 = 42, subtotal = 242 - 42 = 200
-        $this->assertEquals(242.00, $invoice->itemsTotal());
+        $this->assertEquals(242.00, $invoice->getItemsTotal());
         $this->assertEquals(200.00, round($subTotal, 2));
     }
 
@@ -369,14 +369,14 @@ final class InvoiceTest extends TestCase
         $item->title = 'Item';
         $item->quantity = 2;
         $item->unit_price = 10.00;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         if ($forcedTotal !== null) {
             $invoice->forcedTotal($forcedTotal);
         }
 
         // act
-        $total = $invoice->total();
+        $total = $invoice->getTotal();
 
         // assert
         $this->assertEquals($expected, $total);
@@ -410,10 +410,10 @@ final class InvoiceTest extends TestCase
         $item2->unit_price = 110.00; // 100 + 10% tax
         $item2->tax_percentage = 10;
 
-        $invoice->addItems([$item1, $item2]);
+        $invoice->items([$item1, $item2]);
 
         // act
-        $taxAmount = $invoice->taxAmount();
+        $taxAmount = $invoice->getTaxAmount();
 
         // assert
         // tax1 = 121 * 0.21 / 1.21 = 21
@@ -451,10 +451,10 @@ final class InvoiceTest extends TestCase
         $item4->unit_price = 10.00;
         $item4->tax_percentage = null;
 
-        $invoice->addItems([$item1, $item2, $item3, $item4]);
+        $invoice->items([$item1, $item2, $item3, $item4]);
 
         // act
-        $taxGroups = $invoice->taxGroups();
+        $taxGroups = $invoice->getTaxGroups();
 
         // assert
         $this->assertCount(2, $taxGroups);
@@ -480,10 +480,10 @@ final class InvoiceTest extends TestCase
         $item2->unit_price = 110.00;
         $item2->tax_percentage = 10;
 
-        $invoice->addItems([$item1, $item2]);
+        $invoice->items([$item1, $item2]);
 
         // act
-        $tax = $invoice->taxAmountForTaxGroup($taxPercentage);
+        $tax = $invoice->getTaxAmountForTaxGroup($taxPercentage);
 
         // assert
         $this->assertEquals($expected, round($tax, 2));
@@ -510,10 +510,10 @@ final class InvoiceTest extends TestCase
         $item->quantity = 1;
         $item->unit_price = 121.00;
         $item->tax_percentage = 21;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         // act
-        $subTotal = $invoice->subTotalForTaxGroup(21);
+        $subTotal = $invoice->getSubTotalForTaxGroup(21);
 
         // assert
         // itemsTotal = 121, taxAmount = 21, subtotal = 100
@@ -532,7 +532,7 @@ final class InvoiceTest extends TestCase
         // assert
         $this->assertSame($invoice, $result);
         $this->assertEquals(100.50, $invoice->forcedTotal);
-        $this->assertEquals(100.50, $invoice->total());
+        $this->assertEquals(100.50, $invoice->getTotal());
     }
 
     #[Test]
@@ -594,10 +594,10 @@ final class InvoiceTest extends TestCase
         $item->title = 'Item';
         $item->quantity = 1;
         $item->unit_price = 10.50;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         // act
-        $formatted = $invoice->formattedTotal();
+        $formatted = $invoice->getFormattedTotal();
 
         // assert
         $this->assertEquals('€ 10,50', $formatted);
@@ -613,10 +613,10 @@ final class InvoiceTest extends TestCase
         $item->quantity = 1;
         $item->unit_price = 121.00;
         $item->tax_percentage = 21;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
 
         // act
-        $formattedSubTotal = $invoice->formattedSubTotal();
+        $formattedSubTotal = $invoice->getFormattedSubTotal();
 
         // assert
         // formattedSubTotal returns a float, should be exactly 100.00 (121 - 21 tax)
@@ -697,7 +697,7 @@ final class InvoiceTest extends TestCase
         $invoice->date_format = $dateFormat;
 
         // act
-        $formatted = $invoice->formattedDate();
+        $formatted = $invoice->getFormattedDate();
 
         // assert
         $this->assertEquals($expected, $formatted);
@@ -725,7 +725,7 @@ final class InvoiceTest extends TestCase
         $invoice->pay_until_days = $payUntilDays;
 
         // act
-        $formatted = $invoice->formattedDueDate();
+        $formatted = $invoice->getFormattedDueDate();
 
         // assert
         $this->assertEquals($expected, $formatted);
@@ -813,12 +813,12 @@ final class InvoiceTest extends TestCase
         $item->title = 'Item';
         $item->quantity = 1;
         $item->unit_price = 10.00;
-        $invoice->addItem($item);
+        $invoice->items([$item]);
         $invoice->date('2024-01-15');
         $invoice->pay_until_days = 30;
 
         // act
-        $message = $invoice->footerMessage();
+        $message = $invoice->getFooterMessage();
 
         // assert
         $this->assertIsString($message); // @phpstan-ignore-line method.alreadyNarrowedType

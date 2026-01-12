@@ -98,6 +98,7 @@ final class Invoice implements InvoiceInterface
 
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
+            $items = [];
             foreach ($data['items'] as $itemData) {
                 $item = InvoiceItem::make();
 
@@ -121,8 +122,9 @@ final class Invoice implements InvoiceInterface
                     $item->taxPercentage($itemData['tax_percentage']);
                 }
 
-                $invoice->addItem($item);
+                $items[] = $item;
             }
+            $invoice->items($items);
         }
 
         // set invoice number if provided
