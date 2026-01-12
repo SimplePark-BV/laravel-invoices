@@ -630,7 +630,7 @@ final class InvoiceTest extends TestCase
 
     #[Test]
     #[DataProvider('get_number_data_provider')]
-    public function get_number(?string $series, ?int $sequence, ?string $expected): void
+    public function get_number(?string $series, int|string|null $sequence, ?string $expected): void
     {
         // arrange
         $invoice = Invoice::make();
@@ -649,7 +649,7 @@ final class InvoiceTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: string|null, 1: int|null, 2: string|null}>
+     * @return array<string, array{0: string|null, 1: int|string|null, 2: string|null}>
      */
     public static function get_number_data_provider(): array
     {
@@ -660,6 +660,9 @@ final class InvoiceTest extends TestCase
             'neither set' => [null, null, null],
             'sequence with single digit' => ['INV', 1, 'INV.00000001'],
             'sequence with large number' => ['INV', 99999999, 'INV.99999999'],
+            'sequence as numeric string' => ['INV', '123', 'INV.00000123'],
+            'sequence as non-numeric string' => ['INV', 'ABC', 'INV.ABC'],
+            'only sequence as string' => [null, 'ABC', 'ABC'],
         ];
     }
 
@@ -689,6 +692,20 @@ final class InvoiceTest extends TestCase
         // assert
         $this->assertSame($invoice, $result);
         $this->assertEquals(123, $invoice->sequence);
+    }
+
+    #[Test]
+    public function sequence_setter_with_string(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+
+        // act
+        $result = $invoice->sequence('ABC');
+
+        // assert
+        $this->assertSame($invoice, $result);
+        $this->assertEquals('ABC', $invoice->sequence);
     }
 
     #[Test]
