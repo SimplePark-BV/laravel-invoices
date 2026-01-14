@@ -8,6 +8,42 @@ namespace SimpleParkBv\Invoices\Contracts;
 interface InvoiceItemInterface
 {
     /**
+     * Create a new invoice item instance.
+     */
+    public static function make(): self;
+
+    /**
+     * Set the title of the item.
+     */
+    public function title(string $title): self;
+
+    /**
+     * Set the description of the item.
+     */
+    public function description(?string $description): self;
+
+    /**
+     * Set the quantity of the item.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     */
+    public function quantity(float|int $quantity): self;
+
+    /**
+     * Set the unit price of the item.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     */
+    public function unitPrice(float|int $unitPrice): self;
+
+    /**
+     * Set the tax percentage of the item.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     */
+    public function taxPercentage(?float $taxPercentage): self;
+
+    /**
      * Calculate the total for this item (quantity * unit_price).
      */
     public function getTotal(): float;
@@ -16,4 +52,18 @@ interface InvoiceItemInterface
      * Get the formatted tax percentage for display.
      */
     public function getFormattedTaxPercentage(): string;
+
+    /**
+     * Validate the invoice item.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     */
+    public function validate(?int $index = null): void;
+
+    /**
+     * Convert the invoice item to an array representation.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array;
 }

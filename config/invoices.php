@@ -114,15 +114,15 @@ return [
     |
     */
     'seller' => [
-        'name' => env('INVOICES_SELLER_NAME', 'SimplePark B.V.'),
-        'address' => env('INVOICES_SELLER_ADDRESS', 'Valstraat 3'),
-        'postal_code' => env('INVOICES_SELLER_POSTAL_CODE', '5491BH'),
-        'city' => env('INVOICES_SELLER_CITY', 'Sint-Oedenrode'),
+        'name' => env('INVOICES_SELLER_NAME', 'Your Company Name'),
+        'address' => env('INVOICES_SELLER_ADDRESS', 'Street Address'),
+        'postal_code' => env('INVOICES_SELLER_POSTAL_CODE', '1234 AB'),
+        'city' => env('INVOICES_SELLER_CITY', 'City'),
         'country' => env('INVOICES_SELLER_COUNTRY', 'Nederland'),
-        'email' => env('INVOICES_SELLER_EMAIL', 'info@simplepark.nl'),
-        'kvk' => env('INVOICES_SELLER_KVK', '96305827'),
-        'btw' => env('INVOICES_SELLER_BTW', 'NL867555257B01'),
-        'iban' => env('INVOICES_SELLER_IBAN', 'NL59 RABO 0107 4988 55'),
+        'email' => env('INVOICES_SELLER_EMAIL', 'info@example.com'),
+        'kvk' => env('INVOICES_SELLER_KVK', '12345678'),
+        'btw' => env('INVOICES_SELLER_BTW', 'NL000000000B00'),
+        'iban' => env('INVOICES_SELLER_IBAN', 'NL00 BANK 0000 0000 00'),
     ],
 
     /*

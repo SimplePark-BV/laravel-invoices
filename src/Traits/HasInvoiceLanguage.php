@@ -26,6 +26,15 @@ trait HasInvoiceLanguage
     }
 
     /**
+     * Clear the cached available languages.
+     * Useful for testing or when languages are added at runtime.
+     */
+    public static function clearLanguageCache(): void
+    {
+        self::$cachedAvailableLanguages = null;
+    }
+
+    /**
      * Get available languages from translation files.
      *
      * Results are cached to avoid repeated filesystem scans. Returns an empty
