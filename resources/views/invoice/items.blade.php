@@ -16,14 +16,14 @@
     <tbody>
         @foreach($invoice->items as $item)
             <tr class="invoice__items-row">
-                <td class="invoice__items-cell">{{ $item->quantity }}x</td>
+                <td class="invoice__items-cell">{{ $item->getQuantity() }}x</td>
                 <td class="invoice__items-cell">
-                    <span class="invoice__items-title">{{ $item->title }}</span>
-                    @if(!empty($item->description))
-                        <br><span class="invoice__items-description">{{ $item->description }}</span>
+                    <span class="invoice__items-title">{{ $item->getTitle() }}</span>
+                    @if(!empty($item->getDescription()))
+                        <br><span class="invoice__items-description">{{ $item->getDescription() }}</span>
                     @endif
                 </td>
-                <td class="invoice__items-cell invoice__items-cell--right">{{ CurrencyFormatter::format($item->unitPrice) }}</td>
+                <td class="invoice__items-cell invoice__items-cell--right">{{ CurrencyFormatter::format($item->getUnitPrice()) }}</td>
                 <td class="invoice__items-cell invoice__items-cell--right">{{ CurrencyFormatter::format($item->getTotal()) }}</td>
                 <td class="invoice__items-cell invoice__items-cell--right">{{ $item->getFormattedTaxPercentage() }}</td>
             </tr>

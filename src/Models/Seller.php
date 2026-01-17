@@ -41,4 +41,28 @@ final class Seller extends Party
     {
         return new self;
     }
+
+    /**
+     * Get the seller's registration number.
+     */
+    public function getRegistrationNumber(): ?string
+    {
+        return $this->registrationNumber ?? null;
+    }
+
+    /**
+     * Get the seller's tax ID.
+     */
+    public function getTaxId(): ?string
+    {
+        return $this->taxId ?? null;
+    }
+
+    /**
+     * Get the seller's bank account.
+     */
+    public function getBankAccount(): ?string
+    {
+        return $this->bankAccount ?? null;
+    }
 }
