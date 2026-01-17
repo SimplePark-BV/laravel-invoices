@@ -22,9 +22,9 @@ final class SellerTest extends TestCase
             'postal_code' => '12345',
             'country' => 'Test Country',
             'email' => 'seller@test.com',
-            'kvk' => '12345678',
-            'btw' => 'NL123456789B01',
-            'iban' => 'NL91ABNA0417164300',
+            'registration_number' => '12345678',
+            'tax_id' => 'NL123456789B01',
+            'bank_account' => 'NL91ABNA0417164300',
         ]);
     }
 
@@ -59,9 +59,9 @@ final class SellerTest extends TestCase
             'postal_code' => '54321',
             'country' => 'Config Country',
             'email' => 'config@test.com',
-            'kvk' => '87654321',
-            'btw' => 'NL987654321B02',
-            'iban' => 'NL91ABNA0417164301',
+            'registration_number' => '87654321',
+            'tax_id' => 'NL987654321B02',
+            'bank_account' => 'NL91ABNA0417164301',
         ]);
 
         // act
@@ -71,12 +71,12 @@ final class SellerTest extends TestCase
         $this->assertEquals('Config Seller', $seller->name);
         $this->assertEquals('Config Address', $seller->address);
         $this->assertEquals('Config City', $seller->city);
-        $this->assertEquals('54321', $seller->postal_code);
+        $this->assertEquals('54321', $seller->postalCode);
         $this->assertEquals('Config Country', $seller->country);
         $this->assertEquals('config@test.com', $seller->email);
-        $this->assertEquals('87654321', $seller->kvk);
-        $this->assertEquals('NL987654321B02', $seller->btw);
-        $this->assertEquals('NL91ABNA0417164301', $seller->iban);
+        $this->assertEquals('87654321', $seller->registrationNumber);
+        $this->assertEquals('NL987654321B02', $seller->taxId);
+        $this->assertEquals('NL91ABNA0417164301', $seller->bankAccount);
     }
 
     #[Test]
@@ -108,14 +108,14 @@ final class SellerTest extends TestCase
         $this->assertEquals('Partial Seller', $seller->name);
         $this->assertNull($seller->address);
         $this->assertNull($seller->city);
-        $this->assertNull($seller->postal_code);
+        $this->assertNull($seller->postalCode);
         $this->assertNull($seller->country);
         $this->assertNull($seller->email);
         $this->assertNull($seller->phone);
         $this->assertNull($seller->website);
-        $this->assertNull($seller->kvk);
-        $this->assertNull($seller->btw);
-        $this->assertNull($seller->iban);
+        $this->assertNull($seller->registrationNumber);
+        $this->assertNull($seller->taxId);
+        $this->assertNull($seller->bankAccount);
     }
 
     #[Test]
@@ -125,13 +125,13 @@ final class SellerTest extends TestCase
         $seller = Seller::make();
 
         // act
-        $seller->kvk = '12345678';
-        $seller->btw = 'NL123456789B01';
-        $seller->iban = 'NL91ABNA0417164300';
+        $seller->registrationNumber = '12345678';
+        $seller->taxId = 'NL123456789B01';
+        $seller->bankAccount = 'NL91ABNA0417164300';
 
         // assert
-        $this->assertEquals('12345678', $seller->kvk);
-        $this->assertEquals('NL123456789B01', $seller->btw);
-        $this->assertEquals('NL91ABNA0417164300', $seller->iban);
+        $this->assertEquals('12345678', $seller->registrationNumber);
+        $this->assertEquals('NL123456789B01', $seller->taxId);
+        $this->assertEquals('NL91ABNA0417164300', $seller->bankAccount);
     }
 }

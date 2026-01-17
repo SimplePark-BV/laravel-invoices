@@ -14,36 +14,48 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: [ self-hosted, php-8.4 ]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Install php-intl
-        run: |
-          brew install php-intl
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, gd, dom, xml
+          tools: composer
+          coverage: none
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: "--prefer-dist --no-progress"
+
+      - name: Run Tests
+        run: vendor/bin/phpunit
+
+  # Internal testing on self-hosted runners (only runs for internal PRs)
+  test-internal:
+    name: Test (Internal)
+    if: github.repository == 'simplepark-bv/laravel-invoices' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, php-8.4]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
 
       - name: Enable required PHP extensions
         uses: shivammathur/setup-php@v2
         with:
           php-version: pre-installed
-          extensions: pdo_mysql, mbstring, pcntl, bcmath, gd, zip, exif
+          extensions: mbstring, gd, dom, xml
           tools: none
         env:
           runner: self-hosted
           fail-fast: true
           update: false
-
-      - name: Install MySQL via Homebrew
-        uses: ConorMacBride/install-package@v1
-        with:
-          brew: mysql@8.0
-
-      - name: Start MySQL
-        run: |
-          /opt/homebrew/opt/mysql@8.0/bin/mysql.server start
-          /opt/homebrew/opt/mysql@8.0/bin/mysql -u root -e "CREATE DATABASE IF NOT EXISTS testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
       - name: Install Composer dependencies
         uses: ramsey/composer-install@v3
@@ -52,11 +64,4 @@ jobs:
           composer-options: "--optimize-autoloader"
 
       - name: Run Tests
-        env:
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: testing
-          DB_USERNAME: root
-          DB_PASSWORD: ''
         run: vendor/bin/phpunit

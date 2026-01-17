@@ -51,7 +51,7 @@ $buyer->name = 'John Doe';
 $buyer->email = 'john@example.com';
 $buyer->address = '123 Main St';
 $buyer->city = 'Amsterdam';
-$buyer->postal_code = '1000 AA';
+$buyer->postalCode = '1000 AA';
 $invoice->buyer($buyer);
 
 // add items using fluent interface
@@ -233,7 +233,7 @@ $array = $invoice->toArray();
 - `quantity(float|int $quantity)` - Set quantity
 - `unitPrice(float|int $unitPrice)` - Set unit price
 - `taxPercentage(?float $taxPercentage)` - Set tax percentage
-- `getTotal()` - Calculate item total (quantity * unit_price)
+- `getTotal()` - Calculate item total (quantity * unitPrice)
 - `getFormattedTaxPercentage()` - Get formatted tax percentage
 
 ## Validation Requirements
@@ -245,8 +245,8 @@ Before rendering, the invoice must have:
 - Each item must have:
   - A non-empty title
   - A quantity greater than 0
-  - A unit_price greater than or equal to 0
-  - A tax_percentage between 0 and 100, or null
+  - A unitPrice greater than or equal to 0
+  - A taxPercentage between 0 and 100, or null
 
 ## Development
 
@@ -289,7 +289,7 @@ Run Pint for code formatting:
 Make sure:
 - Buyer is set with at least a name
 - At least one item is added
-- All items have valid data (title, quantity > 0, unit_price >= 0)
+- All items have valid data (title, quantity > 0, unitPrice >= 0)
 
 ### PDF generation fails
 

@@ -42,3 +42,4 @@ public/storage
 .env.testing
 .php-cs-fixer.cache
 .phpstan
+composer.lock

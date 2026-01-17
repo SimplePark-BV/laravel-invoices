@@ -19,7 +19,7 @@ trait CreatesTestInvoices
         $item = InvoiceItem::make();
         $item->title = 'Test Item';
         $item->quantity = 1;
-        $item->unit_price = 10.00;
+        $item->unitPrice = 10.00;
         $invoice->items([$item]);
 
         return $invoice;
@@ -30,8 +30,8 @@ trait CreatesTestInvoices
         $item = InvoiceItem::make();
         $item->title = $title;
         $item->quantity = $quantity;
-        $item->unit_price = $unitPrice;
-        $item->tax_percentage = $taxPercentage;
+        $item->unitPrice = $unitPrice;
+        $item->taxPercentage = $taxPercentage;
 
         return $item;
     }

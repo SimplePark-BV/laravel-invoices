@@ -118,11 +118,11 @@ return [
         'address' => env('INVOICES_SELLER_ADDRESS', 'Street Address'),
         'postal_code' => env('INVOICES_SELLER_POSTAL_CODE', '1234 AB'),
         'city' => env('INVOICES_SELLER_CITY', 'City'),
-        'country' => env('INVOICES_SELLER_COUNTRY', 'Nederland'),
+        'country' => env('INVOICES_SELLER_COUNTRY', 'Country'),
         'email' => env('INVOICES_SELLER_EMAIL', 'info@example.com'),
-        'kvk' => env('INVOICES_SELLER_KVK', '12345678'),
-        'btw' => env('INVOICES_SELLER_BTW', 'NL000000000B00'),
-        'iban' => env('INVOICES_SELLER_IBAN', 'NL00 BANK 0000 0000 00'),
+        'registration_number' => env('INVOICES_SELLER_REGISTRATION_NUMBER', null),
+        'tax_id' => env('INVOICES_SELLER_TAX_ID', null),
+        'bank_account' => env('INVOICES_SELLER_BANK_ACCOUNT', null),
     ],
 
     /*

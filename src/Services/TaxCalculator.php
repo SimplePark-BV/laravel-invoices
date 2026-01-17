@@ -41,8 +41,8 @@ final class TaxCalculator
     /**
      * Calculate the total tax amount for a collection of items.
      *
-     * Sums taxes only for items that have a tax_percentage set (excludes null items).
-     * Calculates tax from unit_price which includes tax.
+     * Sums taxes only for items that have a taxPercentage set (excludes null items).
+     * Calculates tax from unitPrice which includes tax.
      *
      * Returns the total tax amount rounded to the configured precision to prevent rounding drift.
      *
@@ -52,12 +52,12 @@ final class TaxCalculator
     public static function calculateTaxAmount(Collection $items): float
     {
         $total = $items->sum(function (InvoiceItem $item): float {
-            if ($item->tax_percentage === null || $item->tax_percentage <= 0) {
+            if ($item->taxPercentage === null || $item->taxPercentage <= 0) {
                 return 0;
             }
 
-            $taxRate = $item->tax_percentage / 100;
-            $itemTotal = $item->unit_price * $item->quantity;
+            $taxRate = $item->taxPercentage / 100;
+            $itemTotal = $item->unitPrice * $item->quantity;
 
             // tax amount = price including tax * taxRate / (1 + taxRate)
             return $itemTotal * $taxRate / (1 + $taxRate);
@@ -79,7 +79,7 @@ final class TaxCalculator
     public static function extractTaxGroups(Collection $items): Collection
     {
         return $items
-            ->pluck('tax_percentage')
+            ->pluck('taxPercentage')
             ->filter(static fn (?float $taxPercentage): bool => $taxPercentage !== null && $taxPercentage > 0)
             ->map(static fn (float $taxPercentage): float => round($taxPercentage, self::getTaxPercentagePrecision()))
             ->unique()
@@ -90,7 +90,7 @@ final class TaxCalculator
     /**
      * Calculate the tax amount for items with a specific tax percentage.
      *
-     * Calculates tax from unit_price which includes tax. Items are matched by
+     * Calculates tax from unitPrice which includes tax. Items are matched by
      * comparing tax percentages using epsilon comparison to handle floating-point
      * precision differences. Returns the total rounded to the configured precision.
      *
@@ -106,9 +106,9 @@ final class TaxCalculator
         $epsilon = self::getTaxPercentageEpsilon();
 
         $total = $items
-            ->filter(fn (InvoiceItem $item) => $item->tax_percentage !== null && abs(round($item->tax_percentage, $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
+            ->filter(fn (InvoiceItem $item) => $item->taxPercentage !== null && abs(round($item->taxPercentage, $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
             ->sum(function (InvoiceItem $item) use ($taxRate): float {
-                $itemTotal = $item->unit_price * $item->quantity;
+                $itemTotal = $item->unitPrice * $item->quantity;
 
                 // tax amount = price including tax * taxRate / (1 + taxRate)
                 return $itemTotal * $taxRate / (1 + $taxRate);
@@ -134,8 +134,8 @@ final class TaxCalculator
         $normalizedTaxPercentage = round($taxPercentage, $taxPercentagePrecision);
         $epsilon = self::getTaxPercentageEpsilon();
         $itemsTotal = $items
-            ->filter(fn (InvoiceItem $item) => $item->tax_percentage !== null && abs(round($item->tax_percentage, $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
-            ->sum(fn (InvoiceItem $item): float => $item->unit_price * $item->quantity);
+            ->filter(fn (InvoiceItem $item) => $item->taxPercentage !== null && abs(round($item->taxPercentage, $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
+            ->sum(fn (InvoiceItem $item): float => $item->unitPrice * $item->quantity);
 
         $subtotal = $itemsTotal - self::calculateTaxForGroup($items, $taxPercentage);
 

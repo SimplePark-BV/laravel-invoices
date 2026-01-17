@@ -10,7 +10,7 @@ use SimpleParkBv\Invoices\Contracts\PartyInterface;
  * @property string $name
  * @property string|null $address
  * @property string|null $city
- * @property string|null $postal_code
+ * @property string|null $postalCode
  * @property string|null $country
  * @property string|null $email
  * @property string|null $phone
@@ -24,7 +24,7 @@ abstract class Party implements PartyInterface
 
     public ?string $city;
 
-    public ?string $postal_code;
+    public ?string $postalCode;
 
     public ?string $country;
 
@@ -63,7 +63,7 @@ abstract class Party implements PartyInterface
      */
     public function getPostalCode(): ?string
     {
-        return $this->postal_code ?? null;
+        return $this->postalCode ?? null;
     }
 
     /**
@@ -109,7 +109,7 @@ abstract class Party implements PartyInterface
             'name' => $this->name,
             'address' => $this->address ?? null,
             'city' => $this->city ?? null,
-            'postal_code' => $this->postal_code ?? null,
+            'postal_code' => $this->postalCode ?? null,
             'country' => $this->country ?? null,
             'email' => $this->email ?? null,
             'phone' => $this->phone ?? null,

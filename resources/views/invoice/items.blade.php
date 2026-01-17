@@ -23,7 +23,7 @@
                         <br><span class="invoice__items-description">{{ $item->description }}</span>
                     @endif
                 </td>
-                <td class="invoice__items-cell invoice__items-cell--right">{{ CurrencyFormatter::format($item->unit_price) }}</td>
+                <td class="invoice__items-cell invoice__items-cell--right">{{ CurrencyFormatter::format($item->unitPrice) }}</td>
                 <td class="invoice__items-cell invoice__items-cell--right">{{ CurrencyFormatter::format($item->getTotal()) }}</td>
                 <td class="invoice__items-cell invoice__items-cell--right">{{ $item->getFormattedTaxPercentage() }}</td>
             </tr>

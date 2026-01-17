@@ -131,7 +131,7 @@ final class InvoicePdfGenerationTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Item';
         $item->quantity = 1;
-        $item->unit_price = 10.00;
+        $item->unitPrice = 10.00;
         $invoice->items([$item]);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);

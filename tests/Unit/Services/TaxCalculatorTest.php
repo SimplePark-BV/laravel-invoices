@@ -23,8 +23,8 @@ final class TaxCalculatorTest extends TestCase
             $item = InvoiceItem::make();
             $item->title = $itemData['title'];
             $item->quantity = $itemData['quantity'];
-            $item->unit_price = $itemData['unit_price'];
-            $item->tax_percentage = $itemData['tax_percentage'] ?? null;
+            $item->unitPrice = $itemData['unit_price'];
+            $item->taxPercentage = $itemData['tax_percentage'] ?? null;
 
             return $item;
         }, $items));
@@ -105,8 +105,8 @@ final class TaxCalculatorTest extends TestCase
             $item = InvoiceItem::make();
             $item->title = $itemData['title'];
             $item->quantity = $itemData['quantity'];
-            $item->unit_price = $itemData['unit_price'];
-            $item->tax_percentage = $itemData['tax_percentage'] ?? null;
+            $item->unitPrice = $itemData['unit_price'];
+            $item->taxPercentage = $itemData['tax_percentage'] ?? null;
 
             return $item;
         }, $items));
@@ -267,8 +267,8 @@ final class TaxCalculatorTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = $title;
         $item->quantity = $quantity;
-        $item->unit_price = $unitPrice;
-        $item->tax_percentage = $taxPercentage;
+        $item->unitPrice = $unitPrice;
+        $item->taxPercentage = $taxPercentage;
 
         return $item;
     }

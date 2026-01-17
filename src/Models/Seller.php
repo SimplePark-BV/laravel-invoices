@@ -7,17 +7,17 @@ use RuntimeException;
 /**
  * Class Seller
  *
- * @property string|null $kvk
- * @property string|null $btw
- * @property string|null $iban
+ * @property string|null $registrationNumber
+ * @property string|null $taxId
+ * @property string|null $bankAccount
  */
 final class Seller extends Party
 {
-    public ?string $kvk;
+    public ?string $registrationNumber;
 
-    public ?string $btw;
+    public ?string $taxId;
 
-    public ?string $iban;
+    public ?string $bankAccount;
 
     public function __construct()
     {
@@ -26,15 +26,15 @@ final class Seller extends Party
         $this->name = $seller['name'] ?? throw new RuntimeException('Seller name is required');
 
         $this->address = $seller['address'] ?? null;
-        $this->postal_code = $seller['postal_code'] ?? null;
+        $this->postalCode = $seller['postal_code'] ?? null;
         $this->city = $seller['city'] ?? null;
         $this->country = $seller['country'] ?? null;
         $this->email = $seller['email'] ?? null;
         $this->phone = null;
         $this->website = null;
-        $this->kvk = $seller['kvk'] ?? null;
-        $this->btw = $seller['btw'] ?? null;
-        $this->iban = $seller['iban'] ?? null;
+        $this->registrationNumber = $seller['registration_number'] ?? null;
+        $this->taxId = $seller['tax_id'] ?? null;
+        $this->bankAccount = $seller['bank_account'] ?? null;
     }
 
     public static function make(): self
