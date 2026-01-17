@@ -8,26 +8,26 @@
             --invoice-font: {{ $invoiceFont }};
         }
         @font-face {
-            font-family: 'AvenirNext';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-Medium.ttf') format('truetype');
+            font-family: 'Montserrat';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-Regular.ttf') format('truetype');
             font-weight: 400;
             font-style: normal;
         }
         @font-face {
-            font-family: 'AvenirNext';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-MediumItalic.ttf') format('truetype');
+            font-family: 'Montserrat';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-Italic.ttf') format('truetype');
             font-weight: 400;
             font-style: italic;
         }
         @font-face {
-            font-family: 'AvenirNext';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-DemiBold.ttf') format('truetype');
+            font-family: 'Montserrat';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-Bold.ttf') format('truetype');
             font-weight: 700;
             font-style: normal;
         }
         @font-face {
-            font-family: 'AvenirNext';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/AvenirNext-DemiBoldItalic.ttf') format('truetype');
+            font-family: 'Montserrat';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-BoldItalic.ttf') format('truetype');
             font-weight: 700;
             font-style: italic;
         }

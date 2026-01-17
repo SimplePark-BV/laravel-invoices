@@ -8,7 +8,7 @@
 
 /* invoice base styles */
 .invoice {
-    font-family: var(--invoice-font, AvenirNext), sans-serif;
+    font-family: var(--invoice-font, Montserrat), sans-serif;
     font-size: 12px;
     line-height: 1.2;
     color: var(--surface-highest);
