@@ -21,13 +21,13 @@
         }
         @font-face {
             font-family: 'Montserrat';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-Bold.ttf') format('truetype');
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-SemiBold.ttf') format('truetype');
             font-weight: 700;
             font-style: normal;
         }
         @font-face {
             font-family: 'Montserrat';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-BoldItalic.ttf') format('truetype');
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-SemiBoldItalic.ttf') format('truetype');
             font-weight: 700;
             font-style: italic;
         }
