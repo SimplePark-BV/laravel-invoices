@@ -129,6 +129,10 @@ final class Invoice implements InvoiceInterface
         }
 
         // set invoice number if provided
+        if (isset($data['serial'])) {
+            $invoice->serial($data['serial']);
+        }
+
         if (isset($data['series'])) {
             $invoice->series($data['series']);
         }
@@ -161,6 +165,7 @@ final class Invoice implements InvoiceInterface
             'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
             'date' => $this->date?->toIso8601String(),
             'items' => $this->items->map(static fn (InvoiceItem $item) => $item->toArray())->toArray(),
+            'serial' => $this->serial,
             'series' => $this->series,
             'sequence' => $this->sequence,
             'language' => $this->language,
