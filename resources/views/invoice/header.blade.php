@@ -13,11 +13,17 @@
             <div class="invoice__seller-name">{{ $invoice->seller->getName() }}</div>
             <div class="invoice__seller-details">
                 <div class="invoice__seller-detail">
-                    {{ $invoice->seller->getAddress() }}<br>
-                    {{ $invoice->seller->getPostalCode() }} {{ $invoice->seller->getCity() }}
+                    @if($invoice->seller->getAddress())
+                        {{ $invoice->seller->getAddress() }}<br>
+                    @endif
+                    @if($invoice->seller->getPostalCode() || $invoice->seller->getCity())
+                        {{ $invoice->seller->getPostalCode() }} {{ $invoice->seller->getCity() }}
+                    @endif
                 </div>
                 <div class="invoice__seller-detail">
-                    {{ $invoice->seller->getEmail() }}
+                    @if($invoice->seller->getEmail())
+                        {{ $invoice->seller->getEmail() }}
+                    @endif
                 </div>
                 <div class="invoice__seller-detail">
                     @if($invoice->seller->getRegistrationNumber())

@@ -44,6 +44,26 @@ interface InvoiceItemInterface
     public function taxPercentage(?float $taxPercentage): self;
 
     /**
+     * Get the title of the item.
+     */
+    public function getTitle(): string;
+
+    /**
+     * Get the description of the item.
+     */
+    public function getDescription(): ?string;
+
+    /**
+     * Get the quantity of the item.
+     */
+    public function getQuantity(): float|int;
+
+    /**
+     * Get the unit price of the item.
+     */
+    public function getUnitPrice(): float|int;
+
+    /**
      * Calculate the total for this item (quantity * unit_price).
      */
     public function getTotal(): float;

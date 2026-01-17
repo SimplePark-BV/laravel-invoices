@@ -3,12 +3,20 @@
     <div class="invoice__buyer-name">{{ $invoice->buyer->getName() }}</div>
     <div class="invoice__buyer-details">
         <div class="invoice__buyer-detail">
-            {{ $invoice->buyer->getAddress() }}<br>
-            {{ $invoice->buyer->getPostalCode() }} {{ $invoice->buyer->getCity() }}
+            @if($invoice->buyer->getAddress())
+                {{ $invoice->buyer->getAddress() }}<br>
+            @endif
+            @if($invoice->buyer->getPostalCode() || $invoice->buyer->getCity())
+                {{ $invoice->buyer->getPostalCode() }} {{ $invoice->buyer->getCity() }}
+            @endif
         </div>
         <div class="invoice__buyer-detail">
-            {{ $invoice->buyer->getEmail() }}<br>
-            {{ $invoice->buyer->getPhone() }}
+            @if($invoice->buyer->getEmail())
+                {{ $invoice->buyer->getEmail() }}<br>
+            @endif
+            @if($invoice->buyer->getPhone())
+                {{ $invoice->buyer->getPhone() }}
+            @endif
         </div>
     </div>
 </div>
