@@ -5,8 +5,6 @@ namespace SimpleParkBv\Invoices\Contracts;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\Models\Buyer;
-use SimpleParkBv\Invoices\Models\InvoiceItem;
 
 /**
  * Interface for invoice implementations.
@@ -35,12 +33,12 @@ interface InvoiceInterface
     /**
      * Set the buyer for this invoice.
      */
-    public function buyer(Buyer $buyer): self;
+    public function buyer(PartyInterface $buyer): self;
 
     /**
      * Set all items for the invoice (replaces existing items).
      *
-     * @param  array<int, InvoiceItem>  $items
+     * @param  array<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
      */
     public function items(array $items): self;
 
@@ -164,6 +162,11 @@ interface InvoiceInterface
      * @return Collection<int, float>
      */
     public function getTaxGroups(): Collection;
+
+    /**
+     * Calculate the tax amount for items with a specific tax percentage.
+     */
+    public function getTaxAmountForTaxGroup(float $taxPercentage): float;
 
     /**
      * Check if the invoice has been issued (is official).

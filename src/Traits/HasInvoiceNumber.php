@@ -62,7 +62,7 @@ trait HasInvoiceNumber
     public function getNumber(): ?string
     {
         // if serial is explicitly set, return it
-        if ($this->serial !== null) {
+        if (filled($this->serial)) {
             return $this->serial;
         }
 
