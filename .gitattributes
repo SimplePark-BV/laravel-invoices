@@ -1,0 +1,11 @@
+* text=auto eol=lf
+
+# exclude from distribution
+/.github export-ignore
+/tests export-ignore
+/docker-compose.yml export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/phpunit.xml export-ignore
+/phpstan.neon export-ignore
+/pint.json export-ignore

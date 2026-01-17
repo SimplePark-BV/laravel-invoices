@@ -1,12 +1,15 @@
 {
     "name": "simplepark-bv/laravel-invoices",
+    "description": "Generate professional PDF invoices for Laravel applications",
     "type": "library",
     "license": "MIT",
     "minimum-stability": "stable",
     "keywords": [
-        "simplepark",
         "laravel",
-        "invoices"
+        "invoice",
+        "pdf",
+        "dompdf",
+        "invoice-generator"
     ],
     "authors": [
         {
