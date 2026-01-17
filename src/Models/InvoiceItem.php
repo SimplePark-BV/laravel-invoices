@@ -110,6 +110,38 @@ final class InvoiceItem implements InvoiceItemInterface
     }
 
     /**
+     * Get the title of the item.
+     */
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    /**
+     * Get the description of the item.
+     */
+    public function getDescription(): ?string
+    {
+        return $this->description ?? null;
+    }
+
+    /**
+     * Get the quantity of the item.
+     */
+    public function getQuantity(): float|int
+    {
+        return $this->quantity;
+    }
+
+    /**
+     * Get the unit price of the item.
+     */
+    public function getUnitPrice(): float|int
+    {
+        return $this->unitPrice;
+    }
+
+    /**
      * Calculate the total for this item (quantity * unitPrice).
      */
     public function getTotal(): float
