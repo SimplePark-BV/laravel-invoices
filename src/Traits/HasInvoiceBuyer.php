@@ -7,7 +7,7 @@ use SimpleParkBv\Invoices\Models\Buyer;
 /**
  * Trait HasInvoiceBuyer
  *
- * @var \SimpleParkBv\Invoices\Buyer $buyer
+ * @var \SimpleParkBv\Invoices\Models\Buyer $buyer
  */
 trait HasInvoiceBuyer
 {

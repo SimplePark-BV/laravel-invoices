@@ -7,12 +7,15 @@ namespace SimpleParkBv\Invoices\Traits;
  *
  * @var ?string $series
  * @var int|string|null $sequence
+ * @var ?string $serial
  */
 trait HasInvoiceNumber
 {
     public ?string $series = null;
 
     public int|string|null $sequence = null;
+
+    public ?string $serial = null;
 
     /**
      * Set the series for this invoice.
@@ -39,6 +42,18 @@ trait HasInvoiceNumber
     }
 
     /**
+     * Set the serial number for this invoice.
+     *
+     * @return $this
+     */
+    public function serial(?string $serial): self
+    {
+        $this->serial = $serial;
+
+        return $this;
+    }
+
+    /**
      * Get the invoice number, built dynamically from series and sequence if available.
      *
      * Returns the explicitly set number if present, otherwise builds from series and/or sequence.
@@ -46,6 +61,11 @@ trait HasInvoiceNumber
      */
     public function getNumber(): ?string
     {
+        // if serial is explicitly set, return it
+        if ($this->serial !== null) {
+            return $this->serial;
+        }
+
         // if both series and sequence are set, combine them
         if ($this->series !== null && $this->sequence !== null) {
             // if sequence is numeric (int or numeric string), pad it

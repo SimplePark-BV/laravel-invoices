@@ -4,10 +4,10 @@ namespace Tests\Feature;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Buyer;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
-use SimpleParkBv\Invoices\Invoice;
-use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Models\Buyer;
+use SimpleParkBv\Invoices\Models\Invoice;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
 

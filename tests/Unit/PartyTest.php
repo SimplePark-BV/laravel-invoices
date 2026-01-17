@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Buyer;
+use SimpleParkBv\Invoices\Models\Buyer;
 use Tests\TestCase;
 
 final class PartyTest extends TestCase

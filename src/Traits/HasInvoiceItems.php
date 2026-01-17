@@ -13,7 +13,7 @@ use SimpleParkBv\Invoices\Services\TaxCalculator;
 trait HasInvoiceItems
 {
     /**
-     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\InvoiceItem>
+     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>
      */
     public Collection $items;
 
@@ -28,7 +28,7 @@ trait HasInvoiceItems
     /**
      * Set all items for the invoice (replaces existing items).
      *
-     * @param  array<int, \SimpleParkBv\Invoices\InvoiceItem>  $items
+     * @param  array<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
      */
     public function items(array $items): self
     {

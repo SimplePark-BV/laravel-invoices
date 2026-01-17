@@ -46,7 +46,7 @@ final class TaxCalculator
      *
      * Returns the total tax amount rounded to the configured precision to prevent rounding drift.
      *
-     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\InvoiceItem>  $items
+     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
      * @return float The total tax amount, rounded to the configured precision
      */
     public static function calculateTaxAmount(Collection $items): float
@@ -73,7 +73,7 @@ final class TaxCalculator
      * rounded to the configured precision to ensure consistent grouping of
      * equivalent percentages that may have different floating-point representations.
      *
-     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\InvoiceItem>  $items
+     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
      * @return \Illuminate\Support\Collection<int, float> Tax percentages rounded to the configured precision
      */
     public static function extractTaxGroups(Collection $items): Collection
@@ -94,7 +94,7 @@ final class TaxCalculator
      * comparing tax percentages using epsilon comparison to handle floating-point
      * precision differences. Returns the total rounded to the configured precision.
      *
-     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\InvoiceItem>  $items
+     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
      * @param  float  $taxPercentage  The tax percentage to filter by (will be normalized)
      * @return float The tax amount for the group, rounded to the configured precision
      */
@@ -124,7 +124,7 @@ final class TaxCalculator
      * Items are matched by comparing tax percentages using epsilon comparison.
      * Returns the subtotal rounded to the configured precision.
      *
-     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\InvoiceItem>  $items
+     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
      * @param  float  $taxPercentage  The tax percentage to filter by (will be normalized)
      * @return float The subtotal for the group, rounded to the configured precision
      */

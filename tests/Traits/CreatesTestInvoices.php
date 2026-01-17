@@ -2,9 +2,9 @@
 
 namespace Tests\Traits;
 
-use SimpleParkBv\Invoices\Buyer;
-use SimpleParkBv\Invoices\Invoice;
-use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Models\Buyer;
+use SimpleParkBv\Invoices\Models\Invoice;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 
 trait CreatesTestInvoices
 {

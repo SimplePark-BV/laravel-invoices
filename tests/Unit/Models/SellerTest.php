@@ -5,7 +5,7 @@ namespace Tests\Unit\Models;
 use Illuminate\Support\Facades\Config;
 use PHPUnit\Framework\Attributes\Test;
 use RuntimeException;
-use SimpleParkBv\Invoices\Seller;
+use SimpleParkBv\Invoices\Models\Seller;
 use Tests\TestCase;
 
 final class SellerTest extends TestCase
@@ -14,7 +14,7 @@ final class SellerTest extends TestCase
     {
         parent::setUp();
 
-        // Set default config for seller
+        // set default config for seller
         Config::set('invoices.seller', [
             'name' => 'Test Seller',
             'address' => 'Test Address',
@@ -45,7 +45,7 @@ final class SellerTest extends TestCase
         $seller = Seller::make();
 
         // assert
-        $this->assertInstanceOf(\SimpleParkBv\Invoices\Party::class, $seller);
+        $this->assertInstanceOf(\SimpleParkBv\Invoices\Models\Party::class, $seller);
     }
 
     #[Test]

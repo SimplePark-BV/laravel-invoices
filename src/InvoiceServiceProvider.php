@@ -28,7 +28,7 @@ class InvoiceServiceProvider extends ServiceProvider
         // using view composer for better isolation and testability
         View::composer('invoices::*', function ($view): void {
             $view->with('invoiceCssPath', realpath(__DIR__.'/../resources/css/invoice.css'));
-            $view->with('invoiceFont', config('invoices.pdf.font', 'AvenirNext'));
+            $view->with('invoiceFont', config('invoices.pdf.font', 'Montserrat'));
             $view->with('invoiceFontPath', realpath(__DIR__.'/../resources/fonts'));
             $view->with('invoiceFontFile', config('invoices.pdf.font_file'));
         });
