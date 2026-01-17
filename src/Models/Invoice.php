@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices;
+namespace SimpleParkBv\Invoices\Models;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPDF;

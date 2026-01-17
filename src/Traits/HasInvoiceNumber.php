@@ -43,7 +43,6 @@ trait HasInvoiceNumber
 
     /**
      * Set the serial number for this invoice.
-     * When set, this overrides series and sequence.
      *
      * @return $this
      */
@@ -62,8 +61,8 @@ trait HasInvoiceNumber
      */
     public function getNumber(): ?string
     {
-        // if serial is set, return it directly (overrides series/sequence)
-        if ($this->serial !== null) {
+        // if serial is explicitly set, return it
+        if (filled($this->serial)) {
             return $this->serial;
         }
 

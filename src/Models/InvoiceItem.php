@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices;
+namespace SimpleParkBv\Invoices\Models;
 
 use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
@@ -11,8 +11,8 @@ use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
  * @property string $title
  * @property string|null $description
  * @property float|int $quantity
- * @property float|int $unit_price
- * @property float|null $tax_percentage
+ * @property float|int $unitPrice
+ * @property float|null $taxPercentage
  */
 final class InvoiceItem implements InvoiceItemInterface
 {
@@ -22,9 +22,9 @@ final class InvoiceItem implements InvoiceItemInterface
 
     public float|int $quantity;
 
-    public float|int $unit_price;
+    public float|int $unitPrice;
 
-    public ?float $tax_percentage;
+    public ?float $taxPercentage;
 
     public static function make(): self
     {
@@ -86,7 +86,7 @@ final class InvoiceItem implements InvoiceItemInterface
             throw new InvalidInvoiceItemException('Unit price must be greater than or equal to 0');
         }
 
-        $this->unit_price = $unitPrice;
+        $this->unitPrice = $unitPrice;
 
         return $this;
     }
@@ -104,17 +104,17 @@ final class InvoiceItem implements InvoiceItemInterface
             throw new InvalidInvoiceItemException('Tax percentage must be between 0 and 100, or null');
         }
 
-        $this->tax_percentage = $taxPercentage;
+        $this->taxPercentage = $taxPercentage;
 
         return $this;
     }
 
     /**
-     * Calculate the total for this item (quantity * unit_price).
+     * Calculate the total for this item (quantity * unitPrice).
      */
     public function getTotal(): float
     {
-        return $this->unit_price * $this->quantity;
+        return $this->unitPrice * $this->quantity;
     }
 
     /**
@@ -123,11 +123,11 @@ final class InvoiceItem implements InvoiceItemInterface
      */
     public function getFormattedTaxPercentage(): string
     {
-        if ($this->tax_percentage === null) {
+        if ($this->taxPercentage === null) {
             return '';
         }
 
-        return $this->tax_percentage.'%';
+        return $this->taxPercentage.'%';
     }
 
     /**
@@ -147,12 +147,12 @@ final class InvoiceItem implements InvoiceItemInterface
             throw new InvalidInvoiceItemException("{$prefix} must have a quantity greater than 0");
         }
 
-        if ($this->unit_price < 0) {
-            throw new InvalidInvoiceItemException("{$prefix} must have a unit_price greater than or equal to 0");
+        if ($this->unitPrice < 0) {
+            throw new InvalidInvoiceItemException("{$prefix} must have a unitPrice greater than or equal to 0");
         }
 
-        if (isset($this->tax_percentage) && ($this->tax_percentage < 0 || $this->tax_percentage > 100)) {
-            throw new InvalidInvoiceItemException("{$prefix} must have a tax_percentage between 0 and 100, or null");
+        if (isset($this->taxPercentage) && ($this->taxPercentage < 0 || $this->taxPercentage > 100)) {
+            throw new InvalidInvoiceItemException("{$prefix} must have a taxPercentage between 0 and 100, or null");
         }
     }
 
@@ -167,8 +167,8 @@ final class InvoiceItem implements InvoiceItemInterface
             'title' => $this->title,
             'description' => $this->description ?? null,
             'quantity' => $this->quantity,
-            'unit_price' => $this->unit_price,
-            'tax_percentage' => $this->tax_percentage ?? null,
+            'unit_price' => $this->unitPrice,
+            'tax_percentage' => $this->taxPercentage ?? null,
         ];
     }
 }

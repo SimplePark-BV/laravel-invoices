@@ -4,10 +4,10 @@ namespace Tests\Feature;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Buyer;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
-use SimpleParkBv\Invoices\Invoice;
-use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Models\Buyer;
+use SimpleParkBv\Invoices\Models\Invoice;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
 
@@ -34,7 +34,7 @@ final class InvoiceValidationTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Test Item';
         $item->quantity = 1;
-        $item->unit_price = 10.00;
+        $item->unitPrice = 10.00;
         $invoice->items([$item]);
 
         // assert
@@ -78,8 +78,8 @@ final class InvoiceValidationTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = $itemData['title'] ?? 'Test Item';
         $item->quantity = $itemData['quantity'] ?? 1;
-        $item->unit_price = $itemData['unit_price'] ?? 10.00;
-        $item->tax_percentage = $itemData['tax_percentage'] ?? null;
+        $item->unitPrice = $itemData['unit_price'] ?? 10.00;
+        $item->taxPercentage = $itemData['tax_percentage'] ?? null;
         $invoice->items([$item]);
 
         // assert
@@ -110,15 +110,15 @@ final class InvoiceValidationTest extends TestCase
             ],
             'negative unit price' => [
                 ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => -10.00],
-                'Item at index 0 must have a unit_price greater than or equal to 0',
+                'Item at index 0 must have a unitPrice greater than or equal to 0',
             ],
             'tax percentage less than zero' => [
                 ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => -1],
-                'Item at index 0 must have a tax_percentage between 0 and 100, or null',
+                'Item at index 0 must have a taxPercentage between 0 and 100, or null',
             ],
             'tax percentage greater than hundred' => [
                 ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 101],
-                'Item at index 0 must have a tax_percentage between 0 and 100, or null',
+                'Item at index 0 must have a taxPercentage between 0 and 100, or null',
             ],
         ];
     }
@@ -139,8 +139,8 @@ final class InvoiceValidationTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = $itemData['title'];
         $item->quantity = $itemData['quantity'];
-        $item->unit_price = $itemData['unit_price'];
-        $item->tax_percentage = $itemData['tax_percentage'] ?? null;
+        $item->unitPrice = $itemData['unit_price'];
+        $item->taxPercentage = $itemData['tax_percentage'] ?? null;
         $invoice->items([$item]);
 
         // act & assert
@@ -200,7 +200,7 @@ final class InvoiceValidationTest extends TestCase
         $item1 = InvoiceItem::make();
         $item1->title = ''; // invalid: empty title
         $item1->quantity = 1;
-        $item1->unit_price = 10.00;
+        $item1->unitPrice = 10.00;
         $invoice->items([$item1]);
 
         // assert
@@ -224,12 +224,12 @@ final class InvoiceValidationTest extends TestCase
         $item1 = InvoiceItem::make();
         $item1->title = 'Valid Item';
         $item1->quantity = 1;
-        $item1->unit_price = 10.00;
+        $item1->unitPrice = 10.00;
 
         $item2 = InvoiceItem::make();
         $item2->title = 'Invalid Item';
         $item2->quantity = 0; // invalid: zero quantity
-        $item2->unit_price = 10.00;
+        $item2->unitPrice = 10.00;
         $invoice->items([$item1, $item2]);
 
         // assert
@@ -252,20 +252,20 @@ final class InvoiceValidationTest extends TestCase
         $item1 = InvoiceItem::make();
         $item1->title = 'Item 1';
         $item1->quantity = 1;
-        $item1->unit_price = 10.00;
-        $item1->tax_percentage = 21;
+        $item1->unitPrice = 10.00;
+        $item1->taxPercentage = 21;
 
         $item2 = InvoiceItem::make();
         $item2->title = 'Item 2';
         $item2->quantity = 2;
-        $item2->unit_price = 20.00;
-        $item2->tax_percentage = null;
+        $item2->unitPrice = 20.00;
+        $item2->taxPercentage = null;
 
         $item3 = InvoiceItem::make();
         $item3->title = 'Item 3';
         $item3->quantity = 0.5;
-        $item3->unit_price = 0;
-        $item3->tax_percentage = 0;
+        $item3->unitPrice = 0;
+        $item3->taxPercentage = 0;
         $invoice->items([$item1, $item2, $item3]);
 
         // act & assert

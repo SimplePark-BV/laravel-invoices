@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Config;
 use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Buyer;
-use SimpleParkBv\Invoices\Invoice;
-use SimpleParkBv\Invoices\InvoiceItem;
-use SimpleParkBv\Invoices\Seller;
+use SimpleParkBv\Invoices\Models\Buyer;
+use SimpleParkBv\Invoices\Models\Invoice;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
+use SimpleParkBv\Invoices\Models\Seller;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
 
@@ -160,7 +160,7 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Test Item';
         $item->quantity = 1;
-        $item->unit_price = 10.00;
+        $item->unitPrice = 10.00;
         $invoice->items([$item]);
 
         // act
@@ -184,8 +184,8 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Test Item';
         $item->quantity = 2;
-        $item->unit_price = 10.50;
-        $item->tax_percentage = 21;
+        $item->unitPrice = 10.50;
+        $item->taxPercentage = 21;
 
         $invoice = Invoice::make();
         $invoice->buyer($buyer);
@@ -262,7 +262,7 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Test Item';
         $item->quantity = 1;
-        $item->unit_price = 10.00;
+        $item->unitPrice = 10.00;
 
         // act
         $result = $invoice->items([$item]);
@@ -281,12 +281,12 @@ final class InvoiceTest extends TestCase
         $item1 = InvoiceItem::make();
         $item1->title = 'Item 1';
         $item1->quantity = 1;
-        $item1->unit_price = 10.00;
+        $item1->unitPrice = 10.00;
 
         $item2 = InvoiceItem::make();
         $item2->title = 'Item 2';
         $item2->quantity = 2;
-        $item2->unit_price = 20.00;
+        $item2->unitPrice = 20.00;
 
         // act
         $result = $invoice->items([$item1, $item2]);
@@ -310,7 +310,7 @@ final class InvoiceTest extends TestCase
             $item = InvoiceItem::make();
             $item->title = $itemData['title'];
             $item->quantity = $itemData['quantity'];
-            $item->unit_price = $itemData['unit_price'];
+            $item->unitPrice = $itemData['unit_price'];
             $invoiceItems[] = $item;
         }
         $invoice->items($invoiceItems);
@@ -350,8 +350,8 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Item';
         $item->quantity = 2;
-        $item->unit_price = 121.00; // 100 + 21% tax
-        $item->tax_percentage = 21;
+        $item->unitPrice = 121.00; // 100 + 21% tax
+        $item->taxPercentage = 21;
         $invoice->items([$item]);
 
         // act
@@ -372,7 +372,7 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Item';
         $item->quantity = 2;
-        $item->unit_price = 10.00;
+        $item->unitPrice = 10.00;
         $invoice->items([$item]);
 
         if ($forcedTotal !== null) {
@@ -405,14 +405,14 @@ final class InvoiceTest extends TestCase
         $item1 = InvoiceItem::make();
         $item1->title = 'Item 1';
         $item1->quantity = 1;
-        $item1->unit_price = 121.00; // 100 + 21% tax
-        $item1->tax_percentage = 21;
+        $item1->unitPrice = 121.00; // 100 + 21% tax
+        $item1->taxPercentage = 21;
 
         $item2 = InvoiceItem::make();
         $item2->title = 'Item 2';
         $item2->quantity = 1;
-        $item2->unit_price = 110.00; // 100 + 10% tax
-        $item2->tax_percentage = 10;
+        $item2->unitPrice = 110.00; // 100 + 10% tax
+        $item2->taxPercentage = 10;
 
         $invoice->items([$item1, $item2]);
 
@@ -434,26 +434,26 @@ final class InvoiceTest extends TestCase
         $item1 = InvoiceItem::make();
         $item1->title = 'Item 1';
         $item1->quantity = 1;
-        $item1->unit_price = 10.00;
-        $item1->tax_percentage = 21;
+        $item1->unitPrice = 10.00;
+        $item1->taxPercentage = 21;
 
         $item2 = InvoiceItem::make();
         $item2->title = 'Item 2';
         $item2->quantity = 1;
-        $item2->unit_price = 10.00;
-        $item2->tax_percentage = 9;
+        $item2->unitPrice = 10.00;
+        $item2->taxPercentage = 9;
 
         $item3 = InvoiceItem::make();
         $item3->title = 'Item 3';
         $item3->quantity = 1;
-        $item3->unit_price = 10.00;
-        $item3->tax_percentage = 21;
+        $item3->unitPrice = 10.00;
+        $item3->taxPercentage = 21;
 
         $item4 = InvoiceItem::make();
         $item4->title = 'Item 4';
         $item4->quantity = 1;
-        $item4->unit_price = 10.00;
-        $item4->tax_percentage = null;
+        $item4->unitPrice = 10.00;
+        $item4->taxPercentage = null;
 
         $invoice->items([$item1, $item2, $item3, $item4]);
 
@@ -475,14 +475,14 @@ final class InvoiceTest extends TestCase
         $item1 = InvoiceItem::make();
         $item1->title = 'Item 1';
         $item1->quantity = 1;
-        $item1->unit_price = 121.00;
-        $item1->tax_percentage = 21;
+        $item1->unitPrice = 121.00;
+        $item1->taxPercentage = 21;
 
         $item2 = InvoiceItem::make();
         $item2->title = 'Item 2';
         $item2->quantity = 1;
-        $item2->unit_price = 110.00;
-        $item2->tax_percentage = 10;
+        $item2->unitPrice = 110.00;
+        $item2->taxPercentage = 10;
 
         $invoice->items([$item1, $item2]);
 
@@ -512,8 +512,8 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Item';
         $item->quantity = 1;
-        $item->unit_price = 121.00;
-        $item->tax_percentage = 21;
+        $item->unitPrice = 121.00;
+        $item->taxPercentage = 21;
         $invoice->items([$item]);
 
         // act
@@ -597,7 +597,7 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Item';
         $item->quantity = 1;
-        $item->unit_price = 10.50;
+        $item->unitPrice = 10.50;
         $invoice->items([$item]);
 
         // act
@@ -615,8 +615,8 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Item';
         $item->quantity = 1;
-        $item->unit_price = 121.00;
-        $item->tax_percentage = 21;
+        $item->unitPrice = 121.00;
+        $item->taxPercentage = 21;
         $invoice->items([$item]);
 
         // act
@@ -940,7 +940,7 @@ final class InvoiceTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Item';
         $item->quantity = 1;
-        $item->unit_price = 10.00;
+        $item->unitPrice = 10.00;
         $invoice->items([$item]);
         $invoice->date('2024-01-15');
         $invoice->pay_until_days = 30;

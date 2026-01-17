@@ -4,7 +4,7 @@ namespace Tests\Unit\Models;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Buyer;
+use SimpleParkBv\Invoices\Models\Buyer;
 use Tests\TestCase;
 
 final class PartyTest extends TestCase
@@ -50,8 +50,8 @@ final class PartyTest extends TestCase
             'address null' => ['address', null, 'getAddress', null],
             'city with value' => ['city', 'Test City', 'getCity', 'Test City'],
             'city null' => ['city', null, 'getCity', null],
-            'postal_code with value' => ['postal_code', '12345', 'getPostalCode', '12345'],
-            'postal_code null' => ['postal_code', null, 'getPostalCode', null],
+            'postalCode with value' => ['postalCode', '12345', 'getPostalCode', '12345'],
+            'postalCode null' => ['postalCode', null, 'getPostalCode', null],
             'country with value' => ['country', 'Test Country', 'getCountry', 'Test Country'],
             'country null' => ['country', null, 'getCountry', null],
             'email with value' => ['email', 'test@example.com', 'getEmail', 'test@example.com'],
@@ -71,7 +71,7 @@ final class PartyTest extends TestCase
         $buyer->name = 'Test Buyer';
         $buyer->address = '123 Test St';
         $buyer->city = 'Test City';
-        $buyer->postal_code = '12345';
+        $buyer->postalCode = '12345';
         $buyer->country = 'Test Country';
         $buyer->email = 'test@example.com';
         $buyer->phone = '+1234567890';
@@ -84,7 +84,7 @@ final class PartyTest extends TestCase
         $this->assertEquals('Test Buyer', $array['name']);
         $this->assertEquals('123 Test St', $array['address']);
         $this->assertEquals('Test City', $array['city']);
-        $this->assertEquals('12345', $array['postal_code']);
+        $this->assertEquals('12345', $array['postal_code']); // toArray uses snake_case
         $this->assertEquals('Test Country', $array['country']);
         $this->assertEquals('test@example.com', $array['email']);
         $this->assertEquals('+1234567890', $array['phone']);
@@ -106,7 +106,7 @@ final class PartyTest extends TestCase
         $this->assertEquals('Test Buyer', $array['name']);
         $this->assertNull($array['address']);
         $this->assertNull($array['city']);
-        $this->assertNull($array['postal_code']);
+        $this->assertNull($array['postal_code']); // toArray uses snake_case
         $this->assertNull($array['country']);
         $this->assertNull($array['email']);
         $this->assertNull($array['phone']);

@@ -3,7 +3,7 @@
 namespace SimpleParkBv\Invoices\Traits;
 
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 use SimpleParkBv\Invoices\Services\CurrencyFormatter;
 use SimpleParkBv\Invoices\Services\TaxCalculator;
 
@@ -13,7 +13,7 @@ use SimpleParkBv\Invoices\Services\TaxCalculator;
 trait HasInvoiceItems
 {
     /**
-     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\InvoiceItem>
+     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>
      */
     public Collection $items;
 
@@ -28,7 +28,7 @@ trait HasInvoiceItems
     /**
      * Set all items for the invoice (replaces existing items).
      *
-     * @param  array<int, \SimpleParkBv\Invoices\InvoiceItem>  $items
+     * @param  array<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
      */
     public function items(array $items): self
     {
@@ -40,8 +40,8 @@ trait HasInvoiceItems
     /**
      * Calculate the total tax amount.
      *
-     * Sums taxes only for items that have a tax_percentage set (excludes null items).
-     * Calculates tax from unit_price which includes tax.
+     * Sums taxes only for items that have a taxPercentage set (excludes null items).
+     * Calculates tax from unitPrice which includes tax.
      */
     public function getTaxAmount(): float
     {
@@ -49,13 +49,13 @@ trait HasInvoiceItems
     }
 
     /**
-     * Get the sum of all items (unit_price * quantity for all items).
+     * Get the sum of all items (unitPrice * quantity for all items).
      * This is the total before subtracting VATs.
      */
     public function getItemsTotal(): float
     {
         return $this->items->sum(
-            static fn (InvoiceItem $item): float => $item->unit_price * $item->quantity
+            static fn (InvoiceItem $item): float => $item->unitPrice * $item->quantity
         );
     }
 
@@ -146,7 +146,7 @@ trait HasInvoiceItems
 
     /**
      * Calculate the tax amount for items with a specific tax percentage.
-     * Calculates tax from unit_price which includes tax.
+     * Calculates tax from unitPrice which includes tax.
      */
     public function getTaxAmountForTaxGroup(float $taxPercentage): float
     {

@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Buyer;
+use SimpleParkBv\Invoices\Models\Buyer;
 use Tests\TestCase;
 
 final class BuyerTest extends TestCase
@@ -25,7 +25,7 @@ final class BuyerTest extends TestCase
         $buyer = Buyer::make();
 
         // assert
-        $this->assertInstanceOf(\SimpleParkBv\Invoices\Party::class, $buyer);
+        $this->assertInstanceOf(\SimpleParkBv\Invoices\Models\Party::class, $buyer);
     }
 
     #[Test]

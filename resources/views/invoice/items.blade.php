@@ -1,3 +1,7 @@
+@php
+    use SimpleParkBv\Invoices\Services\CurrencyFormatter;
+@endphp
+
 {{-- invoice items table --}}
 <table class="invoice__items">
     <thead>
@@ -19,8 +23,8 @@
                         <br><span class="invoice__items-description">{{ $item->description }}</span>
                     @endif
                 </td>
-                <td class="invoice__items-cell invoice__items-cell--right">€ {{ number_format($item->unit_price, 2, ',', '.') }}</td>
-                <td class="invoice__items-cell invoice__items-cell--right">€ {{ number_format($item->getTotal(), 2, ',', '.') }}</td>
+                <td class="invoice__items-cell invoice__items-cell--right">{{ CurrencyFormatter::format($item->unitPrice) }}</td>
+                <td class="invoice__items-cell invoice__items-cell--right">{{ CurrencyFormatter::format($item->getTotal()) }}</td>
                 <td class="invoice__items-cell invoice__items-cell--right">{{ $item->getFormattedTaxPercentage() }}</td>
             </tr>
         @endforeach
@@ -36,9 +40,9 @@
                 @endforeach
             </td>
             <td class="invoice__totals-cell">
-                <span>€ {{ number_format($invoice->getFormattedSubTotal(), 2, ',', '.') }}</span>
+                <span>{{ CurrencyFormatter::format($invoice->getFormattedSubTotal()) }}</span>
                 @foreach($invoice->getTaxGroups() as $taxPercentage)
-                    <span>€ {{ number_format($invoice->getTaxAmountForTaxGroup($taxPercentage), 2, ',', '.') }}</span>
+                    <span>{{ CurrencyFormatter::format($invoice->getTaxAmountForTaxGroup($taxPercentage)) }}</span>
                 @endforeach
             </td>
             <td class="invoice__items-cell-no-border invoice__items-cell"></td>

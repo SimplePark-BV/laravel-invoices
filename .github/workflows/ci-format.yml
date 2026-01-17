@@ -20,13 +20,6 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Create .env file
-        run: |
-          cat << EOF > .env
-          MOLLIE_API_KEY=${{ secrets.MOLLIE_API_KEY }}
-          GOOGLE_CLOUD_PROJECT_ID=${{ secrets.GOOGLE_CLOUD_PROJECT_ID }}
-          EOF
-
       - name: Set up PHP
         uses: shivammathur/setup-php@2.32.0
         with:

@@ -1,13 +1,21 @@
 {
     "name": "simplepark-bv/laravel-invoices",
+    "description": "Generate professional PDF invoices for Laravel applications",
     "type": "library",
     "license": "MIT",
     "minimum-stability": "stable",
     "keywords": [
-        "simplepark",
         "laravel",
-        "invoices"
+        "invoice",
+        "pdf",
+        "dompdf",
+        "invoice-generator"
     ],
+    "homepage": "https://github.com/simplepark-bv/laravel-invoices",
+    "support": {
+        "issues": "https://github.com/simplepark-bv/laravel-invoices/issues",
+        "source": "https://github.com/simplepark-bv/laravel-invoices"
+    },
     "authors": [
         {
             "name": "Lucas Castelein",
@@ -19,25 +27,20 @@
         }
     ],
     "require": {
-        "php": "^8.4",
+        "php": "^8.2",
         "illuminate/support": "^11.0|^12.0",
-        "laravel/framework": "^11.0|^12.0",
         "barryvdh/laravel-dompdf": "^3.1"
     },
     "require-dev": {
         "laravel/pint": "^1.13",
         "larastan/larastan": "^3.3",
-        "laravel/sail": "^1.26",
         "orchestra/testbench": "^10.0",
         "phpunit/phpunit": "^11.0"
     },
     "autoload": {
         "psr-4": {
             "SimpleParkBv\\Invoices\\": "src/"
-        },
-        "classmap": [
-            "src/Classes"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

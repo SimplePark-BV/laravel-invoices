@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Config;
 use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Buyer;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
-use SimpleParkBv\Invoices\Invoice;
-use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Models\Buyer;
+use SimpleParkBv\Invoices\Models\Invoice;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
 use Tests\Traits\MocksPdfGeneration;
@@ -131,7 +131,7 @@ final class InvoicePdfGenerationTest extends TestCase
         $item = InvoiceItem::make();
         $item->title = 'Item';
         $item->quantity = 1;
-        $item->unit_price = 10.00;
+        $item->unitPrice = 10.00;
         $invoice->items([$item]);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
