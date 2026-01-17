@@ -5,8 +5,8 @@ namespace SimpleParkBv\Invoices\Contracts;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\Buyer;
-use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Models\Buyer;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 
 /**
  * Interface for invoice implementations.

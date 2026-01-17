@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices;
+namespace SimpleParkBv\Invoices\Models;
 
 use RuntimeException;
 

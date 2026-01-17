@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices;
+namespace SimpleParkBv\Invoices\Models;
 
 use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;

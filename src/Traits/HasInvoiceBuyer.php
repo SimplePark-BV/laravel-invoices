@@ -2,7 +2,7 @@
 
 namespace SimpleParkBv\Invoices\Traits;
 
-use SimpleParkBv\Invoices\Buyer;
+use SimpleParkBv\Invoices\Models\Buyer;
 
 /**
  * Trait HasInvoiceBuyer

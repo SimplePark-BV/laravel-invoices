@@ -3,7 +3,7 @@
 namespace SimpleParkBv\Invoices\Traits;
 
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 use SimpleParkBv\Invoices\Services\CurrencyFormatter;
 use SimpleParkBv\Invoices\Services\TaxCalculator;
 

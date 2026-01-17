@@ -3,7 +3,7 @@
 namespace SimpleParkBv\Invoices\Services;
 
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\InvoiceItem;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 
 /**
  * Service class for calculating taxes on invoice items.
