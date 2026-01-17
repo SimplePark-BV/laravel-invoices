@@ -33,7 +33,7 @@
     },
     "autoload": {
         "psr-4": {
-            "SimpleParkBv\\Invoices\\": "src/Classes/"
+            "SimpleParkBv\\Invoices\\": "src/"
         }
     },
     "autoload-dev": {
