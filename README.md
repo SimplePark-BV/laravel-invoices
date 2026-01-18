@@ -313,7 +313,7 @@ Run Pint for code formatting:
 Make sure:
 - Buyer is set with at least a name
 - At least one item is added
-- All items have valid data (title, quantity > 0, unitPrice >= 0)
+- All items have valid data (title, quantity > 0)
 
 ### PDF generation fails
 
