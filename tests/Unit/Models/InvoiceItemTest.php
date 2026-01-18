@@ -49,6 +49,7 @@ final class InvoiceItemTest extends TestCase
             'quantity float' => ['quantity', 2.5, 'quantity', 2.5],
             'unit price' => ['unitPrice', 10.50, 'unitPrice', 10.50],
             'unit price zero' => ['unitPrice', 0, 'unitPrice', 0],
+            'unit price negative' => ['unitPrice', -5.00, 'unitPrice', -5.00],
             'tax percentage' => ['taxPercentage', 21, 'taxPercentage', 21],
             'tax percentage zero' => ['taxPercentage', 0, 'taxPercentage', 0],
             'tax percentage hundred' => ['taxPercentage', 100, 'taxPercentage', 100],
@@ -80,20 +81,6 @@ final class InvoiceItemTest extends TestCase
             'zero' => [0],
             'negative' => [-1],
         ];
-    }
-
-    #[Test]
-    public function unit_price_throws_exception_for_negative(): void
-    {
-        // arrange
-        $item = InvoiceItem::make();
-
-        // assert
-        $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Unit price must be greater than or equal to 0');
-
-        // act
-        $item->unitPrice(-10.50);
     }
 
     #[Test]
@@ -146,6 +133,8 @@ final class InvoiceItemTest extends TestCase
         return [
             'int values' => [3, 10.50, 31.50],
             'float quantity' => [2.5, 10.00, 25.00],
+            'negative unit price (discount)' => [1, -5.00, -5.00],
+            'multiple quantity with negative price' => [2, -10.00, -20.00],
         ];
     }
 
@@ -372,23 +361,6 @@ final class InvoiceItemTest extends TestCase
     }
 
     #[Test]
-    public function validate_throws_exception_for_negative_unit_price(): void
-    {
-        // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = -10.00;
-
-        // assert
-        $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Item must have a unitPrice greater than or equal to 0');
-
-        // act
-        $item->validate();
-    }
-
-    #[Test]
     public function validate_throws_exception_for_invalid_tax_percentage(): void
     {
         // arrange
@@ -433,5 +405,38 @@ final class InvoiceItemTest extends TestCase
         // assert
         $this->assertSame($item, $result);
         $this->assertNull($item->description);
+    }
+
+    #[Test]
+    public function discount_item_with_negative_unit_price(): void
+    {
+        // arrange
+        $item = InvoiceItem::make()
+            ->title('Discount')
+            ->quantity(1)
+            ->unitPrice(-5.00)
+            ->taxPercentage(0);
+
+        // act
+        $total = $item->getTotal();
+
+        // assert
+        $this->assertEquals(-5.00, $total);
+        $this->assertEquals(-5.00, $item->getUnitPrice());
+    }
+
+    #[Test]
+    public function negative_unit_price_passes_validation(): void
+    {
+        // arrange
+        $item = InvoiceItem::make();
+        $item->title = 'Discount Item';
+        $item->quantity = 1;
+        $item->unitPrice = -10.00;
+        $item->taxPercentage = 0;
+
+        // act & assert
+        $this->expectNotToPerformAssertions();
+        $item->validate();
     }
 }

@@ -107,6 +107,30 @@ $items = [
 $invoice->items($items);
 ```
 
+### Discount Items
+
+You can create discount items by using negative unit prices:
+
+```php
+$items = [
+    InvoiceItem::make()
+        ->title('Product')
+        ->quantity(1)
+        ->unitPrice(100.00)
+        ->taxPercentage(21.0),
+    InvoiceItem::make()
+        ->title('Discount Code: SAVE10')
+        ->quantity(1)
+        ->unitPrice(-10.00)
+        ->taxPercentage(0),
+];
+
+$invoice->items($items);
+// total will be 90.00 (plus tax on 90.00)
+```
+
+Note: Use negative unit prices for discounts, not negative quantities. Quantities must always be positive.
+
 ### Forced Total
 
 Sometimes you need to override the calculated total to match an external system:
@@ -230,8 +254,8 @@ $array = $invoice->toArray();
 - `make()` - Create a new item instance
 - `title(string $title)` - Set item title
 - `description(?string $description)` - Set item description
-- `quantity(float|int $quantity)` - Set quantity
-- `unitPrice(float|int $unitPrice)` - Set unit price
+- `quantity(float|int $quantity)` - Set quantity (must be > 0)
+- `unitPrice(float|int $unitPrice)` - Set unit price (can be negative for discounts)
 - `taxPercentage(?float $taxPercentage)` - Set tax percentage
 - `getTotal()` - Calculate item total (quantity * unitPrice)
 - `getFormattedTaxPercentage()` - Get formatted tax percentage
@@ -245,7 +269,7 @@ Before rendering, the invoice must have:
 - Each item must have:
   - A non-empty title
   - A quantity greater than 0
-  - A unitPrice greater than or equal to 0
+  - A unitPrice (can be negative for discount items)
   - A taxPercentage between 0 and 100, or null
 
 ## Development
