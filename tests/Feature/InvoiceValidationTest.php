@@ -108,10 +108,6 @@ final class InvoiceValidationTest extends TestCase
                 ['title' => 'Test Item', 'quantity' => -1, 'unit_price' => 10.00],
                 'Item at index 0 must have a quantity greater than 0',
             ],
-            'negative unit price' => [
-                ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => -10.00],
-                'Item at index 0 must have a unitPrice greater than or equal to 0',
-            ],
             'tax percentage less than zero' => [
                 ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => -1],
                 'Item at index 0 must have a taxPercentage between 0 and 100, or null',
@@ -156,6 +152,9 @@ final class InvoiceValidationTest extends TestCase
         return [
             'zero unit price' => [
                 ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => 0],
+            ],
+            'negative unit price (discount)' => [
+                ['title' => 'Discount', 'quantity' => 1, 'unit_price' => -10.00],
             ],
             'null tax percentage' => [
                 ['title' => 'Test Item', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => null],

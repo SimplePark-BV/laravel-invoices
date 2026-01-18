@@ -75,17 +75,12 @@ final class InvoiceItem implements InvoiceItemInterface
 
     /**
      * Set the unit price of the item.
+     * Negative values are allowed for discount items.
      *
      * @return $this
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
      */
     public function unitPrice(float|int $unitPrice): self
     {
-        if ($unitPrice < 0) {
-            throw new InvalidInvoiceItemException('Unit price must be greater than or equal to 0');
-        }
-
         $this->unitPrice = $unitPrice;
 
         return $this;
@@ -179,9 +174,7 @@ final class InvoiceItem implements InvoiceItemInterface
             throw new InvalidInvoiceItemException("{$prefix} must have a quantity greater than 0");
         }
 
-        if ($this->unitPrice < 0) {
-            throw new InvalidInvoiceItemException("{$prefix} must have a unitPrice greater than or equal to 0");
-        }
+        // unit price can be negative for discount items
 
         if (isset($this->taxPercentage) && ($this->taxPercentage < 0 || $this->taxPercentage > 100)) {
             throw new InvalidInvoiceItemException("{$prefix} must have a taxPercentage between 0 and 100, or null");
