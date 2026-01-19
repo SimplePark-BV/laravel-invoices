@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices\Traits;
+namespace SimpleParkBv\Invoices\Models\Traits;
 
 use RuntimeException;
 
@@ -26,12 +26,23 @@ trait HasLanguage
     }
 
     /**
-     * Clear the cached available languages.
-     * Useful for testing or when languages are added at runtime.
+     * Set the language.
+     *
+     * @return $this
+     *
+     * @throws \RuntimeException
      */
-    public static function clearLanguageCache(): void
+    public function language(string $language): self
     {
-        self::$cachedAvailableLanguages = null;
+        $availableLanguages = $this->getAvailableLanguages();
+
+        if (! in_array($language, $availableLanguages, true)) {
+            throw new RuntimeException("Language '{$language}' is not supported. Available languages: ".implode(', ', $availableLanguages));
+        }
+
+        $this->language = $language;
+
+        return $this;
     }
 
     /**
@@ -69,22 +80,11 @@ trait HasLanguage
     }
 
     /**
-     * Set the language.
-     *
-     * @return $this
-     *
-     * @throws \RuntimeException
+     * Clear the cached available languages.
+     * Useful for testing or when languages are added at runtime.
      */
-    public function language(string $language): self
+    public static function clearLanguageCache(): void
     {
-        $availableLanguages = $this->getAvailableLanguages();
-
-        if (! in_array($language, $availableLanguages, true)) {
-            throw new RuntimeException("Language '{$language}' is not supported. Available languages: ".implode(', ', $availableLanguages));
-        }
-
-        $this->language = $language;
-
-        return $this;
+        self::$cachedAvailableLanguages = null;
     }
 }

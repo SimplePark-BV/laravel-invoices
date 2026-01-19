@@ -9,20 +9,22 @@ use Illuminate\Support\Facades\App;
 use RuntimeException;
 use SimpleParkBv\Invoices\Contracts\InvoiceInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
-use SimpleParkBv\Invoices\Traits\HasBuyer;
-use SimpleParkBv\Invoices\Traits\HasDates;
-use SimpleParkBv\Invoices\Traits\HasInvoiceFooter;
-use SimpleParkBv\Invoices\Traits\HasInvoiceItems;
-use SimpleParkBv\Invoices\Traits\HasInvoiceNumber;
-use SimpleParkBv\Invoices\Traits\HasLanguage;
-use SimpleParkBv\Invoices\Traits\HasLogo;
-use SimpleParkBv\Invoices\Traits\HasTemplate;
+use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
+use SimpleParkBv\Invoices\Models\Traits\HasBuyer;
+use SimpleParkBv\Invoices\Models\Traits\HasDates;
+use SimpleParkBv\Invoices\Models\Traits\HasInvoiceFooter;
+use SimpleParkBv\Invoices\Models\Traits\HasInvoiceItems;
+use SimpleParkBv\Invoices\Models\Traits\HasInvoiceNumber;
+use SimpleParkBv\Invoices\Models\Traits\HasLanguage;
+use SimpleParkBv\Invoices\Models\Traits\HasLogo;
+use SimpleParkBv\Invoices\Models\Traits\HasTemplate;
 
 /**
  * Class Invoice
  */
 final class Invoice implements InvoiceInterface
 {
+    use CanFillFromArray;
     use HasBuyer;
     use HasDates;
     use HasInvoiceFooter;
@@ -81,75 +83,21 @@ final class Invoice implements InvoiceInterface
 
         // set buyer if provided
         if (isset($data['buyer']) && is_array($data['buyer'])) {
-            $buyer = Buyer::make();
-
-            foreach ($data['buyer'] as $key => $value) {
-                if (property_exists($buyer, $key)) {
-                    $buyer->$key = $value;
-                }
-            }
-
-            $invoice->buyer($buyer);
-        }
-
-        // set date if provided
-        if (isset($data['date'])) {
-            $invoice->date($data['date']);
+            $invoice->buyer(Buyer::make()->fill($data['buyer']));
         }
 
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
-            $items = [];
-            foreach ($data['items'] as $itemData) {
-                $item = InvoiceItem::make();
+            $items = array_map(
+                static fn (array $itemData) => InvoiceItem::fromArray($itemData),
+                $data['items']
+            );
 
-                if (isset($itemData['title'])) {
-                    $item->title($itemData['title']);
-                }
-
-                if (isset($itemData['description'])) {
-                    $item->description($itemData['description']);
-                }
-
-                if (isset($itemData['quantity'])) {
-                    $item->quantity($itemData['quantity']);
-                }
-
-                if (isset($itemData['unit_price'])) {
-                    $item->unitPrice($itemData['unit_price']);
-                }
-
-                if (isset($itemData['tax_percentage'])) {
-                    $item->taxPercentage($itemData['tax_percentage']);
-                }
-
-                $items[] = $item;
-            }
             $invoice->items($items);
         }
 
-        // set invoice number if provided
-        if (isset($data['serial'])) {
-            $invoice->serial($data['serial']);
-        }
-
-        if (isset($data['series'])) {
-            $invoice->series($data['series']);
-        }
-
-        if (isset($data['sequence'])) {
-            $invoice->sequence($data['sequence']);
-        }
-
-        // set language if provided
-        if (isset($data['language'])) {
-            $invoice->language($data['language']);
-        }
-
-        // set forced total if provided
-        if (isset($data['forced_total'])) {
-            $invoice->forcedTotal($data['forced_total']);
-        }
+        // fill remaining properties (date, serial, series, sequence, language, forced_total)
+        $invoice->fill($data);
 
         return $invoice;
     }

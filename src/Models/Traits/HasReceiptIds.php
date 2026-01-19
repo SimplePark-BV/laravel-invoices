@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices\Traits;
+namespace SimpleParkBv\Invoices\Models\Traits;
 
 /**
  * Trait HasReceiptIds
@@ -27,14 +27,6 @@ trait HasReceiptIds
     }
 
     /**
-     * Get the document ID.
-     */
-    public function getDocumentId(): ?string
-    {
-        return $this->documentId ?? null;
-    }
-
-    /**
      * Set the user ID.
      *
      * @return $this
@@ -44,6 +36,14 @@ trait HasReceiptIds
         $this->userId = $userId;
 
         return $this;
+    }
+
+    /**
+     * Get the document ID.
+     */
+    public function getDocumentId(): ?string
+    {
+        return $this->documentId ?? null;
     }
 
     /**

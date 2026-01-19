@@ -3,12 +3,15 @@
 namespace SimpleParkBv\Invoices\Models;
 
 use SimpleParkBv\Invoices\Contracts\PartyInterface;
+use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 
 /**
  * Class Buyer
  */
 final class Buyer extends Party
 {
+    use CanFillFromArray;
+
     public static function make(): self
     {
         return new self;
@@ -19,18 +22,15 @@ final class Buyer extends Party
      */
     public static function fromParty(PartyInterface $party): self
     {
-        $buyer = self::make();
-        $data = $party->toArray();
-
-        $buyer->name = $data['name'];
-        $buyer->address = $data['address'];
-        $buyer->city = $data['city'];
-        $buyer->postalCode = $data['postal_code'];
-        $buyer->country = $data['country'];
-        $buyer->email = $data['email'];
-        $buyer->phone = $data['phone'];
-        $buyer->website = $data['website'];
-
-        return $buyer;
+        return self::make()->fill([
+            'name' => $party->getName(),
+            'address' => $party->getAddress(),
+            'city' => $party->getCity(),
+            'postalCode' => $party->getPostalCode(),
+            'country' => $party->getCountry(),
+            'email' => $party->getEmail(),
+            'phone' => $party->getPhone(),
+            'website' => $party->getWebsite(),
+        ]);
     }
 }

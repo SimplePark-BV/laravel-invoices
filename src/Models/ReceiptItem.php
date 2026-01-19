@@ -3,39 +3,52 @@
 namespace SimpleParkBv\Invoices\Models;
 
 use Illuminate\Support\Carbon;
+use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 use SimpleParkBv\Invoices\Services\CurrencyFormatter;
 
 /**
  * Class ReceiptItem
  *
- * Represents a single parking session in a usage receipt
+ * Represents a single item/session in a usage receipt
  *
  * @property string $user
- * @property string $licensePlate
+ * @property string $identifier
  * @property \Illuminate\Support\Carbon $startDate
  * @property \Illuminate\Support\Carbon $endDate
- * @property string $zone
+ * @property string $category
  * @property float $price
  */
 final class ReceiptItem
 {
-    public string $user;
+    use CanFillFromArray;
 
-    public string $licensePlate;
+    public ?string $user = null;
 
-    public Carbon $startDate;
+    public ?string $identifier = null;
 
-    public Carbon $endDate;
+    public ?Carbon $startDate = null;
 
-    public string $zone;
+    public ?Carbon $endDate = null;
 
-    public float $price;
+    public ?string $category = null;
 
-    public string $date_format = 'd-m-Y H:i';
+    public ?float $price = null;
+
+    public string $dateFormat = 'd-m-Y H:i';
 
     public static function make(): self
     {
         return new self;
+    }
+
+    /**
+     * Create a receipt item from an array of data.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function fromArray(array $data): self
+    {
+        return self::make()->fill($data);
     }
 
     /**
@@ -51,13 +64,13 @@ final class ReceiptItem
     }
 
     /**
-     * Set the license plate.
+     * Set the identifier.
      *
      * @return $this
      */
-    public function licensePlate(string $licensePlate): self
+    public function identifier(string $identifier): self
     {
-        $this->licensePlate = $licensePlate;
+        $this->identifier = $identifier;
 
         return $this;
     }
@@ -95,13 +108,13 @@ final class ReceiptItem
     }
 
     /**
-     * Set the zone.
+     * Set the category.
      *
      * @return $this
      */
-    public function zone(string $zone): self
+    public function category(string $category): self
     {
-        $this->zone = $zone;
+        $this->category = $category;
 
         return $this;
     }
@@ -127,11 +140,11 @@ final class ReceiptItem
     }
 
     /**
-     * Get the license plate.
+     * Get the identifier.
      */
-    public function getLicensePlate(): string
+    public function getIdentifier(): string
     {
-        return $this->licensePlate;
+        return $this->identifier;
     }
 
     /**
@@ -151,11 +164,11 @@ final class ReceiptItem
     }
 
     /**
-     * Get the zone.
+     * Get the category.
      */
-    public function getZone(): string
+    public function getCategory(): string
     {
-        return $this->zone;
+        return $this->category;
     }
 
     /**
@@ -171,7 +184,7 @@ final class ReceiptItem
      */
     public function getFormattedStartDate(): string
     {
-        return $this->startDate->format($this->date_format);
+        return $this->startDate->format($this->dateFormat);
     }
 
     /**
@@ -179,7 +192,7 @@ final class ReceiptItem
      */
     public function getFormattedEndDate(): string
     {
-        return $this->endDate->format($this->date_format);
+        return $this->endDate->format($this->dateFormat);
     }
 
     /**
@@ -199,31 +212,29 @@ final class ReceiptItem
     {
         $prefix = $index !== null ? "Item at index {$index}" : 'Item';
 
-        if (empty($this->user)) {
-            throw new \RuntimeException("{$prefix} must have a user");
+        // validate required string fields
+        foreach (['user', 'identifier', 'category'] as $field) {
+            if (empty($this->$field)) {
+                throw new \RuntimeException("{$prefix} must have a {$field}");
+            }
         }
 
-        if (empty($this->licensePlate)) {
-            throw new \RuntimeException("{$prefix} must have a license plate");
-        }
-
-        if (! isset($this->startDate)) {
+        // validate required date fields
+        if ($this->startDate === null) {
             throw new \RuntimeException("{$prefix} must have a start date");
         }
 
-        if (! isset($this->endDate)) {
+        if ($this->endDate === null) {
             throw new \RuntimeException("{$prefix} must have an end date");
         }
 
+        // validate date logic
         if ($this->endDate->lt($this->startDate)) {
             throw new \RuntimeException("{$prefix} end date must be after start date");
         }
 
-        if (empty($this->zone)) {
-            throw new \RuntimeException("{$prefix} must have a zone");
-        }
-
-        if (! isset($this->price)) {
+        // validate price
+        if ($this->price === null) {
             throw new \RuntimeException("{$prefix} must have a price");
         }
 
@@ -241,10 +252,10 @@ final class ReceiptItem
     {
         return [
             'user' => $this->user,
-            'license_plate' => $this->licensePlate,
+            'identifier' => $this->identifier,
             'start_date' => $this->startDate->toIso8601String(),
             'end_date' => $this->endDate->toIso8601String(),
-            'zone' => $this->zone,
+            'category' => $this->category,
             'price' => $this->price,
         ];
     }

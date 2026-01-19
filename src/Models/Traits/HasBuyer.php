@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices\Traits;
+namespace SimpleParkBv\Invoices\Models\Traits;
 
 use SimpleParkBv\Invoices\Contracts\PartyInterface;
 use SimpleParkBv\Invoices\Models\Buyer;

@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices\Traits;
+namespace SimpleParkBv\Invoices\Models\Traits;
 
 use Illuminate\Support\Collection;
 use SimpleParkBv\Invoices\Models\ReceiptItem;
@@ -37,16 +37,6 @@ trait HasReceiptItems
     }
 
     /**
-     * Get the sum of all parking session prices.
-     */
-    public function getItemsTotal(): float
-    {
-        return $this->items->sum(
-            static fn (ReceiptItem $item): float => $item->price
-        );
-    }
-
-    /**
      * Force a specific total amount that will override the calculated total.
      * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
      */
@@ -55,6 +45,16 @@ trait HasReceiptItems
         $this->forcedTotal = $amount;
 
         return $this;
+    }
+
+    /**
+     * Get the sum of all parking session prices.
+     */
+    public function getItemsTotal(): float
+    {
+        return $this->items->sum(
+            static fn (ReceiptItem $item): float => $item->price
+        );
     }
 
     /**

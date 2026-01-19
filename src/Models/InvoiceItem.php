@@ -4,6 +4,7 @@ namespace SimpleParkBv\Invoices\Models;
 
 use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
+use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 
 /**
  * Class InvoiceItem
@@ -16,6 +17,8 @@ use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
  */
 final class InvoiceItem implements InvoiceItemInterface
 {
+    use CanFillFromArray;
+
     public string $title;
 
     public ?string $description;
@@ -29,6 +32,16 @@ final class InvoiceItem implements InvoiceItemInterface
     public static function make(): self
     {
         return new self;
+    }
+
+    /**
+     * Create an invoice item from an array of data.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function fromArray(array $data): self
+    {
+        return self::make()->fill($data);
     }
 
     /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace SimpleParkBv\Invoices\Traits;
+namespace SimpleParkBv\Invoices\Models\Traits;
 
 use Illuminate\Support\Collection;
 use SimpleParkBv\Invoices\Models\InvoiceItem;
@@ -33,6 +33,17 @@ trait HasInvoiceItems
     public function items(array $items): self
     {
         $this->items = collect($items);
+
+        return $this;
+    }
+
+    /**
+     * Force a specific total amount that will override the calculated total.
+     * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
+     */
+    public function forcedTotal(float $amount): self
+    {
+        $this->forcedTotal = $amount;
 
         return $this;
     }
@@ -83,17 +94,6 @@ trait HasInvoiceItems
             ->sum(fn (float $taxPercentage): float => round($this->getTaxAmountForTaxGroup($taxPercentage), 2));
 
         return round($total - $sumOfRoundedTaxGroups, 2);
-    }
-
-    /**
-     * Force a specific total amount that will override the calculated total.
-     * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
-     */
-    public function forcedTotal(float $amount): self
-    {
-        $this->forcedTotal = $amount;
-
-        return $this;
     }
 
     /**

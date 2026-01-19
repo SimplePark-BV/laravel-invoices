@@ -14,10 +14,10 @@
         @foreach($usageReceipt->items as $item)
         <tr>
             <td class="usage-receipt__sessions-cell">{{ $item->getUser() }}</td>
-            <td class="usage-receipt__sessions-cell">{{ $item->getLicensePlate() }}</td>
+            <td class="usage-receipt__sessions-cell">{{ $item->getIdentifier() }}</td>
             <td class="usage-receipt__sessions-cell">{{ $item->getFormattedStartDate() }}</td>
             <td class="usage-receipt__sessions-cell">{{ $item->getFormattedEndDate() }}</td>
-            <td class="usage-receipt__sessions-cell">{{ $item->getZone() }}</td>
+            <td class="usage-receipt__sessions-cell">{{ $item->getCategory() }}</td>
             <td class="usage-receipt__sessions-cell usage-receipt__sessions-cell--right">{{ $item->getFormattedPrice() }}</td>
         </tr>
         @endforeach

@@ -71,10 +71,10 @@ class UsageReceiptRenderer extends TestCase
         for ($i = 0; $i < 20; $i++) {
             $session = \SimpleParkBv\Invoices\Models\ReceiptItem::make();
             $session->user('Jasper Demmers');
-            $session->licensePlate('GJJ73R');
+            $session->identifier('GJJ73R');
             $session->startDate('2025-10-22 19:44:00');
             $session->endDate('2025-10-22 20:44:00');
-            $session->zone('5132');
+            $session->category('5132');
             $session->price(12.37);
             $sessions[] = $session;
         }

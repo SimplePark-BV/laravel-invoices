@@ -822,7 +822,7 @@ final class InvoiceTest extends TestCase
         // arrange
         $invoice = Invoice::make();
         $invoice->date('2024-01-15');
-        $invoice->date_format = $dateFormat;
+        $invoice->dateFormat = $dateFormat;
 
         // act
         $formatted = $invoice->getFormattedDate();
@@ -849,8 +849,8 @@ final class InvoiceTest extends TestCase
         // arrange
         $invoice = Invoice::make();
         $invoice->date('2024-01-15');
-        $invoice->date_format = 'd-m-Y';
-        $invoice->pay_until_days = $payUntilDays;
+        $invoice->dateFormat = 'd-m-Y';
+        $invoice->payUntilDays = $payUntilDays;
 
         // act
         $formatted = $invoice->getFormattedDueDate();
@@ -943,7 +943,7 @@ final class InvoiceTest extends TestCase
         $item->unitPrice = 10.00;
         $invoice->items([$item]);
         $invoice->date('2024-01-15');
-        $invoice->pay_until_days = 30;
+        $invoice->payUntilDays = 30;
 
         // act
         $message = $invoice->getFooterMessage();

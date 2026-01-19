@@ -8,20 +8,22 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use RuntimeException;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
-use SimpleParkBv\Invoices\Traits\HasBuyer;
-use SimpleParkBv\Invoices\Traits\HasDates;
-use SimpleParkBv\Invoices\Traits\HasLanguage;
-use SimpleParkBv\Invoices\Traits\HasLogo;
-use SimpleParkBv\Invoices\Traits\HasNotes;
-use SimpleParkBv\Invoices\Traits\HasReceiptIds;
-use SimpleParkBv\Invoices\Traits\HasReceiptItems;
-use SimpleParkBv\Invoices\Traits\HasTemplate;
+use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
+use SimpleParkBv\Invoices\Models\Traits\HasBuyer;
+use SimpleParkBv\Invoices\Models\Traits\HasDates;
+use SimpleParkBv\Invoices\Models\Traits\HasLanguage;
+use SimpleParkBv\Invoices\Models\Traits\HasLogo;
+use SimpleParkBv\Invoices\Models\Traits\HasNotes;
+use SimpleParkBv\Invoices\Models\Traits\HasReceiptIds;
+use SimpleParkBv\Invoices\Models\Traits\HasReceiptItems;
+use SimpleParkBv\Invoices\Models\Traits\HasTemplate;
 
 /**
  * Class UsageReceipt
  */
 final class UsageReceipt
 {
+    use CanFillFromArray;
     use HasBuyer;
     use HasDates;
     use HasLanguage;
@@ -83,80 +85,20 @@ final class UsageReceipt
 
         // set buyer if provided
         if (isset($data['buyer']) && is_array($data['buyer'])) {
-            $buyer = Buyer::make();
-
-            foreach ($data['buyer'] as $key => $value) {
-                if (property_exists($buyer, $key)) {
-                    $buyer->$key = $value;
-                }
-            }
-
-            $usageReceipt->buyer($buyer);
-        }
-
-        // set date if provided
-        if (isset($data['date'])) {
-            $usageReceipt->date($data['date']);
+            $usageReceipt->buyer(Buyer::make()->fill($data['buyer']));
         }
 
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
-            $items = [];
-            foreach ($data['items'] as $itemData) {
-                $item = ReceiptItem::make();
-
-                if (isset($itemData['user'])) {
-                    $item->user($itemData['user']);
-                }
-
-                if (isset($itemData['license_plate'])) {
-                    $item->licensePlate($itemData['license_plate']);
-                }
-
-                if (isset($itemData['start_date'])) {
-                    $item->startDate($itemData['start_date']);
-                }
-
-                if (isset($itemData['end_date'])) {
-                    $item->endDate($itemData['end_date']);
-                }
-
-                if (isset($itemData['zone'])) {
-                    $item->zone($itemData['zone']);
-                }
-
-                if (isset($itemData['price'])) {
-                    $item->price($itemData['price']);
-                }
-
-                $items[] = $item;
-            }
+            $items = array_map(
+                static fn (array $itemData) => ReceiptItem::fromArray($itemData),
+                $data['items']
+            );
             $usageReceipt->items($items);
         }
 
-        // set IDs if provided
-        if (isset($data['document_id'])) {
-            $usageReceipt->documentId($data['document_id']);
-        }
-
-        if (isset($data['user_id'])) {
-            $usageReceipt->userId($data['user_id']);
-        }
-
-        // set language if provided
-        if (isset($data['language'])) {
-            $usageReceipt->language($data['language']);
-        }
-
-        // set note if provided
-        if (isset($data['note'])) {
-            $usageReceipt->note($data['note']);
-        }
-
-        // set forced total if provided
-        if (isset($data['forced_total'])) {
-            $usageReceipt->forcedTotal($data['forced_total']);
-        }
+        // fill remaining properties (date, document_id, user_id, language, note, forced_total)
+        $usageReceipt->fill($data);
 
         return $usageReceipt;
     }
@@ -201,7 +143,7 @@ final class UsageReceipt
         foreach ($this->items as $index => $item) {
             try {
                 $item->validate($index);
-            } catch (\RuntimeException $e) {
+            } catch (RuntimeException $e) {
                 throw new InvalidInvoiceException($e->getMessage(), 0, $e);
             }
         }
