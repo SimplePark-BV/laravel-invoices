@@ -1,17 +1,15 @@
 <?php
 
-namespace SimpleParkBv\Invoices\Traits;
+namespace SimpleParkBv\Invoices\Models\Traits;
 
 use RuntimeException;
 
 /**
- * Trait HasInvoiceLanguage
- *
- * @var string $language
+ * Trait HasLanguage
  */
-trait HasInvoiceLanguage
+trait HasLanguage
 {
-    public string $language;
+    protected string $language;
 
     /**
      * Cached list of available languages to avoid repeated filesystem scans.
@@ -20,18 +18,37 @@ trait HasInvoiceLanguage
      */
     private static ?array $cachedAvailableLanguages = null;
 
-    public function initializeHasInvoiceLanguage(): void
+    public function initializeHasLanguage(): void
     {
         $this->language = config('invoices.default_language', 'nl');
     }
 
     /**
-     * Clear the cached available languages.
-     * Useful for testing or when languages are added at runtime.
+     * Get the language.
      */
-    public static function clearLanguageCache(): void
+    public function getLanguage(): string
     {
-        self::$cachedAvailableLanguages = null;
+        return $this->language;
+    }
+
+    /**
+     * Set the language.
+     *
+     * @return $this
+     *
+     * @throws \RuntimeException
+     */
+    public function language(string $language): self
+    {
+        $availableLanguages = $this->getAvailableLanguages();
+
+        if (! in_array($language, $availableLanguages, true)) {
+            throw new RuntimeException("Language '{$language}' is not supported. Available languages: ".implode(', ', $availableLanguages));
+        }
+
+        $this->language = $language;
+
+        return $this;
     }
 
     /**
@@ -49,7 +66,7 @@ trait HasInvoiceLanguage
             return self::$cachedAvailableLanguages;
         }
 
-        $langPath = __DIR__.'/../../resources/lang';
+        $langPath = __DIR__.'/../../../resources/lang';
         $languages = [];
 
         if (is_dir($langPath)) {
@@ -69,22 +86,11 @@ trait HasInvoiceLanguage
     }
 
     /**
-     * Set the language for this invoice.
-     *
-     * @return $this
-     *
-     * @throws \RuntimeException
+     * Clear the cached available languages.
+     * Useful for testing or when languages are added at runtime.
      */
-    public function language(string $language): self
+    public static function clearLanguageCache(): void
     {
-        $availableLanguages = $this->getAvailableLanguages();
-
-        if (! in_array($language, $availableLanguages, true)) {
-            throw new RuntimeException("Language '{$language}' is not supported. Available languages: ".implode(', ', $availableLanguages));
-        }
-
-        $this->language = $language;
-
-        return $this;
+        self::$cachedAvailableLanguages = null;
     }
 }

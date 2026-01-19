@@ -19,15 +19,11 @@ final class TaxCalculatorTest extends TestCase
     public function calculate_tax_amount(array $items, float $expected): void
     {
         // arrange
-        $itemsCollection = collect(array_map(function ($itemData) {
-            $item = InvoiceItem::make();
-            $item->title = $itemData['title'];
-            $item->quantity = $itemData['quantity'];
-            $item->unitPrice = $itemData['unit_price'];
-            $item->taxPercentage = $itemData['tax_percentage'] ?? null;
-
-            return $item;
-        }, $items));
+        /** @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface> $itemsCollection */
+        $itemsCollection = collect(array_map(
+            static fn (array $itemData) => InvoiceItem::make($itemData),
+            $items
+        ));
 
         // act
         $taxAmount = TaxCalculator::calculateTaxAmount($itemsCollection);
@@ -101,15 +97,11 @@ final class TaxCalculatorTest extends TestCase
     public function extract_tax_groups(array $items, array $expectedGroups, int $expectedCount): void
     {
         // arrange
-        $itemsCollection = collect(array_map(function ($itemData) {
-            $item = InvoiceItem::make();
-            $item->title = $itemData['title'];
-            $item->quantity = $itemData['quantity'];
-            $item->unitPrice = $itemData['unit_price'];
-            $item->taxPercentage = $itemData['tax_percentage'] ?? null;
-
-            return $item;
-        }, $items));
+        /** @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface> $itemsCollection */
+        $itemsCollection = collect(array_map(
+            static fn (array $itemData) => InvoiceItem::make($itemData),
+            $items
+        ));
 
         // act
         $taxGroups = TaxCalculator::extractTaxGroups($itemsCollection);
@@ -161,6 +153,7 @@ final class TaxCalculatorTest extends TestCase
     public function extract_tax_groups_sorted_descending(): void
     {
         // arrange
+        /** @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface> $items */
         $items = collect([
             $this->create_item('Item 1', 1, 10.00, 9),
             $this->create_item('Item 2', 1, 10.00, 21),
@@ -184,6 +177,7 @@ final class TaxCalculatorTest extends TestCase
     public function calculate_tax_for_group(array $items, float $taxPercentage, float $expected): void
     {
         // arrange
+        /** @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface> $itemsCollection */
         $itemsCollection = collect(array_map(function ($itemData) {
             return $this->create_item($itemData['title'], $itemData['quantity'], $itemData['unit_price'], $itemData['tax_percentage'] ?? null);
         }, $items));
@@ -226,6 +220,7 @@ final class TaxCalculatorTest extends TestCase
     public function calculate_subtotal_for_tax_group(array $items, float $taxPercentage, float $expected): void
     {
         // arrange
+        /** @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface> $itemsCollection */
         $itemsCollection = collect(array_map(function ($itemData) {
             return $this->create_item($itemData['title'], $itemData['quantity'], $itemData['unit_price'], $itemData['tax_percentage'] ?? null);
         }, $items));
@@ -264,19 +259,19 @@ final class TaxCalculatorTest extends TestCase
 
     private function create_item(string $title, float|int $quantity, float|int $unitPrice, ?float $taxPercentage): InvoiceItem
     {
-        $item = InvoiceItem::make();
-        $item->title = $title;
-        $item->quantity = $quantity;
-        $item->unitPrice = $unitPrice;
-        $item->taxPercentage = $taxPercentage;
-
-        return $item;
+        return InvoiceItem::make([
+            'title' => $title,
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'tax_percentage' => $taxPercentage,
+        ]);
     }
 
     #[Test]
     public function calculate_tax_amount_with_empty_collection(): void
     {
         // arrange
+        /** @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface> $items */
         $items = collect([]);
 
         // act
@@ -290,6 +285,7 @@ final class TaxCalculatorTest extends TestCase
     public function extract_tax_groups_with_empty_collection(): void
     {
         // arrange
+        /** @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface> $items */
         $items = collect([]);
 
         // act

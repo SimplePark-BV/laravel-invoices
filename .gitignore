@@ -43,3 +43,8 @@ public/storage
 .php-cs-fixer.cache
 .phpstan
 composer.lock
+
+# Development/test files
+/scripts
+*-receipt-*.pdf
+gebruiksbevestiging-*.pdf

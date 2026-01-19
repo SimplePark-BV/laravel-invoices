@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Invoice;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
@@ -13,12 +13,11 @@ use PHPUnit\Framework\Attributes\Test;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Models\Buyer;
 use SimpleParkBv\Invoices\Models\Invoice;
-use SimpleParkBv\Invoices\Models\InvoiceItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
 use Tests\Traits\MocksPdfGeneration;
 
-final class InvoicePdfGenerationTest extends TestCase
+final class PdfGenerationTest extends TestCase
 {
     use CreatesTestInvoices;
     use MocksPdfGeneration;
@@ -33,7 +32,7 @@ final class InvoicePdfGenerationTest extends TestCase
     public function render_creates_pdf(): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -55,7 +54,7 @@ final class InvoicePdfGenerationTest extends TestCase
     public function render_sets_locale_during_rendering(): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
         $invoice->language('en');
         App::setLocale('nl'); // set different locale
 
@@ -85,8 +84,8 @@ final class InvoicePdfGenerationTest extends TestCase
     public function render_uses_template(string $template, string $expectedTemplate): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
-        $invoice->template = $template;
+        $invoice = $this->createValidInvoice();
+        $invoice->template($template);
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -124,15 +123,11 @@ final class InvoicePdfGenerationTest extends TestCase
         Config::set('invoices.pdf.orientation', $orientation);
 
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item = InvoiceItem::make();
-        $item->title = 'Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
-        $invoice->items([$item]);
+        $item = $this->createInvoiceItem('Item');
+        $invoice->addItem($item);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
         $this->mockPdfFacadeChain();
@@ -165,7 +160,8 @@ final class InvoicePdfGenerationTest extends TestCase
     public function download_generates_response(?string $customFilename, string $expectedFilename): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
+        $invoice->language('en'); // explicitly set english for deterministic filename
         $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -198,7 +194,8 @@ final class InvoicePdfGenerationTest extends TestCase
     public function download_auto_renders(): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
+        $invoice->language('en'); // explicitly set english for deterministic filename
         $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -225,7 +222,7 @@ final class InvoicePdfGenerationTest extends TestCase
     public function download_throws_when_render_fails(): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
 
         $this->mockPdfFacadeChain();
 
@@ -246,7 +243,8 @@ final class InvoicePdfGenerationTest extends TestCase
     public function stream_generates_response(?string $customFilename, string $expectedFilename): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
+        $invoice->language('en'); // explicitly set english for deterministic filename
         $invoice->date('2024-01-15'); // fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -280,7 +278,8 @@ final class InvoicePdfGenerationTest extends TestCase
     public function stream_includes_cache_headers(): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
+        $invoice->language('en'); // explicitly set english for deterministic filename
         $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -307,7 +306,8 @@ final class InvoicePdfGenerationTest extends TestCase
     public function stream_auto_renders(): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
+        $invoice->language('en'); // explicitly set english for deterministic filename
         $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -335,7 +335,7 @@ final class InvoicePdfGenerationTest extends TestCase
     public function stream_throws_when_render_fails(): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
         $this->mockPdfFacadeChain();
         Pdf::shouldReceive('loadView')
             ->once()

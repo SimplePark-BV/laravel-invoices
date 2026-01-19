@@ -4,6 +4,7 @@ namespace SimpleParkBv\Invoices\Models;
 
 use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
+use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 
 /**
  * Class InvoiceItem
@@ -16,101 +17,17 @@ use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
  */
 final class InvoiceItem implements InvoiceItemInterface
 {
-    public string $title;
+    use CanFillFromArray;
 
-    public ?string $description;
+    private string $title = '';
 
-    public float|int $quantity;
+    private ?string $description = null;
 
-    public float|int $unitPrice;
+    private float|int $quantity = 0;
 
-    public ?float $taxPercentage;
+    private float|int $unitPrice = 0;
 
-    public static function make(): self
-    {
-        return new self;
-    }
-
-    /**
-     * Set the title of the item.
-     *
-     * @return $this
-     */
-    public function title(string $title): self
-    {
-        $this->title = $title;
-
-        return $this;
-    }
-
-    /**
-     * Set the description of the item.
-     *
-     * @return $this
-     */
-    public function description(?string $description): self
-    {
-        $this->description = $description;
-
-        return $this;
-    }
-
-    /**
-     * Set the quantity of the item.
-     *
-     * @return $this
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
-     */
-    public function quantity(float|int $quantity): self
-    {
-        if ($quantity <= 0) {
-            throw new InvalidInvoiceItemException('Quantity must be greater than 0');
-        }
-
-        $this->quantity = $quantity;
-
-        return $this;
-    }
-
-    /**
-     * Set the unit price of the item.
-     * Negative values are allowed for discount items.
-     *
-     * @return $this
-     */
-    public function unitPrice(float|int $unitPrice): self
-    {
-        $this->unitPrice = $unitPrice;
-
-        return $this;
-    }
-
-    /**
-     * Set the tax percentage of the item.
-     *
-     * @return $this
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
-     */
-    public function taxPercentage(?float $taxPercentage): self
-    {
-        if ($taxPercentage !== null && ($taxPercentage < 0 || $taxPercentage > 100)) {
-            throw new InvalidInvoiceItemException('Tax percentage must be between 0 and 100, or null');
-        }
-
-        $this->taxPercentage = $taxPercentage;
-
-        return $this;
-    }
-
-    /**
-     * Get the title of the item.
-     */
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
+    private ?float $taxPercentage = null;
 
     /**
      * Get the description of the item.
@@ -129,11 +46,88 @@ final class InvoiceItem implements InvoiceItemInterface
     }
 
     /**
+     * Get the tax percentage of the item.
+     */
+    public function getTaxPercentage(): ?float
+    {
+        return $this->taxPercentage;
+    }
+
+    /**
+     * Get the title of the item.
+     */
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    /**
      * Get the unit price of the item.
      */
     public function getUnitPrice(): float|int
     {
         return $this->unitPrice;
+    }
+
+    /**
+     * Set the description of the item.
+     *
+     * @return $this
+     */
+    public function description(?string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * Set the quantity of the item.
+     *
+     * @return $this
+     */
+    public function quantity(float|int $quantity): self
+    {
+        $this->quantity = $quantity;
+
+        return $this;
+    }
+
+    /**
+     * Set the tax percentage of the item.
+     *
+     * @return $this
+     */
+    public function taxPercentage(?float $taxPercentage): self
+    {
+        $this->taxPercentage = $taxPercentage;
+
+        return $this;
+    }
+
+    /**
+     * Set the title of the item.
+     *
+     * @return $this
+     */
+    public function title(string $title): self
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * Set the unit price of the item.
+     * Negative values are allowed for discount items.
+     *
+     * @return $this
+     */
+    public function unitPrice(float|int $unitPrice): self
+    {
+        $this->unitPrice = $unitPrice;
+
+        return $this;
     }
 
     /**

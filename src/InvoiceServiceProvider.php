@@ -27,10 +27,17 @@ class InvoiceServiceProvider extends ServiceProvider
         // share css path and font config with views using view composer
         // using view composer for better isolation and testability
         View::composer('invoices::*', function ($view): void {
+            // invoice css and fonts
             $view->with('invoiceCssPath', realpath(__DIR__.'/../resources/css/invoice.css'));
             $view->with('invoiceFont', config('invoices.pdf.font', 'Montserrat'));
             $view->with('invoiceFontPath', realpath(__DIR__.'/../resources/fonts'));
             $view->with('invoiceFontFile', config('invoices.pdf.font_file'));
+
+            // usage receipt css and fonts
+            $view->with('usageReceiptCssPath', realpath(__DIR__.'/../resources/css/usage-receipt.css'));
+            $view->with('usageReceiptFont', config('invoices.pdf.font', 'Montserrat'));
+            $view->with('usageReceiptFontPath', realpath(__DIR__.'/../resources/fonts'));
+            $view->with('usageReceiptFontFile', config('invoices.pdf.font_file'));
         });
 
         // publish config

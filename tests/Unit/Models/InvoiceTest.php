@@ -26,8 +26,8 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertInstanceOf(Invoice::class, $invoice);
-        $this->assertInstanceOf(Seller::class, $invoice->seller);
-        $this->assertTrue($invoice->items->isEmpty());
+        $this->assertInstanceOf(Seller::class, $invoice->getSeller());
+        $this->assertTrue($invoice->getItems()->isEmpty());
         $this->assertNull($invoice->pdf);
     }
 
@@ -60,18 +60,18 @@ final class InvoiceTest extends TestCase
         ];
 
         // act
-        $invoice = Invoice::fromArray($data);
+        $invoice = Invoice::make($data);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $invoice->buyer);
-        $this->assertEquals('Test Buyer', $invoice->buyer->name);
-        $this->assertNotNull($invoice->date);
-        $this->assertEquals('2024-01-15', $invoice->date->format('Y-m-d'));
-        $this->assertCount(1, $invoice->items);
-        $this->assertEquals('INV', $invoice->series);
-        $this->assertEquals(1, $invoice->sequence);
-        $this->assertEquals('en', $invoice->language);
-        $this->assertEquals(25.41, $invoice->forcedTotal);
+        $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
+        $this->assertEquals('Test Buyer', $invoice->getBuyer()->getName());
+        $this->assertNotNull($invoice->getDate());
+        $this->assertEquals('2024-01-15', $invoice->getDate()->format('Y-m-d'));
+        $this->assertCount(1, $invoice->getItems());
+        $this->assertEquals('INV', $invoice->getSeries());
+        $this->assertEquals(1, $invoice->getSequence());
+        $this->assertEquals('en', $invoice->getLanguage());
+        $this->assertEquals(25.41, $invoice->getForcedTotal());
     }
 
     #[Test]
@@ -92,15 +92,16 @@ final class InvoiceTest extends TestCase
         ];
 
         // act
-        $invoice = Invoice::fromArray($data);
+        $invoice = Invoice::make($data);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $invoice->buyer);
-        $this->assertEquals('Test Buyer', $invoice->buyer->name);
-        $this->assertCount(1, $invoice->items);
-        // Optional fields should use defaults or be null
-        $this->assertNull($invoice->series);
-        $this->assertNull($invoice->sequence);
+        $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
+        $this->assertEquals('Test Buyer', $invoice->getBuyer()->getName());
+        $this->assertCount(1, $invoice->getItems());
+
+        // optional fields should use defaults or be null
+        $this->assertNull($invoice->getSeries());
+        $this->assertNull($invoice->getSequence());
     }
 
     #[Test]
@@ -115,11 +116,11 @@ final class InvoiceTest extends TestCase
         ];
 
         // act
-        $invoice = Invoice::fromArray($data);
+        $invoice = Invoice::make($data);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $invoice->buyer);
-        $this->assertCount(0, $invoice->items);
+        $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
+        $this->assertCount(0, $invoice->getItems());
     }
 
     #[Test]
@@ -140,13 +141,13 @@ final class InvoiceTest extends TestCase
         ];
 
         // act
-        $invoice = Invoice::fromArray($data);
+        $invoice = Invoice::make($data);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $invoice->buyer);
-        $this->assertNull($invoice->series);
-        $this->assertNull($invoice->sequence);
-        $this->assertNull($invoice->forcedTotal);
+        $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
+        $this->assertNull($invoice->getSeries());
+        $this->assertNull($invoice->getSequence());
+        $this->assertNull($invoice->getForcedTotal());
     }
 
     #[Test]
@@ -154,14 +155,10 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
-        $invoice->items([$item]);
+        $item = $this->createInvoiceItem();
+        $invoice->addItem($item);
 
         // act
         $array = $invoice->toArray();
@@ -177,20 +174,17 @@ final class InvoiceTest extends TestCase
     public function to_array_returns_structure(): void
     {
         // arrange
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
-        $buyer->email = 'buyer@test.com';
+        $buyer = Buyer::make([
+            'name' => 'Test Buyer',
+            'email' => 'buyer@test.com',
+        ]);
 
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 2;
-        $item->unitPrice = 10.50;
-        $item->taxPercentage = 21;
+        $item = $this->createInvoiceItem('Test Item', 2, 10.50, 21);
 
         $invoice = Invoice::make();
         $invoice->buyer($buyer);
         $invoice->date('2024-01-15');
-        $invoice->items([$item]);
+        $invoice->addItem($item);
         $invoice->series('INV');
         $invoice->sequence(1);
         $invoice->language('en');
@@ -215,15 +209,14 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
 
         // act
         $result = $invoice->buyer($buyer);
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertSame($buyer, $invoice->buyer);
+        $this->assertSame($buyer, $invoice->getBuyer());
     }
 
     #[Test]
@@ -232,15 +225,14 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $date = is_string($dateInput) ? Carbon::parse($dateInput) : $dateInput;
 
         // act
         $result = $invoice->date($dateInput);
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertNotNull($invoice->date);
-        $this->assertEquals($expectedFormat, $invoice->date->format('Y-m-d'));
+        $this->assertNotNull($invoice->getDate());
+        $this->assertEquals($expectedFormat, $invoice->getDate()->format('Y-m-d'));
     }
 
     /**
@@ -259,18 +251,15 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
+        $item = $this->createInvoiceItem();
 
         // act
         $result = $invoice->items([$item]);
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertCount(1, $invoice->items);
-        $this->assertSame($item, $invoice->items->first());
+        $this->assertCount(1, $invoice->getItems());
+        $this->assertSame($item, $invoice->getItems()->first());
     }
 
     #[Test]
@@ -278,22 +267,15 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = InvoiceItem::make();
-        $item1->title = 'Item 1';
-        $item1->quantity = 1;
-        $item1->unitPrice = 10.00;
-
-        $item2 = InvoiceItem::make();
-        $item2->title = 'Item 2';
-        $item2->quantity = 2;
-        $item2->unitPrice = 20.00;
+        $item1 = $this->createInvoiceItem('Item 1');
+        $item2 = $this->createInvoiceItem('Item 2', 2, 20.00);
 
         // act
         $result = $invoice->items([$item1, $item2]);
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertCount(2, $invoice->items);
+        $this->assertCount(2, $invoice->getItems());
     }
 
     /**
@@ -307,11 +289,7 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::make();
         $invoiceItems = [];
         foreach ($items as $itemData) {
-            $item = InvoiceItem::make();
-            $item->title = $itemData['title'];
-            $item->quantity = $itemData['quantity'];
-            $item->unitPrice = $itemData['unit_price'];
-            $invoiceItems[] = $item;
+            $invoiceItems[] = InvoiceItem::make($itemData);
         }
         $invoice->items($invoiceItems);
 
@@ -347,12 +325,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = InvoiceItem::make();
-        $item->title = 'Item';
-        $item->quantity = 2;
-        $item->unitPrice = 121.00; // 100 + 21% tax
-        $item->taxPercentage = 21;
-        $invoice->items([$item]);
+        $item = $this->createInvoiceItem('Item', 2, 121.00, 21); // 100 + 21% tax
+        $invoice->addItem($item);
 
         // act
         $subTotal = $invoice->getSubTotal();
@@ -369,11 +343,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = InvoiceItem::make();
-        $item->title = 'Item';
-        $item->quantity = 2;
-        $item->unitPrice = 10.00;
-        $invoice->items([$item]);
+        $item = $this->createInvoiceItem('Item', 2);
+        $invoice->addItem($item);
 
         if ($forcedTotal !== null) {
             $invoice->forcedTotal($forcedTotal);
@@ -402,17 +373,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = InvoiceItem::make();
-        $item1->title = 'Item 1';
-        $item1->quantity = 1;
-        $item1->unitPrice = 121.00; // 100 + 21% tax
-        $item1->taxPercentage = 21;
-
-        $item2 = InvoiceItem::make();
-        $item2->title = 'Item 2';
-        $item2->quantity = 1;
-        $item2->unitPrice = 110.00; // 100 + 10% tax
-        $item2->taxPercentage = 10;
+        $item1 = $this->createInvoiceItem('Item 1', 1, 121.00, 21); // 100 + 21% tax
+        $item2 = $this->createInvoiceItem('Item 2', 1, 110.00, 10); // 100 + 10% tax
 
         $invoice->items([$item1, $item2]);
 
@@ -431,29 +393,10 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = InvoiceItem::make();
-        $item1->title = 'Item 1';
-        $item1->quantity = 1;
-        $item1->unitPrice = 10.00;
-        $item1->taxPercentage = 21;
-
-        $item2 = InvoiceItem::make();
-        $item2->title = 'Item 2';
-        $item2->quantity = 1;
-        $item2->unitPrice = 10.00;
-        $item2->taxPercentage = 9;
-
-        $item3 = InvoiceItem::make();
-        $item3->title = 'Item 3';
-        $item3->quantity = 1;
-        $item3->unitPrice = 10.00;
-        $item3->taxPercentage = 21;
-
-        $item4 = InvoiceItem::make();
-        $item4->title = 'Item 4';
-        $item4->quantity = 1;
-        $item4->unitPrice = 10.00;
-        $item4->taxPercentage = null;
+        $item1 = $this->createInvoiceItem('Item 1', 1, 10.00, 21);
+        $item2 = $this->createInvoiceItem('Item 2', 1, 10.00, 9);
+        $item3 = $this->createInvoiceItem('Item 3', 1, 10.00, 21);
+        $item4 = $this->createInvoiceItem('Item 4', 1, 10.00, null);
 
         $invoice->items([$item1, $item2, $item3, $item4]);
 
@@ -472,17 +415,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = InvoiceItem::make();
-        $item1->title = 'Item 1';
-        $item1->quantity = 1;
-        $item1->unitPrice = 121.00;
-        $item1->taxPercentage = 21;
-
-        $item2 = InvoiceItem::make();
-        $item2->title = 'Item 2';
-        $item2->quantity = 1;
-        $item2->unitPrice = 110.00;
-        $item2->taxPercentage = 10;
+        $item1 = $this->createInvoiceItem('Item 1', 1, 121.00, 21);
+        $item2 = $this->createInvoiceItem('Item 2', 1, 110.00, 10);
 
         $invoice->items([$item1, $item2]);
 
@@ -509,12 +443,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = InvoiceItem::make();
-        $item->title = 'Item';
-        $item->quantity = 1;
-        $item->unitPrice = 121.00;
-        $item->taxPercentage = 21;
-        $invoice->items([$item]);
+        $item = $this->createInvoiceItem('Item', 1, 121.00, 21);
+        $invoice->addItem($item);
 
         // act
         $subTotal = $invoice->getSubTotalForTaxGroup(21);
@@ -535,7 +465,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals(100.50, $invoice->forcedTotal);
+        $this->assertEquals(100.50, $invoice->getForcedTotal());
         $this->assertEquals(100.50, $invoice->getTotal());
     }
 
@@ -580,9 +510,9 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::make();
 
         // assert
-        $this->assertInstanceOf(Seller::class, $invoice->seller);
-        $this->assertEquals('Test Seller', $invoice->seller->name);
-        $this->assertEquals('Test Address', $invoice->seller->address);
+        $this->assertInstanceOf(Seller::class, $invoice->getSeller());
+        $this->assertEquals('Test Seller', $invoice->getSeller()->getName());
+        $this->assertEquals('Test Address', $invoice->getSeller()->getAddress());
     }
 
     #[Test]
@@ -594,11 +524,8 @@ final class InvoiceTest extends TestCase
         Config::set('invoices.thousands_separator', '.');
 
         $invoice = Invoice::make();
-        $item = InvoiceItem::make();
-        $item->title = 'Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.50;
-        $invoice->items([$item]);
+        $item = $this->createInvoiceItem('Item', 1, 10.50);
+        $invoice->addItem($item);
 
         // act
         $formatted = $invoice->getFormattedTotal();
@@ -612,12 +539,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = InvoiceItem::make();
-        $item->title = 'Item';
-        $item->quantity = 1;
-        $item->unitPrice = 121.00;
-        $item->taxPercentage = 21;
-        $invoice->items([$item]);
+        $item = $this->createInvoiceItem('Item', 1, 121.00, 21);
+        $invoice->addItem($item);
 
         // act
         $formattedSubTotal = $invoice->getFormattedSubTotal();
@@ -677,7 +600,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals('INV', $invoice->series);
+        $this->assertEquals('INV', $invoice->getSeries());
     }
 
     #[Test]
@@ -691,7 +614,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals(123, $invoice->sequence);
+        $this->assertEquals(123, $invoice->getSequence());
     }
 
     #[Test]
@@ -705,7 +628,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals('ABC', $invoice->sequence);
+        $this->assertEquals('ABC', $invoice->getSequence());
     }
 
     #[Test]
@@ -719,7 +642,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals('INV.00000123', $invoice->serial);
+        $this->assertEquals('INV.00000123', $invoice->getSerial());
     }
 
     #[Test]
@@ -751,8 +674,8 @@ final class InvoiceTest extends TestCase
         // assert
         $this->assertEquals('CUSTOM.999', $number);
         // verify series and sequence are still set but ignored
-        $this->assertEquals('INV', $invoice->series);
-        $this->assertEquals(456, $invoice->sequence);
+        $this->assertEquals('INV', $invoice->getSeries());
+        $this->assertEquals(456, $invoice->getSequence());
     }
 
     #[Test]
@@ -764,10 +687,10 @@ final class InvoiceTest extends TestCase
         ];
 
         // act
-        $invoice = Invoice::fromArray($data);
+        $invoice = Invoice::make($data);
 
         // assert
-        $this->assertEquals('INV.00000123', $invoice->serial);
+        $this->assertEquals('INV.00000123', $invoice->getSerial());
         $this->assertEquals('INV.00000123', $invoice->getNumber());
     }
 
@@ -822,7 +745,7 @@ final class InvoiceTest extends TestCase
         // arrange
         $invoice = Invoice::make();
         $invoice->date('2024-01-15');
-        $invoice->date_format = $dateFormat;
+        $invoice->dateFormat($dateFormat);
 
         // act
         $formatted = $invoice->getFormattedDate();
@@ -849,8 +772,8 @@ final class InvoiceTest extends TestCase
         // arrange
         $invoice = Invoice::make();
         $invoice->date('2024-01-15');
-        $invoice->date_format = 'd-m-Y';
-        $invoice->pay_until_days = $payUntilDays;
+        $invoice->dateFormat('d-m-Y');
+        $invoice->payUntilDays($payUntilDays);
 
         // act
         $formatted = $invoice->getFormattedDueDate();
@@ -881,7 +804,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals('custom-template', $invoice->template);
+        $this->assertEquals('custom-template', $invoice->getTemplate());
     }
 
     #[Test]
@@ -909,7 +832,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals('en', $invoice->language);
+        $this->assertEquals('en', $invoice->getLanguage());
     }
 
     #[Test]
@@ -934,16 +857,12 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
-        $item = InvoiceItem::make();
-        $item->title = 'Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
-        $invoice->items([$item]);
+        $item = $this->createInvoiceItem('Item');
+        $invoice->addItem($item);
         $invoice->date('2024-01-15');
-        $invoice->pay_until_days = 30;
+        $invoice->payUntilDays(30);
 
         // act
         $message = $invoice->getFooterMessage();
@@ -961,7 +880,7 @@ final class InvoiceTest extends TestCase
         // arrange
         $invoice = Invoice::make();
         if ($initialLogo !== null) {
-            $invoice->logo = $initialLogo;
+            $invoice->logo($initialLogo);
         }
 
         // act
@@ -969,7 +888,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals($expected, $invoice->logo);
+        $this->assertEquals($expected, $invoice->getLogo());
     }
 
     /**
@@ -989,7 +908,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $invoice->logo = $logoPath;
+        $invoice->logo($logoPath);
 
         // act
         $dataUri = $invoice->getLogoDataUri();

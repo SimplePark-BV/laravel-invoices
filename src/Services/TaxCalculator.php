@@ -3,7 +3,7 @@
 namespace SimpleParkBv\Invoices\Services;
 
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\Models\InvoiceItem;
+use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 
 /**
  * Service class for calculating taxes on invoice items.
@@ -46,18 +46,19 @@ final class TaxCalculator
      *
      * Returns the total tax amount rounded to the configured precision to prevent rounding drift.
      *
-     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
+     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
      * @return float The total tax amount, rounded to the configured precision
      */
     public static function calculateTaxAmount(Collection $items): float
     {
-        $total = $items->sum(function (InvoiceItem $item): float {
-            if ($item->taxPercentage === null || $item->taxPercentage <= 0) {
+        $total = $items->sum(function (InvoiceItemInterface $item): float {
+            $taxPercentage = $item->getTaxPercentage();
+            if ($taxPercentage === null || $taxPercentage <= 0) {
                 return 0;
             }
 
-            $taxRate = $item->taxPercentage / 100;
-            $itemTotal = $item->unitPrice * $item->quantity;
+            $taxRate = $taxPercentage / 100;
+            $itemTotal = $item->getUnitPrice() * $item->getQuantity();
 
             // tax amount = price including tax * taxRate / (1 + taxRate)
             return $itemTotal * $taxRate / (1 + $taxRate);
@@ -73,13 +74,13 @@ final class TaxCalculator
      * rounded to the configured precision to ensure consistent grouping of
      * equivalent percentages that may have different floating-point representations.
      *
-     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
+     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
      * @return \Illuminate\Support\Collection<int, float> Tax percentages rounded to the configured precision
      */
     public static function extractTaxGroups(Collection $items): Collection
     {
         return $items
-            ->pluck('taxPercentage')
+            ->map(static fn (InvoiceItemInterface $item): ?float => $item->getTaxPercentage())
             ->filter(static fn (?float $taxPercentage): bool => $taxPercentage !== null && $taxPercentage > 0)
             ->map(static fn (float $taxPercentage): float => round($taxPercentage, self::getTaxPercentagePrecision()))
             ->unique()
@@ -94,7 +95,7 @@ final class TaxCalculator
      * comparing tax percentages using epsilon comparison to handle floating-point
      * precision differences. Returns the total rounded to the configured precision.
      *
-     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
+     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
      * @param  float  $taxPercentage  The tax percentage to filter by (will be normalized)
      * @return float The tax amount for the group, rounded to the configured precision
      */
@@ -106,9 +107,9 @@ final class TaxCalculator
         $epsilon = self::getTaxPercentageEpsilon();
 
         $total = $items
-            ->filter(fn (InvoiceItem $item) => $item->taxPercentage !== null && abs(round($item->taxPercentage, $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
-            ->sum(function (InvoiceItem $item) use ($taxRate): float {
-                $itemTotal = $item->unitPrice * $item->quantity;
+            ->filter(fn (InvoiceItemInterface $item) => $item->getTaxPercentage() !== null && abs(round($item->getTaxPercentage(), $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
+            ->sum(function (InvoiceItemInterface $item) use ($taxRate): float {
+                $itemTotal = $item->getUnitPrice() * $item->getQuantity();
 
                 // tax amount = price including tax * taxRate / (1 + taxRate)
                 return $itemTotal * $taxRate / (1 + $taxRate);
@@ -124,7 +125,7 @@ final class TaxCalculator
      * Items are matched by comparing tax percentages using epsilon comparison.
      * Returns the subtotal rounded to the configured precision.
      *
-     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
+     * @param  \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
      * @param  float  $taxPercentage  The tax percentage to filter by (will be normalized)
      * @return float The subtotal for the group, rounded to the configured precision
      */
@@ -134,8 +135,8 @@ final class TaxCalculator
         $normalizedTaxPercentage = round($taxPercentage, $taxPercentagePrecision);
         $epsilon = self::getTaxPercentageEpsilon();
         $itemsTotal = $items
-            ->filter(fn (InvoiceItem $item) => $item->taxPercentage !== null && abs(round($item->taxPercentage, $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
-            ->sum(fn (InvoiceItem $item): float => $item->unitPrice * $item->quantity);
+            ->filter(fn (InvoiceItemInterface $item) => $item->getTaxPercentage() !== null && abs(round($item->getTaxPercentage(), $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
+            ->sum(fn (InvoiceItemInterface $item): float => $item->getUnitPrice() * $item->getQuantity());
 
         $subtotal = $itemsTotal - self::calculateTaxForGroup($items, $taxPercentage);
 

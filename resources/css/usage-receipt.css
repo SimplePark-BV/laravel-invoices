@@ -1,0 +1,261 @@
+:root {
+    --surface-low: #9E9E9E;
+    --surface-high: #616161;
+    --surface-highest: #172240;
+
+    --container-highest: #E0E0E0;
+    --container-low: #FAFAFA;
+}
+
+/* usage receipt base styles */
+.usage-receipt {
+    font-family: var(--usage-receipt-font, Montserrat), sans-serif;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--surface-highest);
+    font-weight: 400;
+    padding-bottom: 160px;
+}
+
+.usage-receipt table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.usage-receipt tr {
+    page-break-inside: avoid;
+}
+
+.usage-receipt td,
+.usage-receipt th {
+    padding: 0;
+}
+
+/* usage receipt header */
+.usage-receipt__header {
+    margin-bottom: 20px;
+}
+
+.usage-receipt__logo {
+    height: 50px;
+    width: auto;
+}
+
+.usage-receipt__logo-placeholder {
+    width: 200px;
+    height: 50px;
+    background-color: var(--container-highest);
+}
+
+/* usage receipt title section */
+.usage-receipt__title-section {
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.usage-receipt__title-cell {
+    vertical-align: bottom;
+}
+
+.usage-receipt__title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.usage-receipt__date-cell {
+    vertical-align: bottom;
+    text-align: right;
+}
+
+.usage-receipt__date-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.usage-receipt__date-label {
+    font-weight: 700;
+}
+
+/* usage receipt buyer */
+.usage-receipt__buyer {
+    margin-bottom: 40px;
+    font-size: 12px;
+    color: var(--surface-high);
+}
+
+.usage-receipt__buyer-name {
+    font-weight: 700;
+    color: var(--surface-highest);
+    margin-bottom: 6px;
+}
+
+.usage-receipt__buyer-detail {
+    margin-bottom: 18px;
+}
+
+.usage-receipt__buyer-detail:last-child {
+    margin-bottom: 0;
+}
+
+/* usage receipt IDs section */
+.usage-receipt__ids {
+    display: table;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.usage-receipt__id-column {
+    display: table-cell;
+    width: 33.3%;
+}
+
+.usage-receipt__id-label {
+    font-weight: 700;
+    color: var(--surface-highest);
+    margin-bottom: 4px;
+}
+
+.usage-receipt__id-value {
+    color: var(--surface-high);
+}
+
+/* usage receipt sessions table */
+.usage-receipt__sessions {
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.usage-receipt__sessions thead,
+.usage-receipt__sessions tbody {
+    background-color: var(--container-low);
+}
+
+.usage-receipt__sessions th.usage-receipt__sessions-header {
+    text-align: left;
+    padding: 6px 8px 8px 0;
+    border-bottom: 1px solid var(--container-highest);
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.usage-receipt__sessions th.usage-receipt__sessions-header:first-child {
+    padding-left: 12px;
+}
+
+.usage-receipt__sessions th.usage-receipt__sessions-header--right {
+    text-align: right;
+    padding-right: 12px;
+}
+
+.usage-receipt__sessions td.usage-receipt__sessions-cell {
+    padding: 6px 8px 0 0;
+    vertical-align: top;
+    font-size: 12px;
+    color: var(--surface-high);
+}
+
+.usage-receipt__sessions td.usage-receipt__sessions-cell:first-child {
+    padding-left: 12px;
+}
+
+.usage-receipt__sessions td.usage-receipt__sessions-cell--right {
+    text-align: right;
+    padding-right: 12px;
+}
+
+.usage-receipt__sessions tbody tr:last-child td.usage-receipt__sessions-cell {
+    padding-bottom: 10px;
+}
+
+/* usage receipt total */
+.usage-receipt__total {
+    width: 100%;
+    margin-bottom: 40px;
+    padding-right: 8px;
+}
+
+.usage-receipt__total-label {
+    text-align: right;
+    font-weight: 700;
+    padding-right: 15px;
+}
+
+.usage-receipt__total-value {
+    text-align: right;
+    width: 80px;
+}
+
+/* usage receipt notes */
+.usage-receipt__notes {
+    margin-bottom: 30px;
+}
+
+.usage-receipt__notes-label {
+    font-weight: 700;
+    color: var(--surface-highest);
+    margin-bottom: 6px;
+}
+
+.usage-receipt__notes-text {
+    font-style: italic;
+    color: var(--surface-high);
+}
+
+/* usage receipt footer */
+.usage-receipt__footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 12px;
+    color: var(--surface-high);
+}
+
+.usage-receipt__footer-disclaimer {
+    margin-bottom: 15px;
+    color: var(--container-highest);
+}
+
+.usage-receipt__footer-disclaimer ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.usage-receipt__footer-disclaimer li {
+    color: var(--surface-high);
+}
+
+.usage-receipt__footer-info {
+    display: table;
+    width: 100%;
+    border-top: 1px solid var(--container-highest);
+    padding-top: 15px;
+}
+
+.usage-receipt__footer-column {
+    display: table-cell;
+    width: 33.33%;
+    vertical-align: top;
+}
+
+.usage-receipt__footer-label {
+    font-weight: 700;
+    color: var(--surface-highest);
+    margin-bottom: 4px;
+}
+
+.usage-receipt__footer-label--spaced {
+    margin-top: 12px;
+}
+
+.usage-receipt__footer-value {
+    color: var(--surface-high);
+    margin-bottom: 4px;
+}
+
+.usage-receipt__footer-company {
+    display: inline-block;
+    padding-bottom: 6px;
+}

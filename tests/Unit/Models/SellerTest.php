@@ -68,15 +68,15 @@ final class SellerTest extends TestCase
         $seller = Seller::make();
 
         // assert
-        $this->assertEquals('Config Seller', $seller->name);
-        $this->assertEquals('Config Address', $seller->address);
-        $this->assertEquals('Config City', $seller->city);
-        $this->assertEquals('54321', $seller->postalCode);
-        $this->assertEquals('Config Country', $seller->country);
-        $this->assertEquals('config@test.com', $seller->email);
-        $this->assertEquals('87654321', $seller->registrationNumber);
-        $this->assertEquals('NL987654321B02', $seller->taxId);
-        $this->assertEquals('NL91ABNA0417164301', $seller->bankAccount);
+        $this->assertEquals('Config Seller', $seller->getName());
+        $this->assertEquals('Config Address', $seller->getAddress());
+        $this->assertEquals('Config City', $seller->getCity());
+        $this->assertEquals('54321', $seller->getPostalCode());
+        $this->assertEquals('Config Country', $seller->getCountry());
+        $this->assertEquals('config@test.com', $seller->getEmail());
+        $this->assertEquals('87654321', $seller->getRegistrationNumber());
+        $this->assertEquals('NL987654321B02', $seller->getTaxId());
+        $this->assertEquals('NL91ABNA0417164301', $seller->getBankAccount());
     }
 
     #[Test]
@@ -105,14 +105,14 @@ final class SellerTest extends TestCase
         $seller = Seller::make();
 
         // assert
-        $this->assertEquals('Partial Seller', $seller->name);
-        $this->assertNull($seller->address);
-        $this->assertNull($seller->city);
-        $this->assertNull($seller->postalCode);
-        $this->assertNull($seller->country);
-        $this->assertNull($seller->email);
-        $this->assertNull($seller->phone);
-        $this->assertNull($seller->website);
+        $this->assertEquals('Partial Seller', $seller->getName());
+        $this->assertNull($seller->getAddress());
+        $this->assertNull($seller->getCity());
+        $this->assertNull($seller->getPostalCode());
+        $this->assertNull($seller->getCountry());
+        $this->assertNull($seller->getEmail());
+        $this->assertNull($seller->getPhone());
+        $this->assertNull($seller->getWebsite());
         $this->assertNull($seller->registrationNumber);
         $this->assertNull($seller->taxId);
         $this->assertNull($seller->bankAccount);

@@ -13,15 +13,10 @@ interface InvoiceInterface
 {
     /**
      * Create a new invoice instance.
-     */
-    public static function make(): self;
-
-    /**
-     * Create an invoice from an array of data.
      *
      * @param  array<string, mixed>  $data
      */
-    public static function fromArray(array $data): self;
+    public static function make(array $data = []): self;
 
     /**
      * Convert the invoice to an array.
@@ -32,8 +27,10 @@ interface InvoiceInterface
 
     /**
      * Set the buyer for this invoice.
+     *
+     * @param  \SimpleParkBv\Invoices\Contracts\PartyInterface|array<string, mixed>  $buyer
      */
-    public function buyer(PartyInterface $buyer): self;
+    public function buyer(PartyInterface|array $buyer): self;
 
     /**
      * Set all items for the invoice (replaces existing items).
@@ -41,6 +38,11 @@ interface InvoiceInterface
      * @param  array<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
      */
     public function items(array $items): self;
+
+    /**
+     * Add a single item to the invoice.
+     */
+    public function addItem(InvoiceItemInterface $item): self;
 
     /**
      * Set the invoice issue date.

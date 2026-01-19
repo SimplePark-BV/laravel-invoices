@@ -1,11 +1,11 @@
 {{-- buyer information section --}}
-@php($buyer = $invoice->getBuyer())
+@php($buyer = $usageReceipt->getBuyer())
 
-<div class="invoice__buyer">
-    <div class="invoice__buyer-name">{{ $buyer->getName() }}</div>
-    <div class="invoice__buyer-details">
+<div class="usage-receipt__buyer">
+    <div class="usage-receipt__buyer-name">{{ $buyer->getName() }}</div>
+    <div class="usage-receipt__buyer-details">
         @if($buyer->hasAddress())
-            <div class="invoice__buyer-detail">
+            <div class="usage-receipt__buyer-detail">
                 @if($buyer->getAddress())
                     {{ $buyer->getAddress() }}<br>
                 @endif
@@ -14,7 +14,7 @@
                 @endif
             </div>
         @endif
-        <div class="invoice__buyer-detail">
+        <div class="usage-receipt__buyer-detail">
             @if($buyer->getEmail())
                 {{ $buyer->getEmail() }}<br>
             @endif

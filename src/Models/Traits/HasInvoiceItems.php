@@ -1,9 +1,9 @@
 <?php
 
-namespace SimpleParkBv\Invoices\Traits;
+namespace SimpleParkBv\Invoices\Models\Traits;
 
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\Models\InvoiceItem;
+use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 use SimpleParkBv\Invoices\Services\CurrencyFormatter;
 use SimpleParkBv\Invoices\Services\TaxCalculator;
 
@@ -13,11 +13,11 @@ use SimpleParkBv\Invoices\Services\TaxCalculator;
 trait HasInvoiceItems
 {
     /**
-     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\InvoiceItem>
+     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>
      */
-    public Collection $items;
+    protected Collection $items;
 
-    public ?float $forcedTotal = null;
+    protected ?float $forcedTotal = null;
 
     public function initializeHasInvoiceItems(): void
     {
@@ -26,9 +26,48 @@ trait HasInvoiceItems
     }
 
     /**
+     * Get the forced total amount.
+     */
+    public function getForcedTotal(): ?float
+    {
+        return $this->forcedTotal;
+    }
+
+    /**
+     * Get all items.
+     *
+     * @return \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>
+     */
+    public function getItems(): Collection
+    {
+        return $this->items;
+    }
+
+    /**
+     * Add a single item to the invoice.
+     */
+    public function addItem(InvoiceItemInterface $item): self
+    {
+        $this->items->push($item);
+
+        return $this;
+    }
+
+    /**
+     * Force a specific total amount that will override the calculated total.
+     * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
+     */
+    public function forcedTotal(float $amount): self
+    {
+        $this->forcedTotal = $amount;
+
+        return $this;
+    }
+
+    /**
      * Set all items for the invoice (replaces existing items).
      *
-     * @param  array<int, \SimpleParkBv\Invoices\Models\InvoiceItem>  $items
+     * @param  array<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
      */
     public function items(array $items): self
     {
@@ -54,8 +93,8 @@ trait HasInvoiceItems
      */
     public function getItemsTotal(): float
     {
-        return $this->items->sum(
-            static fn (InvoiceItem $item): float => $item->unitPrice * $item->quantity
+        return $this->getItems()->sum(
+            static fn (InvoiceItemInterface $item): float => $item->getUnitPrice() * $item->getQuantity()
         );
     }
 
@@ -83,17 +122,6 @@ trait HasInvoiceItems
             ->sum(fn (float $taxPercentage): float => round($this->getTaxAmountForTaxGroup($taxPercentage), 2));
 
         return round($total - $sumOfRoundedTaxGroups, 2);
-    }
-
-    /**
-     * Force a specific total amount that will override the calculated total.
-     * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
-     */
-    public function forcedTotal(float $amount): self
-    {
-        $this->forcedTotal = $amount;
-
-        return $this;
     }
 
     /**
@@ -137,6 +165,7 @@ trait HasInvoiceItems
 
     /**
      * Calculate the subtotal for items with a specific tax percentage.
+     *
      * Calculated as: sum of items in this tax group - tax amount for this group.
      */
     public function getSubTotalForTaxGroup(float $taxPercentage): float
@@ -146,6 +175,7 @@ trait HasInvoiceItems
 
     /**
      * Calculate the tax amount for items with a specific tax percentage.
+     *
      * Calculates tax from unitPrice which includes tax.
      */
     public function getTaxAmountForTaxGroup(float $taxPercentage): float
