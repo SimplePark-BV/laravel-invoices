@@ -195,6 +195,14 @@ abstract class Party implements PartyInterface
     }
 
     /**
+     * Check if the party has any address information.
+     */
+    public function hasAddress(): bool
+    {
+        return ! empty($this->address) || ! empty($this->postalCode) || ! empty($this->city);
+    }
+
+    /**
      * Convert the party to an array representation.
      *
      * @return array<string, mixed>
