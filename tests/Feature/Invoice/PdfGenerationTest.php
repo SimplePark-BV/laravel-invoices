@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Invoice;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
@@ -12,15 +12,15 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Models\Buyer;
-use SimpleParkBv\Invoices\Models\ReceiptItem;
-use SimpleParkBv\Invoices\Models\UsageReceipt;
+use SimpleParkBv\Invoices\Models\Invoice;
+use SimpleParkBv\Invoices\Models\InvoiceItem;
 use Tests\TestCase;
-use Tests\Traits\CreatesTestReceipts;
+use Tests\Traits\CreatesTestInvoices;
 use Tests\Traits\MocksPdfGeneration;
 
-final class UsageReceiptPdfGenerationTest extends TestCase
+final class PdfGenerationTest extends TestCase
 {
-    use CreatesTestReceipts;
+    use CreatesTestInvoices;
     use MocksPdfGeneration;
 
     protected function tearDown(): void
@@ -33,30 +33,30 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public function render_creates_pdf(): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
+        $invoice = $this->create_valid_invoice();
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
 
         Pdf::shouldReceive('loadView')
             ->once()
-            ->with('invoices::usage-receipt.index', ['usageReceipt' => $receipt])
+            ->with('invoices::invoice.index', ['invoice' => $invoice])
             ->andReturn($mockPdf);
 
         // act
-        $result = $receipt->render();
+        $result = $invoice->render();
 
         // assert
-        $this->assertSame($receipt, $result);
-        $this->assertTrue($receipt->isRendered());
+        $this->assertSame($invoice, $result);
+        $this->assertTrue($invoice->isRendered());
     }
 
     #[Test]
     public function render_sets_locale_during_rendering(): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->language('en');
+        $invoice = $this->create_valid_invoice();
+        $invoice->language('en');
         App::setLocale('nl'); // set different locale
 
         $mockPdf = $this->mockPdfInstance();
@@ -66,14 +66,14 @@ final class UsageReceiptPdfGenerationTest extends TestCase
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturnUsing(function ($view, $data) use ($mockPdf) {
-                // verify locale is set to receipt language during rendering
+                // verify locale is set to invoice language during rendering
                 $this->assertEquals('en', App::getLocale());
 
                 return $mockPdf;
             });
 
         // act
-        $receipt->render();
+        $invoice->render();
 
         // assert
         // verify original locale is restored
@@ -85,23 +85,23 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public function render_uses_template(string $template, string $expectedTemplate): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->template = $template;
+        $invoice = $this->create_valid_invoice();
+        $invoice->template = $template;
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
 
         Pdf::shouldReceive('loadView')
             ->once()
-            ->with($expectedTemplate, ['usageReceipt' => $receipt])
+            ->with($expectedTemplate, ['invoice' => $invoice])
             ->andReturn($mockPdf);
 
         // act
-        $receipt->render();
+        $invoice->render();
 
         // assert
-        // verified in mock expectation - ensure receipt was rendered
-        $this->assertTrue($receipt->isRendered());
+        // verified in mock expectation - ensure invoice was rendered
+        $this->assertTrue($invoice->isRendered());
     }
 
     /**
@@ -110,7 +110,7 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public static function template_data_provider(): array
     {
         return [
-            'default template' => ['usage-receipt.index', 'invoices::usage-receipt.index'],
+            'default template' => ['invoice.index', 'invoices::invoice.index'],
             'custom template' => ['custom-template', 'invoices::custom-template'],
         ];
     }
@@ -123,19 +123,16 @@ final class UsageReceiptPdfGenerationTest extends TestCase
         Config::set('invoices.pdf.paper_size', $paperSize);
         Config::set('invoices.pdf.orientation', $orientation);
 
-        $receipt = UsageReceipt::make();
+        $invoice = Invoice::make();
         $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
+        $invoice->buyer($buyer);
 
-        $item = ReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
+        $item = InvoiceItem::make([
+            'title' => 'Item',
+            'quantity' => 1,
+            'unit_price' => 10.00,
         ]);
-        $receipt->items([$item]);
+        $invoice->items([$item]);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
         $this->mockPdfFacadeChain();
@@ -145,11 +142,11 @@ final class UsageReceiptPdfGenerationTest extends TestCase
             ->andReturn($mockPdf);
 
         // act
-        $receipt->render();
+        $invoice->render();
 
         // assert
-        // verified in mock expectation - ensure receipt was rendered
-        $this->assertTrue($receipt->isRendered());
+        // verified in mock expectation - ensure invoice was rendered
+        $this->assertTrue($invoice->isRendered());
     }
 
     /**
@@ -168,8 +165,8 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public function download_generates_response(?string $customFilename, string $expectedFilename): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
+        $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -180,7 +177,7 @@ final class UsageReceiptPdfGenerationTest extends TestCase
         $this->mockPdfDownload($mockPdf, $expectedFilename);
 
         // act
-        $response = $receipt->download($customFilename);
+        $response = $invoice->download($customFilename);
 
         // assert
         $this->assertInstanceOf(Response::class, $response);
@@ -192,8 +189,8 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public static function download_filename_data_provider(): array
     {
         return [
-            'default filename' => [null, 'parkeerbevestiging-15-01-2024.pdf'],
-            'custom filename' => ['custom-receipt.pdf', 'custom-receipt.pdf'],
+            'default filename' => [null, 'invoice-20240115.pdf'],
+            'custom filename' => ['custom-invoice.pdf', 'custom-invoice.pdf'],
         ];
     }
 
@@ -201,8 +198,8 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public function download_auto_renders(): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
+        $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -210,25 +207,25 @@ final class UsageReceiptPdfGenerationTest extends TestCase
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'parkeerbevestiging-15-01-2024.pdf');
+        $this->mockPdfDownload($mockPdf, 'invoice-20240115.pdf');
 
         // assert
         // pdf not rendered yet
-        $this->assertFalse($receipt->isRendered());
+        $this->assertFalse($invoice->isRendered());
 
         // act
-        $receipt->download();
+        $invoice->download();
 
         // assert
         // pdf should be rendered now
-        $this->assertTrue($receipt->isRendered());
+        $this->assertTrue($invoice->isRendered());
     }
 
     #[Test]
     public function download_throws_when_render_fails(): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
+        $invoice = $this->create_valid_invoice();
 
         $this->mockPdfFacadeChain();
 
@@ -241,29 +238,7 @@ final class UsageReceiptPdfGenerationTest extends TestCase
         $this->expectExceptionMessage('Failed to render PDF');
 
         // act
-        $receipt->download();
-    }
-
-    #[Test]
-    public function download_uses_correct_filename_format(): void
-    {
-        // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->date('2025-09-25'); // specific date for filename pattern verification
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'parkeerbevestiging-25-09-2025.pdf');
-
-        // act
-        $response = $receipt->download();
-
-        // assert
-        $this->assertInstanceOf(Response::class, $response);
+        $invoice->download();
     }
 
     #[Test]
@@ -271,8 +246,8 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public function stream_generates_response(?string $customFilename, string $expectedFilename): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
+        $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -284,7 +259,7 @@ final class UsageReceiptPdfGenerationTest extends TestCase
         $this->mockPdfStream($mockPdf, $expectedFilename);
 
         // act
-        $response = $receipt->stream($customFilename);
+        $response = $invoice->stream($customFilename);
 
         // assert
         $this->assertInstanceOf(Response::class, $response);
@@ -296,8 +271,8 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public static function stream_filename_data_provider(): array
     {
         return [
-            'default filename' => [null, 'parkeerbevestiging-15-01-2024.pdf'],
-            'custom filename' => ['custom-receipt.pdf', 'custom-receipt.pdf'],
+            'default filename' => [null, 'invoice-20240115.pdf'],
+            'custom filename' => ['custom-invoice.pdf', 'custom-invoice.pdf'],
         ];
     }
 
@@ -305,8 +280,8 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public function stream_includes_cache_headers(): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
+        $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -315,13 +290,13 @@ final class UsageReceiptPdfGenerationTest extends TestCase
             ->once()
             ->andReturn($mockPdf);
 
-        $this->mockPdfStream($mockPdf, 'parkeerbevestiging-15-01-2024.pdf');
+        $this->mockPdfStream($mockPdf, 'invoice-20240115.pdf');
 
         // act
-        $response = $receipt->stream();
+        $response = $invoice->stream();
 
         // assert
-        $this->assertTrue($receipt->isRendered());
+        $this->assertTrue($invoice->isRendered());
         $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals('no-cache, no-store, must-revalidate', $response->headers->get('Cache-Control'));
         $this->assertEquals('no-cache', $response->headers->get('Pragma'));
@@ -332,8 +307,8 @@ final class UsageReceiptPdfGenerationTest extends TestCase
     public function stream_auto_renders(): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
+        $invoice = $this->create_valid_invoice();
+        $invoice->date('2024-01-15'); // Fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -342,25 +317,25 @@ final class UsageReceiptPdfGenerationTest extends TestCase
             ->once()
             ->andReturn($mockPdf);
 
-        $this->mockPdfStream($mockPdf, 'parkeerbevestiging-15-01-2024.pdf');
+        $this->mockPdfStream($mockPdf, 'invoice-20240115.pdf');
 
         // assert
         // pdf not rendered yet
-        $this->assertFalse($receipt->isRendered());
+        $this->assertFalse($invoice->isRendered());
 
         // act
-        $receipt->stream();
+        $invoice->stream();
 
         // assert
         // pdf should be rendered now
-        $this->assertTrue($receipt->isRendered());
+        $this->assertTrue($invoice->isRendered());
     }
 
     #[Test]
     public function stream_throws_when_render_fails(): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
+        $invoice = $this->create_valid_invoice();
         $this->mockPdfFacadeChain();
         Pdf::shouldReceive('loadView')
             ->once()
@@ -371,29 +346,6 @@ final class UsageReceiptPdfGenerationTest extends TestCase
         $this->expectExceptionMessage('Failed to render PDF');
 
         // act
-        $receipt->stream();
-    }
-
-    #[Test]
-    public function stream_uses_correct_filename_format(): void
-    {
-        // arrange
-        $receipt = $this->create_valid_receipt();
-        $receipt->date('2025-09-25'); // specific date for filename pattern verification
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-
-        $this->mockPdfStream($mockPdf, 'parkeerbevestiging-25-09-2025.pdf');
-
-        // act
-        $response = $receipt->stream();
-
-        // assert
-        $this->assertInstanceOf(Response::class, $response);
+        $invoice->stream();
     }
 }

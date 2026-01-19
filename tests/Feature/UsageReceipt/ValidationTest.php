@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\UsageReceipt;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -11,7 +11,7 @@ use SimpleParkBv\Invoices\Models\UsageReceipt;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
 
-final class UsageReceiptValidationTest extends TestCase
+final class ValidationTest extends TestCase
 {
     use CreatesTestReceipts;
 

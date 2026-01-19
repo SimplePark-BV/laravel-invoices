@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Invoice;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -11,7 +11,7 @@ use SimpleParkBv\Invoices\Models\InvoiceItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
 
-final class InvoiceValidationTest extends TestCase
+final class ValidationTest extends TestCase
 {
     use CreatesTestInvoices;
 
