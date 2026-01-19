@@ -149,13 +149,11 @@ trait HasPdfRendering
      */
     public function download(?string $filename = null): Response
     {
-        if (! $this->pdf) {
+        if ($this->pdf !== null) {
             $this->render();
         }
 
-        if (! $this->pdf) {
-            throw new InvalidInvoiceException('Failed to render PDF');
-        }
+        assert($this->pdf !== null);
 
         $filename = $filename ?? $this->getFilename();
 
@@ -167,13 +165,11 @@ trait HasPdfRendering
      */
     public function stream(?string $filename = null): Response
     {
-        if (! $this->pdf) {
+        if ($this->pdf !== null) {
             $this->render();
         }
 
-        if (! $this->pdf) {
-            throw new InvalidInvoiceException('Failed to render PDF');
-        }
+        assert($this->pdf !== null);
 
         $filename = $filename ?? $this->getFilename();
 

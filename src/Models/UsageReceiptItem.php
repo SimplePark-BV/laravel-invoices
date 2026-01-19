@@ -213,7 +213,7 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
 
         // validate required string fields
         foreach (['user', 'identifier', 'category'] as $field) {
-            if (empty($this->$field)) {
+            if ($this->$field === null || $this->$field === '') {
                 throw new InvalidUsageReceiptItemException("{$prefix} must have a {$field}");
             }
         }

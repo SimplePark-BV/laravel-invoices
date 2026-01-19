@@ -22,12 +22,13 @@
                         {{ $seller->getPostalCode() }} {{ $seller->getCity() }}
                     @endif
                 </div>
-                <div class="invoice__seller-detail">
-                    @if($seller->getEmail())
+                @if($seller->getEmail())
+                    <div class="invoice__seller-detail">
                         {{ $seller->getEmail() }}
-                    @endif
-                </div>
-                <div class="invoice__seller-detail">
+                    </div>
+                @endif
+                @if($seller->getRegistrationNumber() || $seller->getTaxId() || $seller->getBankAccount())
+                    <div class="invoice__seller-detail">
                     @if($seller->getRegistrationNumber())
                         {{ __('invoices::invoice.registration_number') }} {{ $seller->getRegistrationNumber() }}<br>
                     @endif
@@ -37,7 +38,8 @@
                     @if($seller->getBankAccount())
                         {{ __('invoices::invoice.bank') }} {{ $seller->getBankAccount() }}
                     @endif
-                </div>
+                    </div>
+                @endif
             </div>
         </td>
     </tr>
