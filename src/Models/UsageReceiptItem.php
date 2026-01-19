@@ -215,32 +215,14 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
     {
         $prefix = $index !== null ? "Item at index {$index}" : 'Item';
 
-        $this->validateRequiredFields($prefix);
-        $this->validateDates($prefix);
-        $this->validatePrice($prefix);
-    }
-
-    /**
-     * validate required string fields.
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException
-     */
-    private function validateRequiredFields(string $prefix): void
-    {
+        // validate required string fields
         foreach (['user', 'identifier', 'category'] as $field) {
             if ($this->$field === null || $this->$field === '') {
                 throw new InvalidUsageReceiptItemException("{$prefix} must have a {$field}");
             }
         }
-    }
 
-    /**
-     * validate start and end dates.
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException
-     */
-    private function validateDates(string $prefix): void
-    {
+        // validate required date fields
         if ($this->startDate === null) {
             throw new InvalidUsageReceiptItemException("{$prefix} must have a start date");
         }
@@ -249,18 +231,12 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
             throw new InvalidUsageReceiptItemException("{$prefix} must have an end date");
         }
 
+        // validate date logic
         if ($this->endDate->lte($this->startDate)) {
             throw new InvalidUsageReceiptItemException("{$prefix} end date must be after start date");
         }
-    }
 
-    /**
-     * validate price is set and not negative.
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException
-     */
-    private function validatePrice(string $prefix): void
-    {
+        // validate price
         if ($this->price === null) {
             throw new InvalidUsageReceiptItemException("{$prefix} must have a price");
         }
