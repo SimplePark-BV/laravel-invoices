@@ -14,14 +14,16 @@
         <td class="invoice__header-cell invoice__seller">
             <div class="invoice__seller-name">{{ $seller->getName() }}</div>
             <div class="invoice__seller-details">
-                <div class="invoice__seller-detail">
-                    @if($seller->getAddress())
-                        {{ $seller->getAddress() }}<br>
-                    @endif
-                    @if($seller->getPostalCode() || $seller->getCity())
-                        {{ $seller->getPostalCode() }} {{ $seller->getCity() }}
-                    @endif
-                </div>
+                @if($seller->getAddress() || $seller->getPostalCode() || $seller->getCity())
+                    <div class="invoice__seller-detail">
+                        @if($seller->getAddress())
+                            {{ $seller->getAddress() }}<br>
+                        @endif
+                        @if($seller->getPostalCode() || $seller->getCity())
+                            {{ $seller->getPostalCode() }} {{ $seller->getCity() }}
+                        @endif
+                    </div>
+                @endif
                 @if($seller->getEmail())
                     <div class="invoice__seller-detail">
                         {{ $seller->getEmail() }}

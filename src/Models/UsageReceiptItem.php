@@ -119,9 +119,11 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
     {
         if (is_string($endDate)) {
             $this->endDate = Carbon::parse($endDate);
-        } else {
-            $this->endDate = $endDate;
+
+            return $this;
         }
+
+        $this->endDate = $endDate;
 
         return $this;
     }
@@ -159,9 +161,11 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
     {
         if (is_string($startDate)) {
             $this->startDate = Carbon::parse($startDate);
-        } else {
-            $this->startDate = $startDate;
+
+            return $this;
         }
+
+        $this->startDate = $startDate;
 
         return $this;
     }
@@ -211,14 +215,32 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
     {
         $prefix = $index !== null ? "Item at index {$index}" : 'Item';
 
-        // validate required string fields
+        $this->validateRequiredFields($prefix);
+        $this->validateDates($prefix);
+        $this->validatePrice($prefix);
+    }
+
+    /**
+     * validate required string fields.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException
+     */
+    private function validateRequiredFields(string $prefix): void
+    {
         foreach (['user', 'identifier', 'category'] as $field) {
             if ($this->$field === null || $this->$field === '') {
                 throw new InvalidUsageReceiptItemException("{$prefix} must have a {$field}");
             }
         }
+    }
 
-        // validate required date fields
+    /**
+     * validate start and end dates.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException
+     */
+    private function validateDates(string $prefix): void
+    {
         if ($this->startDate === null) {
             throw new InvalidUsageReceiptItemException("{$prefix} must have a start date");
         }
@@ -227,12 +249,18 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
             throw new InvalidUsageReceiptItemException("{$prefix} must have an end date");
         }
 
-        // validate date logic
         if ($this->endDate->lte($this->startDate)) {
             throw new InvalidUsageReceiptItemException("{$prefix} end date must be after start date");
         }
+    }
 
-        // validate price
+    /**
+     * validate price is set and not negative.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException
+     */
+    private function validatePrice(string $prefix): void
+    {
         if ($this->price === null) {
             throw new InvalidUsageReceiptItemException("{$prefix} must have a price");
         }
