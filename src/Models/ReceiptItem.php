@@ -39,6 +39,66 @@ final class ReceiptItem implements ReceiptItemInterface
     private string $dateFormat = 'd-m-Y H:i';
 
     /**
+     * Get the category.
+     */
+    public function getCategory(): ?string
+    {
+        return $this->category;
+    }
+
+    /**
+     * Get the end date.
+     */
+    public function getEndDate(): ?Carbon
+    {
+        return $this->endDate;
+    }
+
+    /**
+     * Get the identifier.
+     */
+    public function getIdentifier(): ?string
+    {
+        return $this->identifier;
+    }
+
+    /**
+     * Get the price.
+     */
+    public function getPrice(): ?float
+    {
+        return $this->price;
+    }
+
+    /**
+     * Get the start date.
+     */
+    public function getStartDate(): ?Carbon
+    {
+        return $this->startDate;
+    }
+
+    /**
+     * Get the user name.
+     */
+    public function getUser(): ?string
+    {
+        return $this->user;
+    }
+
+    /**
+     * Set the category.
+     *
+     * @return $this
+     */
+    public function category(string $category): self
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    /**
      * Set the date format for formatting dates.
      *
      * @return $this
@@ -46,46 +106,6 @@ final class ReceiptItem implements ReceiptItemInterface
     public function dateFormat(string $dateFormat): self
     {
         $this->dateFormat = $dateFormat;
-
-        return $this;
-    }
-
-    /**
-     * Set the user name.
-     *
-     * @return $this
-     */
-    public function user(string $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    /**
-     * Set the identifier.
-     *
-     * @return $this
-     */
-    public function identifier(string $identifier): self
-    {
-        $this->identifier = $identifier;
-
-        return $this;
-    }
-
-    /**
-     * Set the start date.
-     *
-     * @return $this
-     */
-    public function startDate(Carbon|string $startDate): self
-    {
-        if (is_string($startDate)) {
-            $this->startDate = Carbon::parse($startDate);
-        } else {
-            $this->startDate = $startDate;
-        }
 
         return $this;
     }
@@ -107,13 +127,13 @@ final class ReceiptItem implements ReceiptItemInterface
     }
 
     /**
-     * Set the category.
+     * Set the identifier.
      *
      * @return $this
      */
-    public function category(string $category): self
+    public function identifier(string $identifier): self
     {
-        $this->category = $category;
+        $this->identifier = $identifier;
 
         return $this;
     }
@@ -131,51 +151,31 @@ final class ReceiptItem implements ReceiptItemInterface
     }
 
     /**
-     * Get the user name.
+     * Set the start date.
+     *
+     * @return $this
      */
-    public function getUser(): ?string
+    public function startDate(Carbon|string $startDate): self
     {
-        return $this->user;
+        if (is_string($startDate)) {
+            $this->startDate = Carbon::parse($startDate);
+        } else {
+            $this->startDate = $startDate;
+        }
+
+        return $this;
     }
 
     /**
-     * Get the identifier.
+     * Set the user name.
+     *
+     * @return $this
      */
-    public function getIdentifier(): ?string
+    public function user(string $user): self
     {
-        return $this->identifier;
-    }
+        $this->user = $user;
 
-    /**
-     * Get the start date.
-     */
-    public function getStartDate(): ?Carbon
-    {
-        return $this->startDate;
-    }
-
-    /**
-     * Get the end date.
-     */
-    public function getEndDate(): ?Carbon
-    {
-        return $this->endDate;
-    }
-
-    /**
-     * Get the category.
-     */
-    public function getCategory(): ?string
-    {
-        return $this->category;
-    }
-
-    /**
-     * Get the price.
-     */
-    public function getPrice(): ?float
-    {
-        return $this->price;
+        return $this;
     }
 
     /**

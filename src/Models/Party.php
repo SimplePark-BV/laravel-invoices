@@ -35,15 +35,67 @@ abstract class Party implements PartyInterface
     protected ?string $website = null;
 
     /**
-     * Set the party's name.
-     *
-     * @return $this
+     * Get the party's address.
      */
-    public function name(string $name): self
+    public function getAddress(): ?string
     {
-        $this->name = $name;
+        return $this->address ?? null;
+    }
 
-        return $this;
+    /**
+     * Get the party's city.
+     */
+    public function getCity(): ?string
+    {
+        return $this->city ?? null;
+    }
+
+    /**
+     * Get the party's country.
+     */
+    public function getCountry(): ?string
+    {
+        return $this->country ?? null;
+    }
+
+    /**
+     * Get the party's email address.
+     */
+    public function getEmail(): ?string
+    {
+        return $this->email ?? null;
+    }
+
+    /**
+     * Get the party's name.
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Get the party's phone number.
+     */
+    public function getPhone(): ?string
+    {
+        return $this->phone ?? null;
+    }
+
+    /**
+     * Get the party's postal code.
+     */
+    public function getPostalCode(): ?string
+    {
+        return $this->postalCode ?? null;
+    }
+
+    /**
+     * Get the party's website URL.
+     */
+    public function getWebsite(): ?string
+    {
+        return $this->website ?? null;
     }
 
     /**
@@ -66,18 +118,6 @@ abstract class Party implements PartyInterface
     public function city(?string $city): self
     {
         $this->city = $city;
-
-        return $this;
-    }
-
-    /**
-     * Set the party's postal code.
-     *
-     * @return $this
-     */
-    public function postalCode(?string $postalCode): self
-    {
-        $this->postalCode = $postalCode;
 
         return $this;
     }
@@ -107,6 +147,18 @@ abstract class Party implements PartyInterface
     }
 
     /**
+     * Set the party's name.
+     *
+     * @return $this
+     */
+    public function name(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
      * Set the party's phone number.
      *
      * @return $this
@@ -114,6 +166,18 @@ abstract class Party implements PartyInterface
     public function phone(?string $phone): self
     {
         $this->phone = $phone;
+
+        return $this;
+    }
+
+    /**
+     * Set the party's postal code.
+     *
+     * @return $this
+     */
+    public function postalCode(?string $postalCode): self
+    {
+        $this->postalCode = $postalCode;
 
         return $this;
     }
@@ -128,70 +192,6 @@ abstract class Party implements PartyInterface
         $this->website = $website;
 
         return $this;
-    }
-
-    /**
-     * Get the party's name.
-     */
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    /**
-     * Get the party's address.
-     */
-    public function getAddress(): ?string
-    {
-        return $this->address ?? null;
-    }
-
-    /**
-     * Get the party's city.
-     */
-    public function getCity(): ?string
-    {
-        return $this->city ?? null;
-    }
-
-    /**
-     * Get the party's postal code.
-     */
-    public function getPostalCode(): ?string
-    {
-        return $this->postalCode ?? null;
-    }
-
-    /**
-     * Get the party's country.
-     */
-    public function getCountry(): ?string
-    {
-        return $this->country ?? null;
-    }
-
-    /**
-     * Get the party's email address.
-     */
-    public function getEmail(): ?string
-    {
-        return $this->email ?? null;
-    }
-
-    /**
-     * Get the party's phone number.
-     */
-    public function getPhone(): ?string
-    {
-        return $this->phone ?? null;
-    }
-
-    /**
-     * Get the party's website URL.
-     */
-    public function getWebsite(): ?string
-    {
-        return $this->website ?? null;
     }
 
     /**

@@ -12,6 +12,14 @@ trait HasTemplate
     protected string $template = 'invoice.index';
 
     /**
+     * Get the template.
+     */
+    public function getTemplate(): string
+    {
+        return $this->template;
+    }
+
+    /**
      * Set the template.
      *
      * @return $this
@@ -21,13 +29,5 @@ trait HasTemplate
         $this->template = $template;
 
         return $this;
-    }
-
-    /**
-     * Get the template.
-     */
-    public function getTemplate(): string
-    {
-        return $this->template;
     }
 }

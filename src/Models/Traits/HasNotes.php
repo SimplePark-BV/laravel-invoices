@@ -12,6 +12,14 @@ trait HasNotes
     protected ?string $note = null;
 
     /**
+     * Get the note.
+     */
+    public function getNote(): ?string
+    {
+        return $this->note;
+    }
+
+    /**
      * Set the note.
      *
      * @return $this
@@ -21,13 +29,5 @@ trait HasNotes
         $this->note = $note;
 
         return $this;
-    }
-
-    /**
-     * Get the note.
-     */
-    public function getNote(): ?string
-    {
-        return $this->note;
     }
 }

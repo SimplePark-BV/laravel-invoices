@@ -15,6 +15,14 @@ trait HasBuyer
     protected Buyer $buyer;
 
     /**
+     * Get the buyer.
+     */
+    public function getBuyer(): Buyer
+    {
+        return $this->buyer;
+    }
+
+    /**
      * Set the buyer.
      *
      * @param  \SimpleParkBv\Invoices\Contracts\PartyInterface|array<string, mixed>  $buyer
@@ -36,13 +44,5 @@ trait HasBuyer
         $this->buyer = $buyer;
 
         return $this;
-    }
-
-    /**
-     * Get the buyer.
-     */
-    public function getBuyer(): Buyer
-    {
-        return $this->buyer;
     }
 }

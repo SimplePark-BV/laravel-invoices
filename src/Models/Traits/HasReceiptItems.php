@@ -25,6 +25,14 @@ trait HasReceiptItems
     }
 
     /**
+     * Get the forced total amount.
+     */
+    public function getForcedTotal(): ?float
+    {
+        return $this->forcedTotal;
+    }
+
+    /**
      * Get all items.
      *
      * @return \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>
@@ -32,18 +40,6 @@ trait HasReceiptItems
     public function getItems(): Collection
     {
         return $this->items;
-    }
-
-    /**
-     * Set all items for the receipt (replaces existing items).
-     *
-     * @param  array<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>  $items
-     */
-    public function items(array $items): self
-    {
-        $this->items = collect($items);
-
-        return $this;
     }
 
     /**
@@ -68,11 +64,15 @@ trait HasReceiptItems
     }
 
     /**
-     * Get the forced total amount.
+     * Set all items for the receipt (replaces existing items).
+     *
+     * @param  array<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>  $items
      */
-    public function getForcedTotal(): ?float
+    public function items(array $items): self
     {
-        return $this->forcedTotal;
+        $this->items = collect($items);
+
+        return $this;
     }
 
     /**

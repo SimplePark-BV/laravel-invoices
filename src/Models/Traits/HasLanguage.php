@@ -26,6 +26,14 @@ trait HasLanguage
     }
 
     /**
+     * Get the language.
+     */
+    public function getLanguage(): string
+    {
+        return $this->language;
+    }
+
+    /**
      * Set the language.
      *
      * @return $this
@@ -43,14 +51,6 @@ trait HasLanguage
         $this->language = $language;
 
         return $this;
-    }
-
-    /**
-     * Get the language.
-     */
-    public function getLanguage(): string
-    {
-        return $this->language;
     }
 
     /**

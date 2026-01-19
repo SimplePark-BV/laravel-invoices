@@ -15,6 +15,22 @@ trait HasReceiptIds
     protected ?string $userId = null;
 
     /**
+     * Get the document ID.
+     */
+    public function getDocumentId(): ?string
+    {
+        return $this->documentId ?? null;
+    }
+
+    /**
+     * Get the user ID.
+     */
+    public function getUserId(): ?string
+    {
+        return $this->userId ?? null;
+    }
+
+    /**
      * Set the document ID.
      *
      * @return $this
@@ -36,21 +52,5 @@ trait HasReceiptIds
         $this->userId = $userId;
 
         return $this;
-    }
-
-    /**
-     * Get the document ID.
-     */
-    public function getDocumentId(): ?string
-    {
-        return $this->documentId ?? null;
-    }
-
-    /**
-     * Get the user ID.
-     */
-    public function getUserId(): ?string
-    {
-        return $this->userId ?? null;
     }
 }

@@ -30,15 +30,43 @@ final class InvoiceItem implements InvoiceItemInterface
     private ?float $taxPercentage = null;
 
     /**
-     * Set the title of the item.
-     *
-     * @return $this
+     * Get the description of the item.
      */
-    public function title(string $title): self
+    public function getDescription(): ?string
     {
-        $this->title = $title;
+        return $this->description ?? null;
+    }
 
-        return $this;
+    /**
+     * Get the quantity of the item.
+     */
+    public function getQuantity(): float|int
+    {
+        return $this->quantity;
+    }
+
+    /**
+     * Get the tax percentage of the item.
+     */
+    public function getTaxPercentage(): ?float
+    {
+        return $this->taxPercentage;
+    }
+
+    /**
+     * Get the title of the item.
+     */
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    /**
+     * Get the unit price of the item.
+     */
+    public function getUnitPrice(): float|int
+    {
+        return $this->unitPrice;
     }
 
     /**
@@ -66,19 +94,6 @@ final class InvoiceItem implements InvoiceItemInterface
     }
 
     /**
-     * Set the unit price of the item.
-     * Negative values are allowed for discount items.
-     *
-     * @return $this
-     */
-    public function unitPrice(float|int $unitPrice): self
-    {
-        $this->unitPrice = $unitPrice;
-
-        return $this;
-    }
-
-    /**
      * Set the tax percentage of the item.
      *
      * @return $this
@@ -91,43 +106,28 @@ final class InvoiceItem implements InvoiceItemInterface
     }
 
     /**
-     * Get the title of the item.
+     * Set the title of the item.
+     *
+     * @return $this
      */
-    public function getTitle(): string
+    public function title(string $title): self
     {
-        return $this->title;
+        $this->title = $title;
+
+        return $this;
     }
 
     /**
-     * Get the description of the item.
+     * Set the unit price of the item.
+     * Negative values are allowed for discount items.
+     *
+     * @return $this
      */
-    public function getDescription(): ?string
+    public function unitPrice(float|int $unitPrice): self
     {
-        return $this->description ?? null;
-    }
+        $this->unitPrice = $unitPrice;
 
-    /**
-     * Get the quantity of the item.
-     */
-    public function getQuantity(): float|int
-    {
-        return $this->quantity;
-    }
-
-    /**
-     * Get the unit price of the item.
-     */
-    public function getUnitPrice(): float|int
-    {
-        return $this->unitPrice;
-    }
-
-    /**
-     * Get the tax percentage of the item.
-     */
-    public function getTaxPercentage(): ?float
-    {
-        return $this->taxPercentage;
+        return $this;
     }
 
     /**

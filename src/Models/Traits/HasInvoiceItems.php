@@ -26,6 +26,14 @@ trait HasInvoiceItems
     }
 
     /**
+     * Get the forced total amount.
+     */
+    public function getForcedTotal(): ?float
+    {
+        return $this->forcedTotal;
+    }
+
+    /**
      * Get all items.
      *
      * @return \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>
@@ -33,18 +41,6 @@ trait HasInvoiceItems
     public function getItems(): Collection
     {
         return $this->items;
-    }
-
-    /**
-     * Set all items for the invoice (replaces existing items).
-     *
-     * @param  array<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
-     */
-    public function items(array $items): self
-    {
-        $this->items = collect($items);
-
-        return $this;
     }
 
     /**
@@ -69,6 +65,18 @@ trait HasInvoiceItems
     }
 
     /**
+     * Set all items for the invoice (replaces existing items).
+     *
+     * @param  array<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
+     */
+    public function items(array $items): self
+    {
+        $this->items = collect($items);
+
+        return $this;
+    }
+
+    /**
      * Calculate the total tax amount.
      *
      * Sums taxes only for items that have a taxPercentage set (excludes null items).
@@ -77,14 +85,6 @@ trait HasInvoiceItems
     public function getTaxAmount(): float
     {
         return TaxCalculator::calculateTaxAmount($this->items);
-    }
-
-    /**
-     * Get the forced total amount.
-     */
-    public function getForcedTotal(): ?float
-    {
-        return $this->forcedTotal;
     }
 
     /**
