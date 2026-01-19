@@ -30,8 +30,8 @@ final class Seller extends Party
         $this->city = $seller['city'] ?? null;
         $this->country = $seller['country'] ?? null;
         $this->email = $seller['email'] ?? null;
-        $this->phone = null;
-        $this->website = null;
+        $this->phone = $seller['phone'] ?? null;
+        $this->website = $seller['website'] ?? null;
         $this->registrationNumber = $seller['registration_number'] ?? null;
         $this->taxId = $seller['tax_id'] ?? null;
         $this->bankAccount = $seller['bank_account'] ?? null;

@@ -3,16 +3,16 @@
 namespace SimpleParkBv\Invoices\Traits;
 
 /**
- * Trait HasInvoiceTemplate
+ * Trait HasTemplate
  *
  * @var string $template
  */
-trait HasInvoiceTemplate
+trait HasTemplate
 {
     public string $template = 'invoice.index';
 
     /**
-     * Set the template for this invoice.
+     * Set the template.
      *
      * @return $this
      */

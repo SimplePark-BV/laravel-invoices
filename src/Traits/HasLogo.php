@@ -3,21 +3,21 @@
 namespace SimpleParkBv\Invoices\Traits;
 
 /**
- * Trait HasInvoiceLogo
+ * Trait HasLogo
  *
  * @var string|null $logo
  */
-trait HasInvoiceLogo
+trait HasLogo
 {
     public ?string $logo = null;
 
-    public function initializeHasInvoiceLogo(): void
+    public function initializeHasLogo(): void
     {
         $this->logo = config('invoices.logo');
     }
 
     /**
-     * Set the logo path for this invoice.
+     * Set the logo path.
      *
      * @return $this
      */

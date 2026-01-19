@@ -5,11 +5,11 @@ namespace SimpleParkBv\Invoices\Traits;
 use RuntimeException;
 
 /**
- * Trait HasInvoiceLanguage
+ * Trait HasLanguage
  *
  * @var string $language
  */
-trait HasInvoiceLanguage
+trait HasLanguage
 {
     public string $language;
 
@@ -20,7 +20,7 @@ trait HasInvoiceLanguage
      */
     private static ?array $cachedAvailableLanguages = null;
 
-    public function initializeHasInvoiceLanguage(): void
+    public function initializeHasLanguage(): void
     {
         $this->language = config('invoices.default_language', 'nl');
     }
@@ -69,7 +69,7 @@ trait HasInvoiceLanguage
     }
 
     /**
-     * Set the language for this invoice.
+     * Set the language.
      *
      * @return $this
      *

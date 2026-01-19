@@ -5,13 +5,13 @@ namespace SimpleParkBv\Invoices\Traits;
 use Illuminate\Support\Carbon;
 
 /**
- * Trait HasInvoiceDates
+ * Trait HasDates
  *
- * @var \Illuminate\Support\Carbon|null $date The invoice issue date (when the invoice is created/issued)
+ * @var \Illuminate\Support\Carbon|null $date The issue date (when the document is created/issued)
  * @var string $date_format
  * @var int $pay_until_days
  */
-trait HasInvoiceDates
+trait HasDates
 {
     public ?Carbon $date = null;
 
@@ -19,7 +19,7 @@ trait HasInvoiceDates
 
     public int $pay_until_days;
 
-    public function initializeHasInvoiceDates(): void
+    public function initializeHasDates(): void
     {
         $this->date = null;
         $this->date_format = 'd-m-Y';
@@ -27,7 +27,7 @@ trait HasInvoiceDates
     }
 
     /**
-     * Get the invoice date formatted according to the invoice date format.
+     * Get the date formatted according to the date format.
      */
     public function getFormattedDate(): ?string
     {
@@ -35,7 +35,7 @@ trait HasInvoiceDates
     }
 
     /**
-     * Get the due date formatted according to the invoice date format.
+     * Get the due date formatted according to the date format.
      */
     public function getFormattedDueDate(): ?string
     {
@@ -43,10 +43,10 @@ trait HasInvoiceDates
     }
 
     /**
-     * Check if the invoice has been issued (is official).
-     * An invoice is issued when it has an issue date set.
+     * Check if the document has been issued (is official).
+     * A document is issued when it has an issue date set.
      *
-     * @return bool True if the invoice has been issued, false if it's a concept/draft
+     * @return bool True if the document has been issued, false if it's a concept/draft
      */
     public function isIssued(): bool
     {
@@ -54,9 +54,9 @@ trait HasInvoiceDates
     }
 
     /**
-     * Set the invoice issue date (when the invoice is created/issued).
+     * Set the issue date (when the document is created/issued).
      *
-     * @param  Carbon|string|null  $date  The invoice issue date (null to remove the date)
+     * @param  Carbon|string|null  $date  The issue date (null to remove the date)
      * @return $this
      */
     public function date(Carbon|string|null $date): self

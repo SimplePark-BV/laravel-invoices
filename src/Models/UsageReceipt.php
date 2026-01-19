@@ -7,29 +7,28 @@ use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use RuntimeException;
-use SimpleParkBv\Invoices\Contracts\InvoiceInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Traits\HasBuyer;
 use SimpleParkBv\Invoices\Traits\HasDates;
-use SimpleParkBv\Invoices\Traits\HasInvoiceFooter;
-use SimpleParkBv\Invoices\Traits\HasInvoiceItems;
-use SimpleParkBv\Invoices\Traits\HasInvoiceNumber;
 use SimpleParkBv\Invoices\Traits\HasLanguage;
 use SimpleParkBv\Invoices\Traits\HasLogo;
+use SimpleParkBv\Invoices\Traits\HasNotes;
+use SimpleParkBv\Invoices\Traits\HasReceiptIds;
+use SimpleParkBv\Invoices\Traits\HasReceiptItems;
 use SimpleParkBv\Invoices\Traits\HasTemplate;
 
 /**
- * Class Invoice
+ * Class UsageReceipt
  */
-final class Invoice implements InvoiceInterface
+final class UsageReceipt
 {
     use HasBuyer;
     use HasDates;
-    use HasInvoiceFooter;
-    use HasInvoiceItems;
-    use HasInvoiceNumber;
     use HasLanguage;
     use HasLogo;
+    use HasNotes;
+    use HasReceiptIds;
+    use HasReceiptItems;
     use HasTemplate;
 
     public Seller $seller;
@@ -50,13 +49,16 @@ final class Invoice implements InvoiceInterface
 
     public function __construct()
     {
-        $this->initializeHasInvoiceItems();
+        $this->initializeHasReceiptItems();
         $this->initializeHasLogo();
         $this->initializeHasLanguage();
         $this->initializeHasDates();
 
         // seller (default from config)
         $this->seller = Seller::make();
+
+        // default template for usage receipts
+        $this->template = 'usage-receipt.index';
 
         // pdf options
         $this->paperOptions = [
@@ -71,13 +73,13 @@ final class Invoice implements InvoiceInterface
     }
 
     /**
-     * Create an invoice from an array of data.
+     * Create a usage receipt from an array of data.
      *
      * @param  array<string, mixed>  $data
      */
     public static function fromArray(array $data): self
     {
-        $invoice = self::make();
+        $usageReceipt = self::make();
 
         // set buyer if provided
         if (isset($data['buyer']) && is_array($data['buyer'])) {
@@ -89,73 +91,78 @@ final class Invoice implements InvoiceInterface
                 }
             }
 
-            $invoice->buyer($buyer);
+            $usageReceipt->buyer($buyer);
         }
 
         // set date if provided
         if (isset($data['date'])) {
-            $invoice->date($data['date']);
+            $usageReceipt->date($data['date']);
         }
 
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
             $items = [];
             foreach ($data['items'] as $itemData) {
-                $item = InvoiceItem::make();
+                $item = ReceiptItem::make();
 
-                if (isset($itemData['title'])) {
-                    $item->title($itemData['title']);
+                if (isset($itemData['user'])) {
+                    $item->user($itemData['user']);
                 }
 
-                if (isset($itemData['description'])) {
-                    $item->description($itemData['description']);
+                if (isset($itemData['license_plate'])) {
+                    $item->licensePlate($itemData['license_plate']);
                 }
 
-                if (isset($itemData['quantity'])) {
-                    $item->quantity($itemData['quantity']);
+                if (isset($itemData['start_date'])) {
+                    $item->startDate($itemData['start_date']);
                 }
 
-                if (isset($itemData['unit_price'])) {
-                    $item->unitPrice($itemData['unit_price']);
+                if (isset($itemData['end_date'])) {
+                    $item->endDate($itemData['end_date']);
                 }
 
-                if (isset($itemData['tax_percentage'])) {
-                    $item->taxPercentage($itemData['tax_percentage']);
+                if (isset($itemData['zone'])) {
+                    $item->zone($itemData['zone']);
+                }
+
+                if (isset($itemData['price'])) {
+                    $item->price($itemData['price']);
                 }
 
                 $items[] = $item;
             }
-            $invoice->items($items);
+            $usageReceipt->items($items);
         }
 
-        // set invoice number if provided
-        if (isset($data['serial'])) {
-            $invoice->serial($data['serial']);
+        // set IDs if provided
+        if (isset($data['document_id'])) {
+            $usageReceipt->documentId($data['document_id']);
         }
 
-        if (isset($data['series'])) {
-            $invoice->series($data['series']);
-        }
-
-        if (isset($data['sequence'])) {
-            $invoice->sequence($data['sequence']);
+        if (isset($data['user_id'])) {
+            $usageReceipt->userId($data['user_id']);
         }
 
         // set language if provided
         if (isset($data['language'])) {
-            $invoice->language($data['language']);
+            $usageReceipt->language($data['language']);
+        }
+
+        // set note if provided
+        if (isset($data['note'])) {
+            $usageReceipt->note($data['note']);
         }
 
         // set forced total if provided
         if (isset($data['forced_total'])) {
-            $invoice->forcedTotal($data['forced_total']);
+            $usageReceipt->forcedTotal($data['forced_total']);
         }
 
-        return $invoice;
+        return $usageReceipt;
     }
 
     /**
-     * Convert the invoice to an array.
+     * Convert the usage receipt to an array.
      *
      * @return array<string, mixed>
      */
@@ -164,17 +171,17 @@ final class Invoice implements InvoiceInterface
         return [
             'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
             'date' => $this->date?->toIso8601String(),
-            'items' => $this->items->map(static fn (InvoiceItem $item) => $item->toArray())->toArray(),
-            'serial' => $this->serial,
-            'series' => $this->series,
-            'sequence' => $this->sequence,
+            'items' => $this->items->map(static fn (ReceiptItem $item) => $item->toArray())->toArray(),
+            'document_id' => $this->documentId,
+            'user_id' => $this->userId,
             'language' => $this->language,
+            'note' => $this->note,
             'forced_total' => $this->forcedTotal,
         ];
     }
 
     /**
-     * Validate the invoice before rendering.
+     * Validate the usage receipt before rendering.
      *
      * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
      */
@@ -182,19 +189,19 @@ final class Invoice implements InvoiceInterface
     {
         // buyer must be set
         if (! isset($this->buyer)) {
-            throw new InvalidInvoiceException('Buyer is required for invoice');
+            throw new InvalidInvoiceException('Buyer is required for usage receipt');
         }
 
         // at least one item must exist
         if ($this->items->isEmpty()) {
-            throw new InvalidInvoiceException('Invoice must have at least one item');
+            throw new InvalidInvoiceException('Usage receipt must have at least one parking session');
         }
 
         // validate all items
         foreach ($this->items as $index => $item) {
             try {
                 $item->validate($index);
-            } catch (\SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException $e) {
+            } catch (\RuntimeException $e) {
                 throw new InvalidInvoiceException($e->getMessage(), 0, $e);
             }
         }
@@ -225,17 +232,17 @@ final class Invoice implements InvoiceInterface
      */
     public function render(): self
     {
-        // validate invoice before rendering
+        // validate usage receipt before rendering
         $this->validate();
 
         // save current locale
         $originalLocale = App::getLocale();
 
-        // set locale for this invoice
+        // set locale for this usage receipt
         App::setLocale($this->language);
 
         try {
-            // 'invoice' is the variable name used in the blade view
+            // 'usageReceipt' is the variable name used in the blade view
             $template = sprintf('invoices::%s', $this->template);
 
             // get the package root directory to allow dompdf to access fonts
@@ -251,7 +258,7 @@ final class Invoice implements InvoiceInterface
                 'chroot' => $packageRoot,
                 'isRemoteEnabled' => false,
             ])
-                ->loadView($template, ['invoice' => $this])
+                ->loadView($template, ['usageReceipt' => $this])
                 ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
         } catch (\Throwable $e) {
             $this->pdf = null;
@@ -264,7 +271,7 @@ final class Invoice implements InvoiceInterface
     }
 
     /**
-     * Download the invoice as a PDF.
+     * Download the usage receipt as a PDF.
      */
     public function download(?string $filename = null): Response
     {
@@ -276,13 +283,13 @@ final class Invoice implements InvoiceInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'invoice-'.($this->date?->format('Ymd') ?? 'concept').'.pdf';
+        $filename = $filename ?? 'parkeerbevestiging-'.($this->date?->format('d-m-Y') ?? 'concept').'.pdf';
 
         return $this->pdf->download($filename);
     }
 
     /**
-     * Stream the invoice in the browser (Good for testing/previewing).
+     * Stream the usage receipt in the browser (Good for testing/previewing).
      */
     public function stream(?string $filename = null): Response
     {
@@ -294,7 +301,7 @@ final class Invoice implements InvoiceInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'invoice-'.($this->date?->format('Ymd') ?? 'concept').'.pdf';
+        $filename = $filename ?? 'parkeerbevestiging-'.($this->date?->format('d-m-Y') ?? 'concept').'.pdf';
 
         $response = $this->pdf->stream($filename);
 
