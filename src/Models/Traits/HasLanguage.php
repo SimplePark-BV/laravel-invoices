@@ -60,7 +60,7 @@ trait HasLanguage
             return self::$cachedAvailableLanguages;
         }
 
-        $langPath = __DIR__.'/../../resources/lang';
+        $langPath = __DIR__.'/../../../resources/lang';
         $languages = [];
 
         if (is_dir($langPath)) {

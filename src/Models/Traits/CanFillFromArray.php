@@ -25,6 +25,11 @@ trait CanFillFromArray
     public function fill(array $data): self
     {
         foreach ($data as $key => $value) {
+            // skip arrays as they need separate handling (e.g., buyer, items)
+            if (is_array($value)) {
+                continue;
+            }
+
             // convert snake_case to camelCase for method name
             $method = Str::camel($key);
 
