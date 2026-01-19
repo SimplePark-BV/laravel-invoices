@@ -14,14 +14,24 @@ trait HasReceiptItems
     /**
      * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>
      */
-    public Collection $items;
+    protected Collection $items;
 
-    public ?float $forcedTotal = null;
+    protected ?float $forcedTotal = null;
 
     public function initializeHasReceiptItems(): void
     {
         $this->items = collect();
         $this->forcedTotal = null;
+    }
+
+    /**
+     * Get all items.
+     *
+     * @return \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>
+     */
+    public function getItems(): Collection
+    {
+        return $this->items;
     }
 
     /**
@@ -58,11 +68,19 @@ trait HasReceiptItems
     }
 
     /**
+     * Get the forced total amount.
+     */
+    public function getForcedTotal(): ?float
+    {
+        return $this->forcedTotal;
+    }
+
+    /**
      * Get the sum of all parking session prices.
      */
     public function getItemsTotal(): float
     {
-        return $this->items->sum(
+        return $this->getItems()->sum(
             static fn (ReceiptItemInterface $item): float => $item->getPrice() ?? 0.0
         );
     }
@@ -78,8 +96,8 @@ trait HasReceiptItems
      */
     public function getTotal(): float
     {
-        if ($this->forcedTotal !== null) {
-            return $this->forcedTotal;
+        if ($this->getForcedTotal() !== null) {
+            return $this->getForcedTotal();
         }
 
         // always calculate from items directly to ensure precision to the cent

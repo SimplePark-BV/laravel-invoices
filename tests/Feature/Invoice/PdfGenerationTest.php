@@ -86,7 +86,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $invoice = $this->create_valid_invoice();
-        $invoice->template = $template;
+        $invoice->template($template);
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -132,7 +132,7 @@ final class PdfGenerationTest extends TestCase
             'quantity' => 1,
             'unit_price' => 10.00,
         ]);
-        $invoice->items([$item]);
+        $invoice->addItem($item);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
         $this->mockPdfFacadeChain();

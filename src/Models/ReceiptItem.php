@@ -228,7 +228,7 @@ final class ReceiptItem implements ReceiptItemInterface
         }
 
         // validate date logic
-        if ($this->endDate->lt($this->startDate)) {
+        if ($this->endDate->lte($this->startDate)) {
             throw new InvalidReceiptItemException("{$prefix} end date must be after start date");
         }
 

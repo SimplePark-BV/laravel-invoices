@@ -10,9 +10,9 @@ namespace SimpleParkBv\Invoices\Models\Traits;
  */
 trait HasReceiptIds
 {
-    public ?string $documentId = null;
+    protected ?string $documentId = null;
 
-    public ?string $userId = null;
+    protected ?string $userId = null;
 
     /**
      * Set the document ID.

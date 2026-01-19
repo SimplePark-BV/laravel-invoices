@@ -15,14 +15,24 @@ trait HasInvoiceItems
     /**
      * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>
      */
-    public Collection $items;
+    protected Collection $items;
 
-    public ?float $forcedTotal = null;
+    protected ?float $forcedTotal = null;
 
     public function initializeHasInvoiceItems(): void
     {
         $this->items = collect();
         $this->forcedTotal = null;
+    }
+
+    /**
+     * Get all items.
+     *
+     * @return \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>
+     */
+    public function getItems(): Collection
+    {
+        return $this->items;
     }
 
     /**
@@ -70,12 +80,20 @@ trait HasInvoiceItems
     }
 
     /**
+     * Get the forced total amount.
+     */
+    public function getForcedTotal(): ?float
+    {
+        return $this->forcedTotal;
+    }
+
+    /**
      * Get the sum of all items (unitPrice * quantity for all items).
      * This is the total before subtracting VATs.
      */
     public function getItemsTotal(): float
     {
-        return $this->items->sum(
+        return $this->getItems()->sum(
             static fn (InvoiceItemInterface $item): float => $item->getUnitPrice() * $item->getQuantity()
         );
     }

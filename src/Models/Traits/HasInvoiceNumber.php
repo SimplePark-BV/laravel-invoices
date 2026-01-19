@@ -11,11 +11,35 @@ namespace SimpleParkBv\Invoices\Models\Traits;
  */
 trait HasInvoiceNumber
 {
-    public ?string $series = null;
+    protected ?string $series = null;
 
-    public int|string|null $sequence = null;
+    protected int|string|null $sequence = null;
 
-    public ?string $serial = null;
+    protected ?string $serial = null;
+
+    /**
+     * Get the series.
+     */
+    public function getSeries(): ?string
+    {
+        return $this->series;
+    }
+
+    /**
+     * Get the sequence number.
+     */
+    public function getSequence(): int|string|null
+    {
+        return $this->sequence;
+    }
+
+    /**
+     * Get the serial number.
+     */
+    public function getSerial(): ?string
+    {
+        return $this->serial;
+    }
 
     /**
      * Set the series for this invoice.
@@ -62,35 +86,35 @@ trait HasInvoiceNumber
     public function getNumber(): ?string
     {
         // if serial is explicitly set, return it
-        if (filled($this->serial)) {
-            return $this->serial;
+        if (filled($this->getSerial())) {
+            return $this->getSerial();
         }
 
         // if both series and sequence are set, combine them
-        if ($this->series !== null && $this->sequence !== null) {
+        if ($this->getSeries() !== null && $this->getSequence() !== null) {
             // if sequence is numeric (int or numeric string), pad it
-            if (is_numeric($this->sequence)) {
-                $paddedSequence = str_pad((string) $this->sequence, 8, '0', STR_PAD_LEFT);
+            if (is_numeric($this->getSequence())) {
+                $paddedSequence = str_pad((string) $this->getSequence(), 8, '0', STR_PAD_LEFT);
             } else {
                 // for non-numeric strings, use as-is
-                $paddedSequence = (string) $this->sequence;
+                $paddedSequence = (string) $this->getSequence();
             }
 
-            return $this->series.'.'.$paddedSequence;
+            return $this->getSeries().'.'.$paddedSequence;
         }
 
         // if only series is set, return series
-        if ($this->series !== null) {
-            return $this->series;
+        if ($this->getSeries() !== null) {
+            return $this->getSeries();
         }
 
         // if only sequence is set, return sequence as string (padded to 8 digits if numeric)
-        if ($this->sequence !== null) {
-            if (is_numeric($this->sequence)) {
-                return str_pad((string) $this->sequence, 8, '0', STR_PAD_LEFT);
+        if ($this->getSequence() !== null) {
+            if (is_numeric($this->getSequence())) {
+                return str_pad((string) $this->getSequence(), 8, '0', STR_PAD_LEFT);
             }
 
-            return (string) $this->sequence;
+            return (string) $this->getSequence();
         }
 
         // no number can be determined

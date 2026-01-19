@@ -9,7 +9,7 @@ namespace SimpleParkBv\Invoices\Models\Traits;
  */
 trait HasNotes
 {
-    public ?string $note = null;
+    protected ?string $note = null;
 
     /**
      * Set the note.

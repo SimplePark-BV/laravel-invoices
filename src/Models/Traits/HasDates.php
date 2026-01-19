@@ -13,17 +13,41 @@ use Illuminate\Support\Carbon;
  */
 trait HasDates
 {
-    public ?Carbon $date = null;
+    protected ?Carbon $date = null;
 
-    public string $dateFormat;
+    protected string $dateFormat;
 
-    public int $payUntilDays;
+    protected int $payUntilDays;
 
     public function initializeHasDates(): void
     {
         $this->date = null;
         $this->dateFormat = 'd-m-Y';
         $this->payUntilDays = config('invoices.default_payment_terms_days', 30);
+    }
+
+    /**
+     * Get the issue date.
+     */
+    public function getDate(): ?Carbon
+    {
+        return $this->date;
+    }
+
+    /**
+     * Get the date format.
+     */
+    public function getDateFormat(): string
+    {
+        return $this->dateFormat;
+    }
+
+    /**
+     * Get the payment terms in days.
+     */
+    public function getPayUntilDays(): int
+    {
+        return $this->payUntilDays;
     }
 
     /**
@@ -46,11 +70,37 @@ trait HasDates
     }
 
     /**
+     * Set the date format for displaying dates.
+     *
+     * @param  string  $format  The date format (e.g., 'd-m-Y', 'Y-m-d')
+     * @return $this
+     */
+    public function dateFormat(string $format): self
+    {
+        $this->dateFormat = $format;
+
+        return $this;
+    }
+
+    /**
+     * Set the payment terms in days.
+     *
+     * @param  int  $days  Number of days until payment is due
+     * @return $this
+     */
+    public function payUntilDays(int $days): self
+    {
+        $this->payUntilDays = $days;
+
+        return $this;
+    }
+
+    /**
      * Get the date formatted according to the date format.
      */
     public function getFormattedDate(): ?string
     {
-        return $this->date?->format($this->dateFormat);
+        return $this->getDate()?->format($this->getDateFormat());
     }
 
     /**
@@ -58,7 +108,7 @@ trait HasDates
      */
     public function getFormattedDueDate(): ?string
     {
-        return $this->date?->copy()->addDays($this->payUntilDays)->format($this->dateFormat);
+        return $this->getDate()?->copy()->addDays($this->getPayUntilDays())->format($this->getDateFormat());
     }
 
     /**
@@ -69,6 +119,6 @@ trait HasDates
      */
     public function isIssued(): bool
     {
-        return $this->date !== null;
+        return $this->getDate() !== null;
     }
 }

@@ -36,7 +36,8 @@ final class ValidationTest extends TestCase
             'quantity' => 1,
             'unit_price' => 10.00,
         ]);
-        $invoice->items([$item]);
+
+        $invoice->addItem($item);
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -75,7 +76,8 @@ final class ValidationTest extends TestCase
         $invoice->buyer($buyer);
 
         $item = InvoiceItem::make($itemData);
-        $invoice->items([$item]);
+
+        $invoice->addItem($item);
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -127,7 +129,7 @@ final class ValidationTest extends TestCase
         $invoice->buyer($buyer);
 
         $item = InvoiceItem::make($itemData);
-        $invoice->items([$item]);
+        $invoice->addItem($item);
 
         // act & assert
         $this->expectNotToPerformAssertions();
@@ -190,7 +192,7 @@ final class ValidationTest extends TestCase
             'quantity' => 1,
             'unit_price' => 10.00,
         ]);
-        $invoice->items([$item1]);
+        $invoice->addItem($item1);
 
         // assert
         // should throw exception for first invalid item

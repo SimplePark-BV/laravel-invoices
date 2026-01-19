@@ -9,11 +9,19 @@ namespace SimpleParkBv\Invoices\Models\Traits;
  */
 trait HasLogo
 {
-    public ?string $logo = null;
+    protected ?string $logo = null;
 
     public function initializeHasLogo(): void
     {
         $this->logo = config('invoices.logo');
+    }
+
+    /**
+     * Get the logo path.
+     */
+    public function getLogo(): ?string
+    {
+        return $this->logo;
     }
 
     /**
@@ -37,12 +45,12 @@ trait HasLogo
      */
     public function getLogoDataUri(): ?string
     {
-        if (! $this->logo) {
+        if (! $this->getLogo()) {
             return null;
         }
 
         // validate file path to prevent directory traversal
-        $realPath = realpath($this->logo);
+        $realPath = realpath($this->getLogo());
         if ($realPath === false || ! file_exists($realPath)) {
             return null;
         }

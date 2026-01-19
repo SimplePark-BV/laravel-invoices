@@ -1,342 +1,168 @@
 # laravel-invoices
 
-This Laravel package provides an easy to use interface to generate Invoice PDF files with your provided data.
+A Laravel package for generating Invoice and Usage Receipt PDFs with customizable templates and multilingual support.
 
 ## Installation
-
-You can install the package via Composer:
 
 ```bash
 composer require simplepark-bv/laravel-invoices
 ```
 
-The service provider will be automatically registered via Laravel's package auto-discovery.
-
 ### Publish Configuration
-
-Publish the configuration file to customize the package settings:
 
 ```bash
 php artisan vendor:publish --provider="SimpleParkBv\Invoices\InvoiceServiceProvider" --tag="invoices-config"
 ```
 
-This will create a `config/invoices.php` file where you can customize:
+Customize currency, tax rates, payment terms, PDF settings, and seller information in `config/invoices.php`.
 
-- Currency settings
-- Default tax rate
-- Payment terms
-- PDF generation settings
-- Seller information
+### Publish Translations
+
+```bash
+php artisan vendor:publish --provider="SimpleParkBv\Invoices\InvoiceServiceProvider" --tag="invoices-lang"
+```
+
+Modify labels, table headers, footer text, and filename prefixes in `lang/vendor/invoices/`. Available languages: `en`, `nl`.
 
 ## Usage
 
-### Basic Example
+### Invoices
 
 ```php
 use SimpleParkBv\Invoices\Models\Invoice;
 use SimpleParkBv\Invoices\Models\InvoiceItem;
 use SimpleParkBv\Invoices\Models\Buyer;
-use Illuminate\Support\Carbon;
 
-// create invoice
 $invoice = Invoice::make()
     ->series('2024')
     ->sequence(1)
-    ->date(Carbon::now())
-    ->language('nl');
-
-// set buyer - can use data array for convenience
-$buyer = Buyer::make([
-    'name' => 'John Doe',
-    'email' => 'john@example.com',
-    'address' => '123 Main St',
-    'city' => 'Amsterdam',
-    'postal_code' => '1000 AA',
-]);
-$invoice->buyer($buyer);
-
-// add items - supports both fluent interface and data array
-$item = InvoiceItem::make([
-    'title' => 'Product Name',
-    'description' => 'Product description',
-    'quantity' => 2,
-    'unit_price' => 50.00,
-    'tax_percentage' => 21.0,
-]);
-
-$invoice->items([$item]);
-
-// generate and download PDF
-return $invoice->download('invoice.pdf');
-```
-
-### Fluent Interface
-
-The package supports both fluent interface and data arrays for building invoices:
-
-```php
-// Using fluent interface
-$invoice = Invoice::make()
-    ->series('2024')
-    ->sequence(123)
     ->date('2024-01-15')
-    ->language('en');
-
-$item = InvoiceItem::make()
-    ->title('Service')
-    ->quantity(1)
-    ->unitPrice(100.00)
-    ->taxPercentage(21.0);
-
-$invoice->items([$item]);
-
-// Or using data arrays (more concise)
-$item = InvoiceItem::make([
-    'title' => 'Service',
-    'quantity' => 1,
-    'unit_price' => 100.00,
-    'tax_percentage' => 21.0,
-]);
-```
-
-### Multiple Items
-
-```php
-$items = [
-    InvoiceItem::make([
-        'title' => 'Item 1',
-        'quantity' => 2,
-        'unit_price' => 25.00,
-        'tax_percentage' => 21.0,
-    ]),
-    InvoiceItem::make([
-        'title' => 'Item 2',
-        'quantity' => 1,
-        'unit_price' => 50.00,
-        'tax_percentage' => 9.0,
-    ]),
-];
-
-$invoice->items($items);
-```
-
-### Discount Items
-
-You can create discount items by using negative unit prices:
-
-```php
-$items = [
-    InvoiceItem::make()
-        ->title('Product')
-        ->quantity(1)
-        ->unitPrice(100.00)
-        ->taxPercentage(21.0),
-    InvoiceItem::make()
-        ->title('Discount Code: SAVE10')
-        ->quantity(1)
-        ->unitPrice(-10.00)
-        ->taxPercentage(0),
-];
-
-$invoice->items($items);
-// total will be 90.00 (plus tax on 90.00)
-```
-
-Note: Use negative unit prices for discounts, not negative quantities. Quantities must always be positive.
-
-### Forced Total
-
-Sometimes you need to override the calculated total to match an external system:
-
-```php
-$invoice->forcedTotal(100.00);
-
-// getTotal() will return 100.00
-// getItemsTotal() will still return the calculated sum
-```
-
-### Date Handling
-
-The `date()` method (from the `HasInvoiceDates` trait) accepts both Carbon instances and strings. Strings are automatically parsed using `Carbon::parse()`:
-
-```php
-// using Carbon
-$invoice->date(Carbon::now());
-
-// using string (parsed with Carbon::parse)
-$invoice->date('2024-01-15');
-```
-
-### Invoice Number
-
-Invoice numbers can be generated from series and/or sequence:
-
-```php
-$invoice->series('2024')->sequence(123);
-// generates: "2024.00000123"
-
-$invoice->sequence(456);
-// generates: "00000456"
-
-$invoice->series('2024');
-// generates: "2024"
-```
-
-### Validation
-
-The invoice is automatically validated before rendering. You can also validate manually:
-
-```php
-try {
-    $invoice->validate();
-} catch (\SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException $e) {
-    // handle validation error
-}
-```
-
-### Creating from Array
-
-You can create invoices from array data:
-
-```php
-$data = [
-    'buyer' => [
+    ->language('nl')
+    ->buyer([
         'name' => 'John Doe',
         'email' => 'john@example.com',
-    ],
-    'date' => '2024-01-15',
-    'items' => [
-        [
-            'title' => 'Product',
-            'quantity' => 1,
-            'unit_price' => 100.00,
+        'address' => '123 Main St',
+        'city' => 'Amsterdam',
+        'postal_code' => '1000 AA',
+    ])
+    ->items([
+        InvoiceItem::make([
+            'title' => 'Product Name',
+            'description' => 'Product description',
+            'quantity' => 2,
+            'unit_price' => 50.00,
             'tax_percentage' => 21.0,
-        ],
-    ],
-    'series' => '2024',
-    'sequence' => 1,
-];
+        ]),
+    ]);
 
-$invoice = Invoice::make($data);
+return $invoice->download(); // or ->stream() for browser preview
 ```
 
-### Converting to Array
+**Invoice Numbers**: Combine `series()` and `sequence()` to generate formatted invoice numbers (e.g., "2024.00000123").
 
-You can also convert invoices to arrays for serialization:
+**Discounts**: Use negative `unit_price` values for discount items (quantities must be positive).
+
+**Forced Totals**: Override calculated totals with `forcedTotal(100.00)` when needed.
+
+### Usage Receipts
 
 ```php
-$array = $invoice->toArray();
+use SimpleParkBv\Invoices\Models\UsageReceipt;
+use SimpleParkBv\Invoices\Models\ReceiptItem;
+use SimpleParkBv\Invoices\Models\Buyer;
+
+$receipt = UsageReceipt::make()
+    ->date('2024-01-15')
+    ->language('nl')
+    ->title('Custom Title') // optional, falls back to translation
+    ->documentId('DOC-12345')
+    ->userId('USER-001')
+    ->buyer([
+        'name' => 'John Doe',
+        'email' => 'john@example.com',
+    ])
+    ->items([
+        ReceiptItem::make([
+            'user' => 'John Doe',
+            'identifier' => 'ABC123',
+            'start_date' => '2024-01-15 10:00:00',
+            'end_date' => '2024-01-15 12:00:00',
+            'category' => 'Premium',
+            'price' => 12.50,
+        ]),
+    ])
+    ->note('Optional note for the receipt');
+
+return $receipt->download(); // filename is locale-aware
 ```
 
-### Available Methods
+**Locale-Aware Filenames**: The package generates filenames based on the selected language (e.g., `gebruiksbevestiging-2026-01-19-14-30-00.pdf` for Dutch).
 
-#### Invoice Methods
+### Common Features
 
-- `make(array $data = [])` - Create a new invoice instance, optionally with data
-- `toArray()` - Convert invoice to array
-- `buyer(Buyer $buyer)` - Set the buyer
-- `items(array $items)` - Set all items for the invoice (replaces existing items)
-- `addItem(InvoiceItem $item)` - Add a single item to the invoice
-- `series(?string $series)` - Set invoice series
-- `sequence(?int $sequence)` - Set invoice sequence number
-- `date(Carbon|string $date)` - Set invoice date (accepts Carbon instance or string, strings are parsed with Carbon::parse)
-- `language(string $language)` - Set invoice language
-- `logo(?string $logoPath)` - Set custom logo path
-- `template(string $template)` - Set custom template
-- `forcedTotal(float $amount)` - Override calculated total
-- `validate()` - Validate invoice data
-- `render()` - Generate PDF instance
-- `download(?string $filename)` - Download PDF
-- `stream(?string $filename)` - Stream PDF in browser
-- `isRendered()` - Check if PDF has been rendered
-- `clearPdf()` - Clear PDF instance to free memory
-- `getItemsTotal()` - Get sum of all items
-- `getTaxAmount()` - Calculate total tax amount
-- `getSubTotal()` - Calculate subtotal (excluding tax)
-- `getTotal()` - Get grand total
-- `getFormattedTotal()` - Get formatted total with currency
-- `getTaxGroups()` - Get unique tax percentages
-- `getTaxAmountForTaxGroup(float $taxPercentage)` - Get tax amount for specific tax group
-- `getSubTotalForTaxGroup(float $taxPercentage)` - Get subtotal for specific tax group
-- `getFormattedDate()` - Get formatted invoice date
-- `getFormattedDueDate()` - Get formatted due date
-- `getNumber()` - Get invoice number
+Both `Invoice` and `UsageReceipt` support:
 
-#### InvoiceItem Methods
+- **Fluent interface** and **array-based** creation
+- **Data arrays**: `Invoice::make($data)` or `UsageReceipt::make($data)`
+- **Serialization**: `->toArray()` for JSON/API responses
+- **Validation**: Automatic validation before rendering, or manual with `->validate()`
+- **Output**: `->download(?string $filename)` or `->stream(?string $filename)`
+- **Custom templates**: `->template('custom.template')`
+- **Custom logos**: `->logo('/path/to/logo.png')`
+- **Date parsing**: Accepts Carbon instances or strings (parsed with `Carbon::parse()`)
 
-- `make(array $data = [])` - Create a new item instance, optionally with data
-- `title(string $title)` - Set item title
-- `description(?string $description)` - Set item description
-- `quantity(float|int $quantity)` - Set quantity (must be > 0)
-- `unitPrice(float|int $unitPrice)` - Set unit price (can be negative for discounts)
-- `taxPercentage(?float $taxPercentage)` - Set tax percentage (0-100 or null)
-- `getTotal()` - Calculate item total (quantity * unitPrice)
-- `getFormattedTaxPercentage()` - Get formatted tax percentage
-- `getTaxPercentage()` - Get tax percentage value
-- `validate(?int $index)` - Validate the item
+### Creating from Arrays
+
+```php
+$invoice = Invoice::make([
+    'buyer' => ['name' => 'John Doe', 'email' => 'john@example.com'],
+    'date' => '2024-01-15',
+    'series' => '2024',
+    'sequence' => 1,
+    'items' => [
+        ['title' => 'Product', 'quantity' => 1, 'unit_price' => 100.00, 'tax_percentage' => 21.0],
+    ],
+]);
+
+$receipt = UsageReceipt::make([
+    'buyer' => ['name' => 'Jane Doe'],
+    'date' => '2024-01-15',
+    'document_id' => 'DOC-001',
+    'user_id' => 'USER-001',
+    'items' => [
+        ['user' => 'Jane Doe', 'identifier' => 'XYZ', 'start_date' => '2024-01-15 10:00', 'end_date' => '2024-01-15 12:00', 'category' => 'Basic', 'price' => 10.00],
+    ],
+]);
+```
 
 ## Validation Requirements
 
-Before rendering, the invoice must have:
-
+**Invoices** must have:
 - A buyer with at least a name
-- At least one item
-- Each item must have:
-  - A non-empty title
-  - A quantity greater than 0
-  - A unitPrice (can be negative for discount items)
-  - A taxPercentage between 0 and 100, or null
+- At least one item with: non-empty title, quantity > 0, unit price, tax percentage (0-100 or null)
+
+**Usage Receipts** must have:
+- A buyer with at least a name
+- At least one item with: user, identifier, start date, end date, category, and price
 
 ## Development
 
-This package uses Laravel Sail for local development and Orchestra Testbench for testing.
-
-### Initial Setup
-
-1. Install dependencies:
 ```bash
 composer install
-```
-
-2. Start Sail:
-```bash
 ./vendor/bin/sail up -d
-```
-
-### Running Tests
-
-```bash
 ./vendor/bin/sail phpunit
-```
-
-### Code Quality
-
-Run PHPStan for static analysis:
-```bash
 ./vendor/bin/phpstan analyse
-```
-
-Run Pint for code formatting:
-```bash
 ./vendor/bin/pint
 ```
 
 ## Troubleshooting
 
-### Invoice validation fails
+**Validation fails**: Ensure buyer and items meet requirements above.
 
-Make sure:
-- Buyer is set with at least a name
-- At least one item is added
-- All items have valid data (title, quantity > 0)
+**PDF generation fails**: Verify translations exist for the selected language and logo path is valid.
 
-### PDF generation fails
+**Language not supported**: Supported languages are detected from `resources/lang/`. Add custom translations by publishing the language files.
 
-Check that:
-- All required translations are available for the selected language
-- Logo path is valid (if using custom logo)
-- Template exists and is accessible
+## License
 
-### Language not supported
-
-The package validates language codes against available translation files. Supported languages are automatically detected from the `resources/lang` directory.
+MIT

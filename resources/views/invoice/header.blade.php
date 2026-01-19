@@ -10,30 +10,30 @@
         </td>
 
         <td class="invoice__header-cell invoice__seller">
-            <div class="invoice__seller-name">{{ $invoice->seller->getName() }}</div>
+            <div class="invoice__seller-name">{{ $invoice->getSeller()->getName() }}</div>
             <div class="invoice__seller-details">
                 <div class="invoice__seller-detail">
-                    @if($invoice->seller->getAddress())
-                        {{ $invoice->seller->getAddress() }}<br>
+                    @if($invoice->getSeller()->getAddress())
+                        {{ $invoice->getSeller()->getAddress() }}<br>
                     @endif
-                    @if($invoice->seller->getPostalCode() || $invoice->seller->getCity())
-                        {{ $invoice->seller->getPostalCode() }} {{ $invoice->seller->getCity() }}
-                    @endif
-                </div>
-                <div class="invoice__seller-detail">
-                    @if($invoice->seller->getEmail())
-                        {{ $invoice->seller->getEmail() }}
+                    @if($invoice->getSeller()->getPostalCode() || $invoice->getSeller()->getCity())
+                        {{ $invoice->getSeller()->getPostalCode() }} {{ $invoice->getSeller()->getCity() }}
                     @endif
                 </div>
                 <div class="invoice__seller-detail">
-                    @if($invoice->seller->getRegistrationNumber())
-                        {{ __('invoices::invoice.registration_number') }} {{ $invoice->seller->getRegistrationNumber() }}<br>
+                    @if($invoice->getSeller()->getEmail())
+                        {{ $invoice->getSeller()->getEmail() }}
                     @endif
-                    @if($invoice->seller->getTaxId())
-                        {{ __('invoices::invoice.tax_id') }} {{ $invoice->seller->getTaxId() }}<br>
+                </div>
+                <div class="invoice__seller-detail">
+                    @if($invoice->getSeller()->getRegistrationNumber())
+                        {{ __('invoices::invoice.registration_number') }} {{ $invoice->getSeller()->getRegistrationNumber() }}<br>
                     @endif
-                    @if($invoice->seller->getBankAccount())
-                        {{ __('invoices::invoice.bank') }} {{ $invoice->seller->getBankAccount() }}
+                    @if($invoice->getSeller()->getTaxId())
+                        {{ __('invoices::invoice.tax_id') }} {{ $invoice->getSeller()->getTaxId() }}<br>
+                    @endif
+                    @if($invoice->getSeller()->getBankAccount())
+                        {{ __('invoices::invoice.bank') }} {{ $invoice->getSeller()->getBankAccount() }}
                     @endif
                 </div>
             </div>

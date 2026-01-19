@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ $invoice->language }}">
+<html lang="{{ $invoice->getLanguage() }}">
 <head>
     <meta charset="utf-8">
     <title>{{ __('invoices::invoice.invoice') }} {{ $invoice->getNumber() ?? __('invoices::invoice.concept') }}</title>
@@ -31,7 +31,9 @@
             font-weight: 700;
             font-style: italic;
         }
-        {!! file_get_contents($invoiceCssPath) !!}
+        @if(is_readable($invoiceCssPath))
+            {!! file_get_contents($invoiceCssPath) !!}
+        @endif
     </style>
 </head>
 <body class="invoice">

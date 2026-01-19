@@ -110,15 +110,23 @@ final class Invoice implements InvoiceInterface
     public function toArray(): array
     {
         return [
-            'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
-            'date' => $this->date?->toIso8601String(),
-            'items' => $this->items->map(static fn (InvoiceItemInterface $item) => $item->toArray())->toArray(),
-            'serial' => $this->serial,
-            'series' => $this->series,
-            'sequence' => $this->sequence,
-            'language' => $this->language,
-            'forced_total' => $this->forcedTotal,
+            'buyer' => isset($this->buyer) ? $this->getBuyer()->toArray() : null,
+            'date' => $this->getDate()?->toIso8601String(),
+            'items' => $this->getItems()->map(static fn (InvoiceItemInterface $item) => $item->toArray())->toArray(),
+            'serial' => $this->getSerial(),
+            'series' => $this->getSeries(),
+            'sequence' => $this->getSequence(),
+            'language' => $this->getLanguage(),
+            'forced_total' => $this->getForcedTotal(),
         ];
+    }
+
+    /**
+     * Get the seller.
+     */
+    public function getSeller(): Seller
+    {
+        return $this->seller;
     }
 
     /**
@@ -134,12 +142,12 @@ final class Invoice implements InvoiceInterface
         }
 
         // at least one item must exist
-        if ($this->items->isEmpty()) {
+        if ($this->getItems()->isEmpty()) {
             throw new InvalidInvoiceException('Invoice must have at least one item');
         }
 
         // validate all items
-        foreach ($this->items as $index => $item) {
+        foreach ($this->getItems() as $index => $item) {
             try {
                 $item->validate($index);
             } catch (\SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException $e) {
@@ -180,7 +188,7 @@ final class Invoice implements InvoiceInterface
         $originalLocale = App::getLocale();
 
         // set locale for this invoice
-        App::setLocale($this->language);
+        App::setLocale($this->getLanguage());
 
         try {
             // 'invoice' is the variable name used in the blade view
@@ -224,7 +232,7 @@ final class Invoice implements InvoiceInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'invoice-'.($this->date?->format('Ymd') ?? 'concept').'.pdf';
+        $filename = $filename ?? 'invoice-'.($this->getDate()?->format('Ymd') ?? 'concept').'.pdf';
 
         return $this->pdf->download($filename);
     }
@@ -242,7 +250,7 @@ final class Invoice implements InvoiceInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'invoice-'.($this->date?->format('Ymd') ?? 'concept').'.pdf';
+        $filename = $filename ?? 'invoice-'.($this->getDate()?->format('Ymd') ?? 'concept').'.pdf';
 
         $response = $this->pdf->stream($filename);
 

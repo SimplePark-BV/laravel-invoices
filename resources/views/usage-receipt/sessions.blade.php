@@ -1,4 +1,4 @@
-{{-- parking sessions table --}}
+{{-- usage sessions table --}}
 <table class="usage-receipt__sessions">
     <thead>
         <tr>

@@ -3,6 +3,8 @@
 namespace SimpleParkBv\Invoices\Models\Traits;
 
 use Illuminate\Support\Str;
+use ReflectionException;
+use ReflectionMethod;
 
 /**
  * Trait CanFillFromArray
@@ -37,6 +39,14 @@ trait CanFillFromArray
      */
     public function fill(array $data): self
     {
+        // blocklist of dangerous method names that should never be called via fill
+        $dangerousMethods = [
+            'fill', 'make', 'toArray', 'toJson', '__construct', '__destruct',
+            '__call', '__callStatic', '__get', '__set', '__isset', '__unset',
+            '__sleep', '__wakeup', '__serialize', '__unserialize', '__toString',
+            '__invoke', '__set_state', '__clone', '__debugInfo',
+        ];
+
         foreach ($data as $key => $value) {
             // skip arrays as they need separate handling (e.g., buyer, items)
             if (is_array($value)) {
@@ -46,9 +56,39 @@ trait CanFillFromArray
             // convert snake_case to camelCase for method name
             $method = Str::camel($key);
 
+            // skip if method name is in the dangerous methods blocklist
+            if (in_array($method, $dangerousMethods, true)) {
+                continue;
+            }
+
             // check if a setter method exists (e.g., unitPrice())
-            if (method_exists($this, $method)) {
+            if (! method_exists($this, $method)) {
+                continue;
+            }
+
+            // use reflection to verify the method is safe to call
+            try {
+                $reflection = new ReflectionMethod($this, $method);
+
+                // ensure the method is public
+                if (! $reflection->isPublic()) {
+                    continue;
+                }
+
+                // ensure the method has exactly one required parameter
+                // or exactly one total parameter (with optional parameters)
+                $paramCount = $reflection->getNumberOfParameters();
+                $requiredParamCount = $reflection->getNumberOfRequiredParameters();
+
+                if ($paramCount === 0 || $requiredParamCount > 1) {
+                    continue;
+                }
+
+                // safe to invoke the setter
                 $this->$method($value);
+            } catch (ReflectionException $e) {
+                // skip if reflection fails
+                continue;
             }
         }
 

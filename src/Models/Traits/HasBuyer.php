@@ -12,15 +12,21 @@ use SimpleParkBv\Invoices\Models\Buyer;
  */
 trait HasBuyer
 {
-    public Buyer $buyer;
+    protected Buyer $buyer;
 
     /**
      * Set the buyer.
      *
+     * @param  \SimpleParkBv\Invoices\Contracts\PartyInterface|array<string, mixed>  $buyer
      * @return $this
      */
-    public function buyer(PartyInterface $buyer): self
+    public function buyer(PartyInterface|array $buyer): self
     {
+        // auto-cast array to Buyer instance
+        if (is_array($buyer)) {
+            $buyer = Buyer::make($buyer);
+        }
+
         // for backwards compatibility, we accept any PartyInterface
         // but if it's not a Buyer instance, we create one with the same data
         if (! $buyer instanceof Buyer) {
@@ -30,5 +36,13 @@ trait HasBuyer
         $this->buyer = $buyer;
 
         return $this;
+    }
+
+    /**
+     * Get the buyer.
+     */
+    public function getBuyer(): Buyer
+    {
+        return $this->buyer;
     }
 }

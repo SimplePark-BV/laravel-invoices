@@ -19,13 +19,13 @@ final class InvoiceItem implements InvoiceItemInterface
 {
     use CanFillFromArray;
 
-    private string $title;
+    private string $title = '';
 
     private ?string $description = null;
 
-    private float|int $quantity;
+    private float|int $quantity = 0;
 
-    private float|int $unitPrice;
+    private float|int $unitPrice = 0;
 
     private ?float $taxPercentage = null;
 

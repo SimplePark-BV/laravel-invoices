@@ -46,4 +46,5 @@ composer.lock
 
 # Development/test files
 /scripts
-parkeerbevestiging-*.pdf
+*-receipt-*.pdf
+gebruiksbevestiging-*.pdf

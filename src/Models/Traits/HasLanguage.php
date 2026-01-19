@@ -11,7 +11,7 @@ use RuntimeException;
  */
 trait HasLanguage
 {
-    public string $language;
+    protected string $language;
 
     /**
      * Cached list of available languages to avoid repeated filesystem scans.
@@ -43,6 +43,14 @@ trait HasLanguage
         $this->language = $language;
 
         return $this;
+    }
+
+    /**
+     * Get the language.
+     */
+    public function getLanguage(): string
+    {
+        return $this->language;
     }
 
     /**

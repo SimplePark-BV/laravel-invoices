@@ -26,8 +26,10 @@ interface UsageReceiptInterface
 
     /**
      * Set the buyer for this usage receipt.
+     *
+     * @param  \SimpleParkBv\Invoices\Contracts\PartyInterface|array<string, mixed>  $buyer
      */
-    public function buyer(PartyInterface $buyer): self;
+    public function buyer(PartyInterface|array $buyer): self;
 
     /**
      * Set all items for the usage receipt (replaces existing items).
@@ -65,6 +67,21 @@ interface UsageReceiptInterface
      * Set the note for this usage receipt.
      */
     public function note(?string $note): self;
+
+    /**
+     * Set the title for this usage receipt.
+     */
+    public function title(?string $title): self;
+
+    /**
+     * Get the title for this usage receipt.
+     */
+    public function getTitle(): string;
+
+    /**
+     * Get the default filename for the usage receipt.
+     */
+    public function getFilename(): string;
 
     /**
      * Set the logo path for this usage receipt.

@@ -37,6 +37,7 @@ class InvoiceServiceProvider extends ServiceProvider
             $view->with('usageReceiptCssPath', realpath(__DIR__.'/../resources/css/usage-receipt.css'));
             $view->with('usageReceiptFont', config('invoices.pdf.font', 'Montserrat'));
             $view->with('usageReceiptFontPath', realpath(__DIR__.'/../resources/fonts'));
+            $view->with('usageReceiptFontFile', config('invoices.pdf.font_file'));
         });
 
         // publish config

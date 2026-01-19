@@ -27,9 +27,9 @@ final class UsageReceiptTest extends TestCase
         // assert
         $this->assertInstanceOf(UsageReceipt::class, $receipt);
         $this->assertInstanceOf(Seller::class, $receipt->seller);
-        $this->assertTrue($receipt->items->isEmpty());
+        $this->assertTrue($receipt->getItems()->isEmpty());
         $this->assertNull($receipt->pdf);
-        $this->assertEquals('usage-receipt.index', $receipt->template);
+        $this->assertEquals('usage-receipt.index', $receipt->getTemplate());
     }
 
     #[Test]
@@ -67,16 +67,16 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make($data);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $receipt->buyer);
-        $this->assertEquals('Test Buyer', $receipt->buyer->getName());
-        $this->assertNotNull($receipt->date);
-        $this->assertEquals('2024-01-15', $receipt->date->format('Y-m-d'));
-        $this->assertCount(1, $receipt->items);
-        $this->assertEquals('DOC-12345', $receipt->documentId);
-        $this->assertEquals('USER-67890', $receipt->userId);
-        $this->assertEquals('en', $receipt->language);
-        $this->assertEquals('Test note', $receipt->note);
-        $this->assertEquals(25.50, $receipt->forcedTotal);
+        $this->assertInstanceOf(Buyer::class, $receipt->getBuyer());
+        $this->assertEquals('Test Buyer', $receipt->getBuyer()->getName());
+        $this->assertNotNull($receipt->getDate());
+        $this->assertEquals('2024-01-15', $receipt->getDate()->format('Y-m-d'));
+        $this->assertCount(1, $receipt->getItems());
+        $this->assertEquals('DOC-12345', $receipt->getDocumentId());
+        $this->assertEquals('USER-67890', $receipt->getUserId());
+        $this->assertEquals('en', $receipt->getLanguage());
+        $this->assertEquals('Test note', $receipt->getNote());
+        $this->assertEquals(25.50, $receipt->getForcedTotal());
     }
 
     #[Test]
@@ -103,13 +103,13 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make($data);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $receipt->buyer);
-        $this->assertEquals('Test Buyer', $receipt->buyer->getName());
-        $this->assertCount(1, $receipt->items);
+        $this->assertInstanceOf(Buyer::class, $receipt->getBuyer());
+        $this->assertEquals('Test Buyer', $receipt->getBuyer()->getName());
+        $this->assertCount(1, $receipt->getItems());
 
         // optional fields should use defaults or be null
-        $this->assertNull($receipt->documentId);
-        $this->assertNull($receipt->userId);
+        $this->assertNull($receipt->getDocumentId());
+        $this->assertNull($receipt->getUserId());
     }
 
     #[Test]
@@ -127,8 +127,8 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make($data);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $receipt->buyer);
-        $this->assertCount(0, $receipt->items);
+        $this->assertInstanceOf(Buyer::class, $receipt->getBuyer());
+        $this->assertCount(0, $receipt->getItems());
     }
 
     #[Test]
@@ -155,11 +155,10 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make($data);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $receipt->buyer);
-        $this->assertNull($receipt->documentId);
-        $this->assertNull($receipt->userId);
-        $this->assertNull($receipt->forcedTotal);
-        $this->assertNull($receipt->note);
+        $this->assertInstanceOf(Buyer::class, $receipt->getBuyer());
+        $this->assertNull($receipt->getDocumentId());
+        $this->assertNull($receipt->getUserId());
+        $this->assertNull($receipt->getNote());
     }
 
     #[Test]
@@ -177,7 +176,7 @@ final class UsageReceiptTest extends TestCase
             'category' => 'Standard Parking',
             'price' => 5.50,
         ]);
-        $receipt->items([$item]);
+        $receipt->addItem($item);
 
         // act
         $array = $receipt->toArray();
@@ -211,7 +210,7 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make();
         $receipt->buyer($buyer);
         $receipt->date('2024-01-15');
-        $receipt->items([$item]);
+        $receipt->addItem($item);
         $receipt->documentId('DOC-12345');
         $receipt->userId('USER-67890');
         $receipt->language('en');
@@ -248,7 +247,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertSame($buyer, $receipt->buyer);
+        $this->assertSame($buyer, $receipt->getBuyer());
     }
 
     #[Test]
@@ -257,15 +256,14 @@ final class UsageReceiptTest extends TestCase
     {
         // arrange
         $receipt = UsageReceipt::make();
-        $date = is_string($dateInput) ? Carbon::parse($dateInput) : $dateInput;
 
         // act
         $result = $receipt->date($dateInput);
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertNotNull($receipt->date);
-        $this->assertEquals($expectedFormat, $receipt->date->format('Y-m-d'));
+        $this->assertNotNull($receipt->getDate());
+        $this->assertEquals($expectedFormat, $receipt->getDate()->format('Y-m-d'));
     }
 
     /**
@@ -294,12 +292,12 @@ final class UsageReceiptTest extends TestCase
         ]);
 
         // act
-        $result = $receipt->items([$item]);
+        $result = $receipt->addItem($item);
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertCount(1, $receipt->items);
-        $this->assertSame($item, $receipt->items->first());
+        $this->assertCount(1, $receipt->getItems());
+        $this->assertSame($item, $receipt->getItems()->first());
     }
 
     #[Test]
@@ -330,7 +328,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertCount(2, $receipt->items);
+        $this->assertCount(2, $receipt->getItems());
     }
 
     /**
@@ -410,7 +408,7 @@ final class UsageReceiptTest extends TestCase
             'category' => 'Standard Parking',
             'price' => 5.50,
         ]);
-        $receipt->items([$item]);
+        $receipt->addItem($item);
 
         if ($forcedTotal !== null) {
             $receipt->forcedTotal($forcedTotal);
@@ -445,7 +443,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertEquals(100.50, $receipt->forcedTotal);
+        $this->assertEquals(100.50, $receipt->getForcedTotal());
         $this->assertEquals(100.50, $receipt->getTotal());
     }
 
@@ -512,7 +510,7 @@ final class UsageReceiptTest extends TestCase
             'category' => 'Standard Parking',
             'price' => 10.50,
         ]);
-        $receipt->items([$item]);
+        $receipt->addItem($item);
 
         // act
         $formatted = $receipt->getFormattedTotal();
@@ -532,7 +530,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertEquals('DOC-12345', $receipt->documentId);
+        $this->assertEquals('DOC-12345', $receipt->getDocumentId());
     }
 
     #[Test]
@@ -546,7 +544,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertEquals('USER-67890', $receipt->userId);
+        $this->assertEquals('USER-67890', $receipt->getUserId());
     }
 
     #[Test]
@@ -560,7 +558,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertEquals('custom-template', $receipt->template);
+        $this->assertEquals('custom-template', $receipt->getTemplate());
     }
 
     #[Test]
@@ -574,7 +572,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertEquals('Test note content', $receipt->note);
+        $this->assertEquals('Test note content', $receipt->getNote());
     }
 
     #[Test]
@@ -602,7 +600,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertEquals('en', $receipt->language);
+        $this->assertEquals('en', $receipt->getLanguage());
     }
 
     #[Test]
@@ -629,7 +627,7 @@ final class UsageReceiptTest extends TestCase
         // arrange
         $receipt = UsageReceipt::make();
         $receipt->date('2024-01-15');
-        $receipt->dateFormat = $dateFormat;
+        $receipt->dateFormat($dateFormat);
 
         // act
         $formatted = $receipt->getFormattedDate();
@@ -656,7 +654,7 @@ final class UsageReceiptTest extends TestCase
         // arrange
         $receipt = UsageReceipt::make();
         if ($initialLogo !== null) {
-            $receipt->logo = $initialLogo;
+            $receipt->logo($initialLogo);
         }
 
         // act
@@ -664,7 +662,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertEquals($expected, $receipt->logo);
+        $this->assertEquals($expected, $receipt->getLogo());
     }
 
     /**
@@ -684,7 +682,7 @@ final class UsageReceiptTest extends TestCase
     {
         // arrange
         $receipt = UsageReceipt::make();
-        $receipt->logo = $logoPath;
+        $receipt->logo($logoPath);
 
         // act
         $dataUri = $receipt->getLogoDataUri();

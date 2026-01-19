@@ -5,8 +5,6 @@
 
     --container-highest: #E0E0E0;
     --container-low: #FAFAFA;
-
-    --primary: #4A7FFF;
 }
 
 /* usage receipt base styles */
@@ -143,12 +141,12 @@
 }
 
 .usage-receipt__sessions th.usage-receipt__sessions-header:first-child {
-    padding-left: 18px;
+    padding-left: 12px;
 }
 
 .usage-receipt__sessions th.usage-receipt__sessions-header--right {
     text-align: right;
-    padding-right: 18px;
+    padding-right: 12px;
 }
 
 .usage-receipt__sessions td.usage-receipt__sessions-cell {
@@ -159,12 +157,12 @@
 }
 
 .usage-receipt__sessions td.usage-receipt__sessions-cell:first-child {
-    padding-left: 18px;
+    padding-left: 12px;
 }
 
 .usage-receipt__sessions td.usage-receipt__sessions-cell--right {
     text-align: right;
-    padding-right: 18px;
+    padding-right: 12px;
 }
 
 .usage-receipt__sessions tbody tr:last-child td.usage-receipt__sessions-cell {
@@ -175,7 +173,7 @@
 .usage-receipt__total {
     width: 100%;
     margin-bottom: 40px;
-    padding-right: 18px;
+    padding-right: 8px;
 }
 
 .usage-receipt__total-label {
@@ -217,7 +215,7 @@
 
 .usage-receipt__footer-disclaimer {
     margin-bottom: 15px;
-    color: var(--container-high);
+    color: var(--container-highest);
 }
 
 .usage-receipt__footer-disclaimer ul {

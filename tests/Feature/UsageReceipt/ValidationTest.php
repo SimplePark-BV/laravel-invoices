@@ -39,7 +39,7 @@ final class ValidationTest extends TestCase
             'category' => 'Standard Parking',
             'price' => 5.50,
         ]);
-        $receipt->items([$item]);
+        $receipt->addItem($item);
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -59,7 +59,7 @@ final class ValidationTest extends TestCase
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
-        $this->expectExceptionMessage('Usage receipt must have at least one parking session');
+        $this->expectExceptionMessage('Usage receipt must have at least one item');
 
         // act
         $receipt->validate();
@@ -78,7 +78,7 @@ final class ValidationTest extends TestCase
         $receipt->buyer($buyer);
 
         $item = ReceiptItem::make($itemData);
-        $receipt->items([$item]);
+        $receipt->addItem($item);
 
         // assert
         $this->expectException(InvalidInvoiceException::class);
@@ -165,7 +165,7 @@ final class ValidationTest extends TestCase
         $receipt->buyer($buyer);
 
         $item = ReceiptItem::make($itemData);
-        $receipt->items([$item]);
+        $receipt->addItem($item);
 
         // act & assert
         $this->expectNotToPerformAssertions();
@@ -186,16 +186,6 @@ final class ValidationTest extends TestCase
                     'end_date' => '2024-01-15 12:00:00',
                     'category' => 'Free Parking',
                     'price' => 0,
-                ],
-            ],
-            'same start and end date' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 10:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => 5.50,
                 ],
             ],
             'very long strings in fields' => [
@@ -243,7 +233,7 @@ final class ValidationTest extends TestCase
             'category' => 'Standard Parking',
             'price' => 5.50,
         ]);
-        $receipt->items([$item1]);
+        $receipt->addItem($item1);
 
         // assert
         // should throw exception for first invalid item
@@ -319,7 +309,7 @@ final class ValidationTest extends TestCase
             'user' => 'Bob Smith',
             'identifier' => 'DEF-456',
             'start_date' => '2024-01-15 18:00:00',
-            'end_date' => '2024-01-15 18:00:00', // same start/end time
+            'end_date' => '2024-01-15 20:00:00',
             'category' => 'Free Parking',
             'price' => 0,
         ]);

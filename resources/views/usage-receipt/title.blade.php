@@ -2,7 +2,7 @@
 <table class="usage-receipt__title-section">
     <tr>
         <td class="usage-receipt__title-cell">
-            <h1 class="usage-receipt__title">{{ __('invoices::usage-receipt.title') }}</h1>
+            <h1 class="usage-receipt__title">{{ $usageReceipt->getTitle() }}</h1>
         </td>
         <td class="usage-receipt__date-cell">
             <div class="usage-receipt__date-container">

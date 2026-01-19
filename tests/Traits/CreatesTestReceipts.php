@@ -23,7 +23,7 @@ trait CreatesTestReceipts
             'category' => 'Standard Parking',
             'price' => 5.50,
         ]);
-        $receipt->items([$item]);
+        $receipt->addItem($item);
 
         return $receipt;
     }

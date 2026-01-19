@@ -9,7 +9,7 @@ namespace SimpleParkBv\Invoices\Models\Traits;
  */
 trait HasTemplate
 {
-    public string $template = 'invoice.index';
+    protected string $template = 'invoice.index';
 
     /**
      * Set the template.
@@ -21,5 +21,13 @@ trait HasTemplate
         $this->template = $template;
 
         return $this;
+    }
+
+    /**
+     * Get the template.
+     */
+    public function getTemplate(): string
+    {
+        return $this->template;
     }
 }

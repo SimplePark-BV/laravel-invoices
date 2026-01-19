@@ -27,8 +27,10 @@ interface InvoiceInterface
 
     /**
      * Set the buyer for this invoice.
+     *
+     * @param  \SimpleParkBv\Invoices\Contracts\PartyInterface|array<string, mixed>  $buyer
      */
-    public function buyer(PartyInterface $buyer): self;
+    public function buyer(PartyInterface|array $buyer): self;
 
     /**
      * Set all items for the invoice (replaces existing items).

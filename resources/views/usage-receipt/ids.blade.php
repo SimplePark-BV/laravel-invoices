@@ -1,4 +1,4 @@
-{{-- parking and user IDs section --}}
+{{-- document and user IDs section --}}
 <div class="usage-receipt__ids">
     <div class="usage-receipt__id-column">
         <div class="usage-receipt__id-label">{{ __('invoices::usage-receipt.document_id') }}</div>

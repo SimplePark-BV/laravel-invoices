@@ -86,7 +86,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $receipt = $this->create_valid_receipt();
-        $receipt->template = $template;
+        $receipt->template($template);
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -135,7 +135,7 @@ final class PdfGenerationTest extends TestCase
             'category' => 'Standard Parking',
             'price' => 5.50,
         ]);
-        $receipt->items([$item]);
+        $receipt->addItem($item);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
         $this->mockPdfFacadeChain();
@@ -169,6 +169,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $receipt = $this->create_valid_receipt();
+        $receipt->language('nl'); // explicitly set dutch for deterministic filename
         $receipt->date('2024-01-15'); // fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -177,6 +178,7 @@ final class PdfGenerationTest extends TestCase
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
+
         $this->mockPdfDownload($mockPdf, $expectedFilename);
 
         // act
@@ -192,7 +194,7 @@ final class PdfGenerationTest extends TestCase
     public static function download_filename_data_provider(): array
     {
         return [
-            'default filename' => [null, 'parkeerbevestiging-15-01-2024.pdf'],
+            'default filename' => [null, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf'],
             'custom filename' => ['custom-receipt.pdf', 'custom-receipt.pdf'],
         ];
     }
@@ -202,6 +204,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $receipt = $this->create_valid_receipt();
+        $receipt->language('nl'); // explicitly set dutch for deterministic filename
         $receipt->date('2024-01-15'); // fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -210,7 +213,7 @@ final class PdfGenerationTest extends TestCase
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'parkeerbevestiging-15-01-2024.pdf');
+        $this->mockPdfDownload($mockPdf, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf');
 
         // assert
         // pdf not rendered yet
@@ -249,6 +252,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $receipt = $this->create_valid_receipt();
+        $receipt->language('nl'); // explicitly set dutch for deterministic filename
         $receipt->date('2025-09-25'); // specific date for filename pattern verification
         $mockPdf = $this->mockPdfInstance();
 
@@ -257,7 +261,7 @@ final class PdfGenerationTest extends TestCase
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'parkeerbevestiging-25-09-2025.pdf');
+        $this->mockPdfDownload($mockPdf, 'gebruiksbevestiging-2025-09-25-00-00-00.pdf');
 
         // act
         $response = $receipt->download();
@@ -272,6 +276,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $receipt = $this->create_valid_receipt();
+        $receipt->language('nl'); // explicitly set dutch for deterministic filename
         $receipt->date('2024-01-15'); // fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -296,7 +301,7 @@ final class PdfGenerationTest extends TestCase
     public static function stream_filename_data_provider(): array
     {
         return [
-            'default filename' => [null, 'parkeerbevestiging-15-01-2024.pdf'],
+            'default filename' => [null, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf'],
             'custom filename' => ['custom-receipt.pdf', 'custom-receipt.pdf'],
         ];
     }
@@ -306,6 +311,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $receipt = $this->create_valid_receipt();
+        $receipt->language('nl'); // explicitly set dutch for deterministic filename
         $receipt->date('2024-01-15'); // fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -315,7 +321,7 @@ final class PdfGenerationTest extends TestCase
             ->once()
             ->andReturn($mockPdf);
 
-        $this->mockPdfStream($mockPdf, 'parkeerbevestiging-15-01-2024.pdf');
+        $this->mockPdfStream($mockPdf, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf');
 
         // act
         $response = $receipt->stream();
@@ -333,6 +339,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $receipt = $this->create_valid_receipt();
+        $receipt->language('nl'); // explicitly set dutch for deterministic filename
         $receipt->date('2024-01-15'); // fixed date for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
@@ -342,7 +349,7 @@ final class PdfGenerationTest extends TestCase
             ->once()
             ->andReturn($mockPdf);
 
-        $this->mockPdfStream($mockPdf, 'parkeerbevestiging-15-01-2024.pdf');
+        $this->mockPdfStream($mockPdf, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf');
 
         // assert
         // pdf not rendered yet
@@ -379,6 +386,7 @@ final class PdfGenerationTest extends TestCase
     {
         // arrange
         $receipt = $this->create_valid_receipt();
+        $receipt->language('nl'); // explicitly set dutch for deterministic filename
         $receipt->date('2025-09-25'); // specific date for filename pattern verification
         $mockPdf = $this->mockPdfInstance();
 
@@ -388,7 +396,7 @@ final class PdfGenerationTest extends TestCase
             ->once()
             ->andReturn($mockPdf);
 
-        $this->mockPdfStream($mockPdf, 'parkeerbevestiging-25-09-2025.pdf');
+        $this->mockPdfStream($mockPdf, 'gebruiksbevestiging-2025-09-25-00-00-00.pdf');
 
         // act
         $response = $receipt->stream();

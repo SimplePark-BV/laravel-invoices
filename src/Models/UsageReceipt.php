@@ -22,6 +22,8 @@ use SimpleParkBv\Invoices\Models\Traits\HasTemplate;
 
 /**
  * Class UsageReceipt
+ *
+ * @property string|null $title
  */
 final class UsageReceipt implements UsageReceiptInterface
 {
@@ -36,6 +38,8 @@ final class UsageReceipt implements UsageReceiptInterface
     use HasTemplate;
 
     public Seller $seller;
+
+    protected ?string $title = null;
 
     public ?DomPDF $pdf = null;
 
@@ -92,16 +96,61 @@ final class UsageReceipt implements UsageReceiptInterface
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
             $items = array_map(
-                static fn (array $itemData) => ReceiptItem::make($itemData),
+                static fn ($item) => $item instanceof ReceiptItemInterface ? $item : ReceiptItem::make($item),
                 $data['items']
             );
             $usageReceipt->items($items);
         }
 
-        // fill remaining properties (date, document_id, user_id, language, note, forced_total)
+        // fill remaining properties (date, document_id, user_id, title, language, note, forced_total)
         $usageReceipt->fill($data);
 
         return $usageReceipt;
+    }
+
+    /**
+     * Set the receipt title.
+     *
+     * @return $this
+     */
+    public function title(?string $title): self
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * Get the receipt title.
+     */
+    public function getTitle(): string
+    {
+        return $this->title ?? __('invoices::usage-receipt.title');
+    }
+
+    /**
+     * Get the seller.
+     */
+    public function getSeller(): Seller
+    {
+        return $this->seller;
+    }
+
+    /**
+     * Get the default filename for the usage receipt.
+     *
+     * format: {translatable-base}-Y-m-d-H-i-s.pdf
+     * example: gebruiksbevestiging-2026-01-19-14-30-00.pdf
+     */
+    public function getFilename(): string
+    {
+        // use the receipt's language for translation
+        $base = __('invoices::usage-receipt.filename', [], $this->getLanguage());
+        $datetime = $this->getDate()
+            ? $this->getDate()->format('Y-m-d-H-i-s')
+            : now()->format('Y-m-d-H-i-s');
+
+        return "{$base}-{$datetime}.pdf";
     }
 
     /**
@@ -112,14 +161,15 @@ final class UsageReceipt implements UsageReceiptInterface
     public function toArray(): array
     {
         return [
-            'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
-            'date' => $this->date?->toIso8601String(),
-            'items' => $this->items->map(static fn (ReceiptItemInterface $item) => $item->toArray())->toArray(),
+            'buyer' => isset($this->buyer) ? $this->getBuyer()->toArray() : null,
+            'date' => $this->getDate()?->toIso8601String(),
+            'items' => $this->getItems()->map(static fn (ReceiptItemInterface $item) => $item->toArray())->toArray(),
             'document_id' => $this->documentId,
             'user_id' => $this->userId,
-            'language' => $this->language,
+            'title' => $this->title,
+            'language' => $this->getLanguage(),
             'note' => $this->note,
-            'forced_total' => $this->forcedTotal,
+            'forced_total' => $this->getForcedTotal(),
         ];
     }
 
@@ -136,12 +186,12 @@ final class UsageReceipt implements UsageReceiptInterface
         }
 
         // at least one item must exist
-        if ($this->items->isEmpty()) {
-            throw new InvalidInvoiceException('Usage receipt must have at least one parking session');
+        if ($this->getItems()->isEmpty()) {
+            throw new InvalidInvoiceException('Usage receipt must have at least one item');
         }
 
         // validate all items
-        foreach ($this->items as $index => $item) {
+        foreach ($this->getItems() as $index => $item) {
             try {
                 $item->validate($index);
             } catch (\SimpleParkBv\Invoices\Exceptions\InvalidReceiptItemException $e) {
@@ -182,7 +232,7 @@ final class UsageReceipt implements UsageReceiptInterface
         $originalLocale = App::getLocale();
 
         // set locale for this usage receipt
-        App::setLocale($this->language);
+        App::setLocale($this->getLanguage());
 
         try {
             // 'usageReceipt' is the variable name used in the blade view
@@ -226,7 +276,7 @@ final class UsageReceipt implements UsageReceiptInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'parkeerbevestiging-'.($this->date?->format('d-m-Y') ?? 'concept').'.pdf';
+        $filename = $filename ?? $this->getFilename();
 
         return $this->pdf->download($filename);
     }
@@ -244,7 +294,7 @@ final class UsageReceipt implements UsageReceiptInterface
             throw new InvalidInvoiceException('Failed to render PDF');
         }
 
-        $filename = $filename ?? 'parkeerbevestiging-'.($this->date?->format('d-m-Y') ?? 'concept').'.pdf';
+        $filename = $filename ?? $this->getFilename();
 
         $response = $this->pdf->stream($filename);
 

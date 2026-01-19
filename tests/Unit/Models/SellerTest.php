@@ -74,9 +74,9 @@ final class SellerTest extends TestCase
         $this->assertEquals('54321', $seller->getPostalCode());
         $this->assertEquals('Config Country', $seller->getCountry());
         $this->assertEquals('config@test.com', $seller->getEmail());
-        $this->assertEquals('87654321', $seller->registrationNumber);
-        $this->assertEquals('NL987654321B02', $seller->taxId);
-        $this->assertEquals('NL91ABNA0417164301', $seller->bankAccount);
+        $this->assertEquals('87654321', $seller->getRegistrationNumber());
+        $this->assertEquals('NL987654321B02', $seller->getTaxId());
+        $this->assertEquals('NL91ABNA0417164301', $seller->getBankAccount());
     }
 
     #[Test]

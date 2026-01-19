@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ $usageReceipt->language }}">
+<html lang="{{ $usageReceipt->getLanguage() }}">
 <head>
     <meta charset="utf-8">
-    <title>{{ __('invoices::usage-receipt.title') }}</title>
+    <title>{{ $usageReceipt->getTitle() }}</title>
     <style>
         :root {
             --usage-receipt-font: {{ $usageReceiptFont }};
@@ -31,7 +31,9 @@
             font-weight: 700;
             font-style: italic;
         }
-        {!! file_get_contents($usageReceiptCssPath) !!}
+        @if(is_readable($usageReceiptCssPath))
+            {!! file_get_contents($usageReceiptCssPath) !!}
+        @endif
     </style>
 </head>
 <body class="usage-receipt">
