@@ -2,7 +2,7 @@
 <html lang="{{ $usageReceipt->language }}">
 <head>
     <meta charset="utf-8">
-    <title>Parkeerbevestiging</title>
+    <title>{{ __('invoices::usage-receipt.title') }}</title>
     <style>
         :root {
             --usage-receipt-font: {{ $usageReceiptFont }};

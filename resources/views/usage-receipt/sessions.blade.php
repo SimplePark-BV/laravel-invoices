@@ -2,12 +2,12 @@
 <table class="usage-receipt__sessions">
     <thead>
         <tr>
-            <th class="usage-receipt__sessions-header">Gebruiker</th>
-            <th class="usage-receipt__sessions-header">Kenteken</th>
-            <th class="usage-receipt__sessions-header">Startdatum</th>
-            <th class="usage-receipt__sessions-header">Einddatum</th>
-            <th class="usage-receipt__sessions-header">Zone</th>
-            <th class="usage-receipt__sessions-header usage-receipt__sessions-header--right">Prijs</th>
+            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.user') }}</th>
+            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.identifier') }}</th>
+            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.start_date') }}</th>
+            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.end_date') }}</th>
+            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.category') }}</th>
+            <th class="usage-receipt__sessions-header usage-receipt__sessions-header--right">{{ __('invoices::usage-receipt.table.price') }}</th>
         </tr>
     </thead>
     <tbody>
@@ -27,7 +27,7 @@
 {{-- total section --}}
 <table class="usage-receipt__total">
     <tr>
-        <td class="usage-receipt__total-label">Totaal</td>
+        <td class="usage-receipt__total-label">{{ __('invoices::usage-receipt.total') }}</td>
         <td class="usage-receipt__total-value">{{ $usageReceipt->getFormattedTotal() }}</td>
     </tr>
 </table>
