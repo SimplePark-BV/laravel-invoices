@@ -3,9 +3,10 @@
 namespace SimpleParkBv\Invoices\Models;
 
 use Barryvdh\DomPDF\Facade\Pdf;
-use SimpleParkBv\Invoices\Contracts\ReceiptItemInterface;
 use SimpleParkBv\Invoices\Contracts\UsageReceiptInterface;
-use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
+use SimpleParkBv\Invoices\Contracts\UsageReceiptItemInterface;
+use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException;
+use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException;
 use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 use SimpleParkBv\Invoices\Models\Traits\HasBuyer;
 use SimpleParkBv\Invoices\Models\Traits\HasDates;
@@ -14,8 +15,8 @@ use SimpleParkBv\Invoices\Models\Traits\HasLogo;
 use SimpleParkBv\Invoices\Models\Traits\HasNotes;
 use SimpleParkBv\Invoices\Models\Traits\HasPdfRendering;
 use SimpleParkBv\Invoices\Models\Traits\HasReceiptIds;
-use SimpleParkBv\Invoices\Models\Traits\HasReceiptItems;
 use SimpleParkBv\Invoices\Models\Traits\HasTemplate;
+use SimpleParkBv\Invoices\Models\Traits\HasUsageReceiptItems;
 
 /**
  * Class UsageReceipt
@@ -32,8 +33,8 @@ final class UsageReceipt implements UsageReceiptInterface
     use HasNotes;
     use HasPdfRendering;
     use HasReceiptIds;
-    use HasReceiptItems;
     use HasTemplate;
+    use HasUsageReceiptItems;
 
     public Seller $seller;
 
@@ -41,7 +42,7 @@ final class UsageReceipt implements UsageReceiptInterface
 
     public function __construct()
     {
-        $this->initializeHasReceiptItems();
+        $this->initializeHasUsageReceiptItems();
         $this->initializeHasLogo();
         $this->initializeHasLanguage();
         $this->initializeHasDates();
@@ -80,7 +81,7 @@ final class UsageReceipt implements UsageReceiptInterface
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
             $items = array_map(
-                static fn ($item) => $item instanceof ReceiptItemInterface ? $item : ReceiptItem::make($item),
+                static fn ($item) => $item instanceof UsageReceiptItemInterface ? $item : UsageReceiptItem::make($item),
                 $data['items']
             );
             $usageReceipt->items($items);
@@ -147,7 +148,7 @@ final class UsageReceipt implements UsageReceiptInterface
         return [
             'buyer' => $this->getBuyer()?->toArray() ?? null,
             'date' => $this->getDate()?->toIso8601String(),
-            'items' => $this->getItems()->map(static fn (ReceiptItemInterface $item) => $item->toArray())->toArray(),
+            'items' => $this->getItems()->map(static fn (UsageReceiptItemInterface $item) => $item->toArray())->toArray(),
             'document_id' => $this->documentId,
             'user_id' => $this->userId,
             'title' => $this->title,
@@ -168,26 +169,26 @@ final class UsageReceipt implements UsageReceiptInterface
     /**
      * Validate the usage receipt before rendering.
      *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException
      */
     public function validate(): void
     {
         // buyer must be set
         if ($this->getBuyer() === null) {
-            throw new InvalidInvoiceException('Buyer is required for usage receipt');
+            throw new InvalidUsageReceiptException('Buyer is required for usage receipt');
         }
 
         // at least one item must exist
         if ($this->getItems()->isEmpty()) {
-            throw new InvalidInvoiceException('Usage receipt must have at least one item');
+            throw new InvalidUsageReceiptException('Usage receipt must have at least one item');
         }
 
         // validate all items
         foreach ($this->getItems() as $index => $item) {
             try {
                 $item->validate($index);
-            } catch (\SimpleParkBv\Invoices\Exceptions\InvalidReceiptItemException $e) {
-                throw new InvalidInvoiceException($e->getMessage(), 0, $e);
+            } catch (InvalidUsageReceiptItemException $e) {
+                throw new InvalidUsageReceiptException($e->getMessage(), 0, $e);
             }
         }
     }

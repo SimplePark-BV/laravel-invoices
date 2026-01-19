@@ -3,19 +3,19 @@
 namespace Tests\Traits;
 
 use SimpleParkBv\Invoices\Models\Buyer;
-use SimpleParkBv\Invoices\Models\ReceiptItem;
 use SimpleParkBv\Invoices\Models\UsageReceipt;
+use SimpleParkBv\Invoices\Models\UsageReceiptItem;
 
 trait CreatesTestReceipts
 {
-    protected function create_valid_receipt(): UsageReceipt
+    protected function createValidReceipt(): UsageReceipt
     {
         // arrange
         $receipt = UsageReceipt::make();
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $receipt->buyer($buyer);
 
-        $item = ReceiptItem::make([
+        $item = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -28,15 +28,15 @@ trait CreatesTestReceipts
         return $receipt;
     }
 
-    protected function create_receipt_item(
+    protected function createReceiptItem(
         string $user = 'John Doe',
         string $identifier = 'ABC-123',
         string $startDate = '2024-01-15 10:00:00',
         string $endDate = '2024-01-15 12:00:00',
         string $category = 'Standard Parking',
         float $price = 5.50
-    ): ReceiptItem {
-        return ReceiptItem::make([
+    ): UsageReceiptItem {
+        return UsageReceiptItem::make([
             'user' => $user,
             'identifier' => $identifier,
             'start_date' => $startDate,

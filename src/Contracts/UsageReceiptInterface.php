@@ -34,14 +34,14 @@ interface UsageReceiptInterface
     /**
      * Set all items for the usage receipt (replaces existing items).
      *
-     * @param  array<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>  $items
+     * @param  array<int, \SimpleParkBv\Invoices\Contracts\UsageReceiptItemInterface>  $items
      */
     public function items(array $items): self;
 
     /**
      * Add a single item to the usage receipt.
      */
-    public function addItem(ReceiptItemInterface $item): self;
+    public function addItem(UsageReceiptItemInterface $item): self;
 
     /**
      * Set the usage receipt issue date.
@@ -101,14 +101,14 @@ interface UsageReceiptInterface
     /**
      * Validate the usage receipt before rendering.
      *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException
      */
     public function validate(): void;
 
     /**
      * Generate the PDF instance.
      *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException
      */
     public function render(): self;
 

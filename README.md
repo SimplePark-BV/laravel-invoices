@@ -68,7 +68,7 @@ return $invoice->download(); // or ->stream() for browser preview
 
 ```php
 use SimpleParkBv\Invoices\Models\UsageReceipt;
-use SimpleParkBv\Invoices\Models\ReceiptItem;
+use SimpleParkBv\Invoices\Models\UsageReceiptItem;
 use SimpleParkBv\Invoices\Models\Buyer;
 
 $receipt = UsageReceipt::make()
@@ -82,7 +82,7 @@ $receipt = UsageReceipt::make()
         'email' => 'john@example.com',
     ])
     ->items([
-        ReceiptItem::make([
+        UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC123',
             'start_date' => '2024-01-15 10:00:00',

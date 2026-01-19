@@ -8,9 +8,9 @@ use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use SimpleParkBv\Invoices\Models\Buyer;
-use SimpleParkBv\Invoices\Models\ReceiptItem;
 use SimpleParkBv\Invoices\Models\Seller;
 use SimpleParkBv\Invoices\Models\UsageReceipt;
+use SimpleParkBv\Invoices\Models\UsageReceiptItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
 
@@ -168,7 +168,7 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make();
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $receipt->buyer($buyer);
-        $item = ReceiptItem::make([
+        $item = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -198,7 +198,7 @@ final class UsageReceiptTest extends TestCase
             'email' => 'buyer@test.com',
         ]);
 
-        $item = ReceiptItem::make([
+        $item = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -282,7 +282,7 @@ final class UsageReceiptTest extends TestCase
     {
         // arrange
         $receipt = UsageReceipt::make();
-        $item = ReceiptItem::make([
+        $item = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -305,7 +305,7 @@ final class UsageReceiptTest extends TestCase
     {
         // arrange
         $receipt = UsageReceipt::make();
-        $item1 = ReceiptItem::make([
+        $item1 = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -314,7 +314,7 @@ final class UsageReceiptTest extends TestCase
             'price' => 5.50,
         ]);
 
-        $item2 = ReceiptItem::make([
+        $item2 = UsageReceiptItem::make([
             'user' => 'Jane Doe',
             'identifier' => 'XYZ-789',
             'start_date' => '2024-01-15 14:00:00',
@@ -342,7 +342,7 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make();
         $receiptItems = [];
         foreach ($items as $itemData) {
-            $receiptItems[] = ReceiptItem::make($itemData);
+            $receiptItems[] = UsageReceiptItem::make($itemData);
         }
         $receipt->items($receiptItems);
 
@@ -400,7 +400,7 @@ final class UsageReceiptTest extends TestCase
     {
         // arrange
         $receipt = UsageReceipt::make();
-        $item = ReceiptItem::make([
+        $item = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -488,7 +488,7 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make();
 
         // assert
-        $this->assertInstanceOf(Seller::class, actual: $receipt->getSeller());
+        $this->assertInstanceOf(Seller::class, $receipt->getSeller());
         $this->assertEquals('Test Seller', $receipt->getSeller()->getName());
         $this->assertEquals('Test Address', $receipt->getSeller()->getAddress());
     }
@@ -502,7 +502,7 @@ final class UsageReceiptTest extends TestCase
         Config::set('invoices.thousands_separator', '.');
 
         $receipt = UsageReceipt::make();
-        $item = ReceiptItem::make([
+        $item = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',

@@ -1,23 +1,25 @@
 {{-- buyer information section --}}
+@php($buyer = $usageReceipt->getBuyer())
+
 <div class="usage-receipt__buyer">
-    <div class="usage-receipt__buyer-name">{{ $usageReceipt->getBuyer()->getName() }}</div>
+    <div class="usage-receipt__buyer-name">{{ $buyer->getName() }}</div>
     <div class="usage-receipt__buyer-details">
-        @if($usageReceipt->getBuyer()->hasAddress())
+        @if($buyer->hasAddress())
             <div class="usage-receipt__buyer-detail">
-                @if($usageReceipt->getBuyer()->getAddress())
-                    {{ $usageReceipt->getBuyer()->getAddress() }}<br>
+                @if($buyer->getAddress())
+                    {{ $buyer->getAddress() }}<br>
                 @endif
-                @if($usageReceipt->getBuyer()->getPostalCode() || $usageReceipt->getBuyer()->getCity())
-                    {{ $usageReceipt->getBuyer()->getPostalCode() }} {{ $usageReceipt->getBuyer()->getCity() }}
+                @if($buyer->getPostalCode() || $buyer->getCity())
+                    {{ $buyer->getPostalCode() }} {{ $buyer->getCity() }}
                 @endif
             </div>
         @endif
         <div class="usage-receipt__buyer-detail">
-            @if($usageReceipt->getBuyer()->getEmail())
-                {{ $usageReceipt->getBuyer()->getEmail() }}<br>
+            @if($buyer->getEmail())
+                {{ $buyer->getEmail() }}<br>
             @endif
-            @if($usageReceipt->getBuyer()->getPhone())
-                {{ $usageReceipt->getBuyer()->getPhone() }}
+            @if($buyer->getPhone())
+                {{ $buyer->getPhone() }}
             @endif
         </div>
     </div>

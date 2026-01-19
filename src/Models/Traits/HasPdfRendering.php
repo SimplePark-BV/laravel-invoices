@@ -31,22 +31,33 @@ trait HasPdfRendering
     public array $paperOptions = [];
 
     /**
-     * get the default filename for the document
+     * Get the default filename for the document
      */
     abstract public function getFilename(): string;
 
     /**
-     * get the view variable name to use when rendering
+     * Get the view variable name to use when rendering
      * e.g., 'invoice' or 'usageReceipt'
      */
     abstract protected function getViewVariableName(): string;
 
     /**
-     * validate the document before rendering
+     * Validate the document before rendering
      *
      * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
      */
     abstract public function validate(): void;
+
+    /**
+     * Get the language for rendering localized content
+     */
+    abstract protected function getLanguage(): string;
+
+    /**
+     * Get the template path for rendering
+     * E.g., 'invoice.index' or 'usage-receipt.index'
+     */
+    abstract public function getTemplate(): string;
 
     /**
      * check if the pdf has been rendered
@@ -57,7 +68,7 @@ trait HasPdfRendering
     }
 
     /**
-     * clear the pdf instance to free memory
+     * Clear the pdf instance to free memory
      */
     public function clearPdf(): self
     {
@@ -67,7 +78,25 @@ trait HasPdfRendering
     }
 
     /**
-     * generate the pdf instance
+     * Normalize and validate paper options with defaults
+     *
+     * @return array{size: string, orientation: string}
+     */
+    private function getNormalizedPaperOptions(): array
+    {
+        $defaults = [
+            'size' => 'a4',
+            'orientation' => 'portrait',
+        ];
+
+        return [
+            'size' => $this->paperOptions['size'] ?? $defaults['size'],
+            'orientation' => $this->paperOptions['orientation'] ?? $defaults['orientation'],
+        ];
+    }
+
+    /**
+     * Generate the pdf instance
      *
      * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
      */
@@ -76,6 +105,9 @@ trait HasPdfRendering
         // validate document before rendering
         $this->validate();
 
+        // normalize paper options with defaults
+        $paperOptions = $this->getNormalizedPaperOptions();
+
         // save current locale
         $originalLocale = App::getLocale();
 
@@ -83,7 +115,7 @@ trait HasPdfRendering
         App::setLocale($this->getLanguage());
 
         try {
-            $template = sprintf('invoices::%s', $this->template);
+            $template = sprintf('invoices::%s', $this->getTemplate());
 
             // get the package root directory to allow dompdf to access fonts
             $packageRoot = realpath(__DIR__.'/../../../');
@@ -101,7 +133,7 @@ trait HasPdfRendering
                 'isRemoteEnabled' => false,
             ])
                 ->loadView($template, [$viewVariableName => $this])
-                ->setPaper($this->paperOptions['size'], $this->paperOptions['orientation']);
+                ->setPaper($paperOptions['size'], $paperOptions['orientation']);
         } catch (\Throwable $e) {
             $this->pdf = null;
             throw new InvalidInvoiceException('Failed to render PDF: '.$e->getMessage(), 0, $e);

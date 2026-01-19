@@ -4,10 +4,10 @@ namespace Tests\Feature\UsageReceipt;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
+use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException;
 use SimpleParkBv\Invoices\Models\Buyer;
-use SimpleParkBv\Invoices\Models\ReceiptItem;
 use SimpleParkBv\Invoices\Models\UsageReceipt;
+use SimpleParkBv\Invoices\Models\UsageReceiptItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
 
@@ -19,7 +19,7 @@ final class ValidationTest extends TestCase
     public function valid_receipt_passes(): void
     {
         // arrange
-        $receipt = $this->create_valid_receipt();
+        $receipt = $this->createValidReceipt();
 
         // act & assert
         $this->expectNotToPerformAssertions();
@@ -31,7 +31,7 @@ final class ValidationTest extends TestCase
     {
         // arrange
         $receipt = UsageReceipt::make();
-        $item = ReceiptItem::make([
+        $item = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -42,7 +42,7 @@ final class ValidationTest extends TestCase
         $receipt->addItem($item);
 
         // assert
-        $this->expectException(InvalidInvoiceException::class);
+        $this->expectException(InvalidUsageReceiptException::class);
         $this->expectExceptionMessage('Buyer is required for usage receipt');
 
         // act
@@ -58,7 +58,7 @@ final class ValidationTest extends TestCase
         $receipt->buyer($buyer);
 
         // assert
-        $this->expectException(InvalidInvoiceException::class);
+        $this->expectException(InvalidUsageReceiptException::class);
         $this->expectExceptionMessage('Usage receipt must have at least one item');
 
         // act
@@ -77,11 +77,11 @@ final class ValidationTest extends TestCase
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $receipt->buyer($buyer);
 
-        $item = ReceiptItem::make($itemData);
+        $item = UsageReceiptItem::make($itemData);
         $receipt->addItem($item);
 
         // assert
-        $this->expectException(InvalidInvoiceException::class);
+        $this->expectException(InvalidUsageReceiptException::class);
         $this->expectExceptionMessage($expectedMessage);
 
         // act
@@ -164,7 +164,7 @@ final class ValidationTest extends TestCase
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $receipt->buyer($buyer);
 
-        $item = ReceiptItem::make($itemData);
+        $item = UsageReceiptItem::make($itemData);
         $receipt->addItem($item);
 
         // act & assert
@@ -209,7 +209,7 @@ final class ValidationTest extends TestCase
         // missing buyer
 
         // assert
-        $this->expectException(InvalidInvoiceException::class);
+        $this->expectException(InvalidUsageReceiptException::class);
         $this->expectExceptionMessage('Buyer is required for usage receipt');
 
         // act
@@ -225,7 +225,7 @@ final class ValidationTest extends TestCase
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $receipt->buyer($buyer);
 
-        $item1 = ReceiptItem::make([
+        $item1 = UsageReceiptItem::make([
             'user' => '', // invalid: empty user
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -237,7 +237,7 @@ final class ValidationTest extends TestCase
 
         // assert
         // should throw exception for first invalid item
-        $this->expectException(InvalidInvoiceException::class);
+        $this->expectException(InvalidUsageReceiptException::class);
         $this->expectExceptionMessage('Item at index 0 must have a user');
 
         // act
@@ -252,7 +252,7 @@ final class ValidationTest extends TestCase
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $receipt->buyer($buyer);
 
-        $item1 = ReceiptItem::make([
+        $item1 = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -261,7 +261,7 @@ final class ValidationTest extends TestCase
             'price' => 5.50,
         ]);
 
-        $item2 = ReceiptItem::make([
+        $item2 = UsageReceiptItem::make([
             'user' => 'Jane Doe',
             'identifier' => 'XYZ-789',
             'start_date' => '2024-01-15 16:00:00', // invalid: end before start
@@ -272,7 +272,7 @@ final class ValidationTest extends TestCase
         $receipt->items([$item1, $item2]);
 
         // assert
-        $this->expectException(InvalidInvoiceException::class);
+        $this->expectException(InvalidUsageReceiptException::class);
         $this->expectExceptionMessage('Item at index 1 end date must be after start date');
 
         // act
@@ -287,7 +287,7 @@ final class ValidationTest extends TestCase
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $receipt->buyer($buyer);
 
-        $item1 = ReceiptItem::make([
+        $item1 = UsageReceiptItem::make([
             'user' => 'John Doe',
             'identifier' => 'ABC-123',
             'start_date' => '2024-01-15 10:00:00',
@@ -296,7 +296,7 @@ final class ValidationTest extends TestCase
             'price' => 5.50,
         ]);
 
-        $item2 = ReceiptItem::make([
+        $item2 = UsageReceiptItem::make([
             'user' => 'Jane Doe',
             'identifier' => 'XYZ-789',
             'start_date' => '2024-01-15 14:00:00',
@@ -305,7 +305,7 @@ final class ValidationTest extends TestCase
             'price' => 10.00,
         ]);
 
-        $item3 = ReceiptItem::make([
+        $item3 = UsageReceiptItem::make([
             'user' => 'Bob Smith',
             'identifier' => 'DEF-456',
             'start_date' => '2024-01-15 18:00:00',

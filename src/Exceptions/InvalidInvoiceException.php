@@ -7,7 +7,7 @@ use RuntimeException;
 /**
  * Exception thrown when an invoice is invalid.
  */
-final class InvalidInvoiceException extends RuntimeException
+class InvalidInvoiceException extends RuntimeException
 {
     //
 }
