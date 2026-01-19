@@ -6,8 +6,6 @@ use RuntimeException;
 
 /**
  * Trait HasLanguage
- *
- * @var string $language
  */
 trait HasLanguage
 {

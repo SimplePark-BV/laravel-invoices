@@ -199,7 +199,7 @@ abstract class Party implements PartyInterface
      */
     public function hasAddress(): bool
     {
-        return ! empty($this->address) || ! empty($this->postalCode) || ! empty($this->city);
+        return ! empty($this->address) || ! empty($this->postalCode) || ! empty($this->city) || ! empty($this->country);
     }
 
     /**

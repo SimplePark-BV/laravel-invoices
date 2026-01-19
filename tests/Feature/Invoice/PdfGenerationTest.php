@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\Test;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Models\Buyer;
 use SimpleParkBv\Invoices\Models\Invoice;
-use SimpleParkBv\Invoices\Models\InvoiceItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
 use Tests\Traits\MocksPdfGeneration;
