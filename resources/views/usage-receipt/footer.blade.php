@@ -9,7 +9,7 @@
         <div class="usage-receipt__footer-column">
             <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.address') }}</div>
             <div class="usage-receipt__footer-value">
-                <span class="usage-receipt__footer-company">{{ $usageReceipt->seller->getName() }}</span><br>
+                {{ $usageReceipt->seller->getName() }}<br>
                 @if($usageReceipt->seller->getAddress())
                     {{ $usageReceipt->seller->getAddress() }}<br>
                 @endif
