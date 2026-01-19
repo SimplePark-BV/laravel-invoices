@@ -149,7 +149,7 @@ trait HasPdfRendering
      */
     public function download(?string $filename = null): Response
     {
-        if ($this->pdf !== null) {
+        if ($this->pdf === null) {
             $this->render();
         }
 
@@ -165,7 +165,7 @@ trait HasPdfRendering
      */
     public function stream(?string $filename = null): Response
     {
-        if ($this->pdf !== null) {
+        if ($this->pdf === null) {
             $this->render();
         }
 
