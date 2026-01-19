@@ -3,6 +3,7 @@
 namespace SimpleParkBv\Invoices\Models;
 
 use Illuminate\Support\Carbon;
+use SimpleParkBv\Invoices\Exceptions\InvalidReceiptItemException;
 use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 use SimpleParkBv\Invoices\Services\CurrencyFormatter;
 
@@ -206,7 +207,7 @@ final class ReceiptItem
     /**
      * Validate the receipt item.
      *
-     * @throws \RuntimeException
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidReceiptItemException
      */
     public function validate(?int $index = null): void
     {
@@ -215,31 +216,31 @@ final class ReceiptItem
         // validate required string fields
         foreach (['user', 'identifier', 'category'] as $field) {
             if (empty($this->$field)) {
-                throw new \RuntimeException("{$prefix} must have a {$field}");
+                throw new InvalidReceiptItemException("{$prefix} must have a {$field}");
             }
         }
 
         // validate required date fields
         if ($this->startDate === null) {
-            throw new \RuntimeException("{$prefix} must have a start date");
+            throw new InvalidReceiptItemException("{$prefix} must have a start date");
         }
 
         if ($this->endDate === null) {
-            throw new \RuntimeException("{$prefix} must have an end date");
+            throw new InvalidReceiptItemException("{$prefix} must have an end date");
         }
 
         // validate date logic
         if ($this->endDate->lt($this->startDate)) {
-            throw new \RuntimeException("{$prefix} end date must be after start date");
+            throw new InvalidReceiptItemException("{$prefix} end date must be after start date");
         }
 
         // validate price
         if ($this->price === null) {
-            throw new \RuntimeException("{$prefix} must have a price");
+            throw new InvalidReceiptItemException("{$prefix} must have a price");
         }
 
         if ($this->price < 0) {
-            throw new \RuntimeException("{$prefix} price cannot be negative");
+            throw new InvalidReceiptItemException("{$prefix} price cannot be negative");
         }
     }
 

@@ -7,6 +7,7 @@ use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use RuntimeException;
+use SimpleParkBv\Invoices\Contracts\UsageReceiptInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 use SimpleParkBv\Invoices\Models\Traits\HasBuyer;
@@ -21,7 +22,7 @@ use SimpleParkBv\Invoices\Models\Traits\HasTemplate;
 /**
  * Class UsageReceipt
  */
-final class UsageReceipt
+final class UsageReceipt implements UsageReceiptInterface
 {
     use CanFillFromArray;
     use HasBuyer;
@@ -143,7 +144,7 @@ final class UsageReceipt
         foreach ($this->items as $index => $item) {
             try {
                 $item->validate($index);
-            } catch (RuntimeException $e) {
+            } catch (\SimpleParkBv\Invoices\Exceptions\InvalidReceiptItemException $e) {
                 throw new InvalidInvoiceException($e->getMessage(), 0, $e);
             }
         }

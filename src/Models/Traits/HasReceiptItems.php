@@ -37,6 +37,16 @@ trait HasReceiptItems
     }
 
     /**
+     * Add a single item to the receipt.
+     */
+    public function addItem(ReceiptItem $item): self
+    {
+        $this->items->push($item);
+
+        return $this;
+    }
+
+    /**
      * Force a specific total amount that will override the calculated total.
      * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
      */

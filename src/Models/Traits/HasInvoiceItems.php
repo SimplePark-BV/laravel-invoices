@@ -38,6 +38,16 @@ trait HasInvoiceItems
     }
 
     /**
+     * Add a single item to the invoice.
+     */
+    public function addItem(InvoiceItem $item): self
+    {
+        $this->items->push($item);
+
+        return $this;
+    }
+
+    /**
      * Force a specific total amount that will override the calculated total.
      * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
      */
@@ -137,6 +147,7 @@ trait HasInvoiceItems
 
     /**
      * Calculate the subtotal for items with a specific tax percentage.
+     * 
      * Calculated as: sum of items in this tax group - tax amount for this group.
      */
     public function getSubTotalForTaxGroup(float $taxPercentage): float
@@ -146,6 +157,7 @@ trait HasInvoiceItems
 
     /**
      * Calculate the tax amount for items with a specific tax percentage.
+     * 
      * Calculates tax from unitPrice which includes tax.
      */
     public function getTaxAmountForTaxGroup(float $taxPercentage): float

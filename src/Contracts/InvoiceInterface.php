@@ -5,6 +5,7 @@ namespace SimpleParkBv\Invoices\Contracts;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 
 /**
  * Interface for invoice implementations.
@@ -41,6 +42,11 @@ interface InvoiceInterface
      * @param  array<int, \SimpleParkBv\Invoices\Contracts\InvoiceItemInterface>  $items
      */
     public function items(array $items): self;
+
+    /**
+     * Add a single item to the invoice.
+     */
+    public function addItem(InvoiceItemInterface $item): self;
 
     /**
      * Set the invoice issue date.

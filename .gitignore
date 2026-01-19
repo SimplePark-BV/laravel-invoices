@@ -43,3 +43,7 @@ public/storage
 .php-cs-fixer.cache
 .phpstan
 composer.lock
+
+# Development/test files
+render-usage-receipt.php
+parkeerbevestiging-*.pdf
