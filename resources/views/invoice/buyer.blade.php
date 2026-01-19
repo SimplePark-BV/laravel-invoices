@@ -1,23 +1,23 @@
 {{-- buyer information section --}}
 <div class="invoice__buyer">
-    <div class="invoice__buyer-name">{{ $invoice->buyer->getName() }}</div>
+    <div class="invoice__buyer-name">{{ $invoice->getBuyer()->getName() }}</div>
     <div class="invoice__buyer-details">
-        @if($invoice->buyer->hasAddress())
+        @if($invoice->getBuyer()->hasAddress())
             <div class="invoice__buyer-detail">
-                @if($invoice->buyer->getAddress())
-                    {{ $invoice->buyer->getAddress() }}<br>
+                @if($invoice->getBuyer()->getAddress())
+                    {{ $invoice->getBuyer()->getAddress() }}<br>
                 @endif
-                @if($invoice->buyer->getPostalCode() || $invoice->buyer->getCity())
-                    {{ $invoice->buyer->getPostalCode() }} {{ $invoice->buyer->getCity() }}
+                @if($invoice->getBuyer()->getPostalCode() || $invoice->getBuyer()->getCity())
+                    {{ $invoice->getBuyer()->getPostalCode() }} {{ $invoice->getBuyer()->getCity() }}
                 @endif
             </div>
         @endif
         <div class="invoice__buyer-detail">
-            @if($invoice->buyer->getEmail())
-                {{ $invoice->buyer->getEmail() }}<br>
+            @if($invoice->getBuyer()->getEmail())
+                {{ $invoice->getBuyer()->getEmail() }}<br>
             @endif
-            @if($invoice->buyer->getPhone())
-                {{ $invoice->buyer->getPhone() }}
+            @if($invoice->getBuyer()->getPhone())
+                {{ $invoice->getBuyer()->getPhone() }}
             @endif
         </div>
     </div>
