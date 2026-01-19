@@ -2,6 +2,7 @@
 
 return [
     'invoice' => 'Factuur',
+    'filename' => 'factuur',
     'concept' => 'CONCEPT',
     'description' => 'Omschrijving',
     'amount' => 'Bedrag',

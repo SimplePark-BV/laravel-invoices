@@ -11,7 +11,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach($usageReceipt->items as $item)
+        @foreach($usageReceipt->getItems() as $item)
         <tr>
             <td class="usage-receipt__sessions-cell">{{ $item->getUser() }}</td>
             <td class="usage-receipt__sessions-cell">{{ $item->getIdentifier() }}</td>

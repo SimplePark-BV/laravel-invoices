@@ -8,16 +8,16 @@ use SimpleParkBv\Invoices\Models\Buyer;
 /**
  * Trait HasBuyer
  *
- * @var \SimpleParkBv\Invoices\Models\Buyer $buyer
+ * @var \SimpleParkBv\Invoices\Models\Buyer|null $buyer
  */
 trait HasBuyer
 {
-    protected Buyer $buyer;
+    protected ?Buyer $buyer = null;
 
     /**
      * Get the buyer.
      */
-    public function getBuyer(): Buyer
+    public function getBuyer(): ?Buyer
     {
         return $this->buyer;
     }

@@ -19,7 +19,7 @@ final class ValidationTest extends TestCase
     public function valid_invoice_passes(): void
     {
         // arrange
-        $invoice = $this->create_valid_invoice();
+        $invoice = $this->createValidInvoice();
 
         // act & assert
         $this->expectNotToPerformAssertions();
@@ -31,11 +31,7 @@ final class ValidationTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 1,
-            'unit_price' => 10.00,
-        ]);
+        $item = $this->createInvoiceItem();
 
         $invoice->addItem($item);
 

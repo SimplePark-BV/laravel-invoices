@@ -8,24 +8,20 @@ use SimpleParkBv\Invoices\Models\InvoiceItem;
 
 trait CreatesTestInvoices
 {
-    protected function create_valid_invoice(): Invoice
+    protected function createValidInvoice(): Invoice
     {
         // arrange
         $invoice = Invoice::make();
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 1,
-            'unit_price' => 10.00,
-        ]);
+        $item = $this->createInvoiceItem();
         $invoice->addItem($item);
 
         return $invoice;
     }
 
-    protected function create_invoice_item(string $title = 'Test Item', float|int $quantity = 1, float|int $unitPrice = 10.00, ?float $taxPercentage = null): InvoiceItem
+    protected function createInvoiceItem(string $title = 'Test Item', float|int $quantity = 1, float|int $unitPrice = 10.00, ?float $taxPercentage = null): InvoiceItem
     {
         return InvoiceItem::make([
             'title' => $title,

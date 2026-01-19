@@ -2,6 +2,7 @@
 
 return [
     'invoice' => 'Invoice',
+    'filename' => 'invoice',
     'concept' => 'DRAFT',
     'description' => 'Description',
     'amount' => 'Amount',
