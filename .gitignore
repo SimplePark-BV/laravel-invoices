@@ -45,5 +45,5 @@ public/storage
 composer.lock
 
 # Development/test files
-render-usage-receipt.php
+/scripts
 parkeerbevestiging-*.pdf
