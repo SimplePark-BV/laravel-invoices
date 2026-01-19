@@ -59,17 +59,21 @@ final class InvoiceItemTest extends TestCase
 
     #[Test]
     #[DataProvider('invalid_quantity_data_provider')]
-    public function quantity_throws_exception_for_invalid_values(mixed $quantity): void
+    public function validate_throws_exception_for_invalid_quantity(mixed $quantity): void
     {
         // arrange
-        $item = InvoiceItem::make();
+        $item = InvoiceItem::make([
+            'title' => 'Test',
+            'quantity' => $quantity,
+            'unit_price' => 10.00,
+        ]);
 
         // assert
         $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Quantity must be greater than 0');
+        $this->expectExceptionMessage('Item must have a quantity greater than 0');
 
         // act
-        $item->quantity($quantity);
+        $item->validate();
     }
 
     /**
@@ -85,17 +89,22 @@ final class InvoiceItemTest extends TestCase
 
     #[Test]
     #[DataProvider('invalid_tax_percentage_data_provider')]
-    public function tax_percentage_throws_exception_for_invalid_values(mixed $taxPercentage): void
+    public function validate_throws_exception_for_invalid_tax_percentage(mixed $taxPercentage): void
     {
         // arrange
-        $item = InvoiceItem::make();
+        $item = InvoiceItem::make([
+            'title' => 'Test',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'tax_percentage' => $taxPercentage,
+        ]);
 
         // assert
         $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Tax percentage must be between 0 and 100, or null');
+        $this->expectExceptionMessage('Item must have a taxPercentage between 0 and 100, or null');
 
         // act
-        $item->taxPercentage($taxPercentage);
+        $item->validate();
     }
 
     /**
@@ -355,24 +364,6 @@ final class InvoiceItemTest extends TestCase
         // assert
         $this->expectException(InvalidInvoiceItemException::class);
         $this->expectExceptionMessage('Item must have a quantity greater than 0');
-
-        // act
-        $item->validate();
-    }
-
-    #[Test]
-    public function validate_throws_exception_for_invalid_tax_percentage(): void
-    {
-        // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
-        $item->taxPercentage = 101;
-
-        // assert
-        $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Item must have a taxPercentage between 0 and 100, or null');
 
         // act
         $item->validate();

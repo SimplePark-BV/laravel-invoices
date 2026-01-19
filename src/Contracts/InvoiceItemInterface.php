@@ -26,22 +26,16 @@ interface InvoiceItemInterface
 
     /**
      * Set the quantity of the item.
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
      */
     public function quantity(float|int $quantity): self;
 
     /**
      * Set the unit price of the item.
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
      */
     public function unitPrice(float|int $unitPrice): self;
 
     /**
      * Set the tax percentage of the item.
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
      */
     public function taxPercentage(?float $taxPercentage): self;
 

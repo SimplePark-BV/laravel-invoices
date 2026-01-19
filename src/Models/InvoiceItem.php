@@ -57,15 +57,9 @@ final class InvoiceItem implements InvoiceItemInterface
      * Set the quantity of the item.
      *
      * @return $this
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
      */
     public function quantity(float|int $quantity): self
     {
-        if ($quantity <= 0) {
-            throw new InvalidInvoiceItemException('Quantity must be greater than 0');
-        }
-
         $this->quantity = $quantity;
 
         return $this;
@@ -88,15 +82,9 @@ final class InvoiceItem implements InvoiceItemInterface
      * Set the tax percentage of the item.
      *
      * @return $this
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
      */
     public function taxPercentage(?float $taxPercentage): self
     {
-        if ($taxPercentage !== null && ($taxPercentage < 0 || $taxPercentage > 100)) {
-            throw new InvalidInvoiceItemException('Tax percentage must be between 0 and 100, or null');
-        }
-
         $this->taxPercentage = $taxPercentage;
 
         return $this;
