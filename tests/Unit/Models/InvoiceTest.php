@@ -26,7 +26,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertInstanceOf(Invoice::class, $invoice);
-        $this->assertInstanceOf(Seller::class, $invoice->seller);
+        $this->assertInstanceOf(Seller::class, actual: $invoice->getSeller());
         $this->assertTrue($invoice->getItems()->isEmpty());
         $this->assertNull($invoice->pdf);
     }
@@ -510,9 +510,9 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::make();
 
         // assert
-        $this->assertInstanceOf(Seller::class, $invoice->seller);
-        $this->assertEquals('Test Seller', $invoice->seller->getName());
-        $this->assertEquals('Test Address', $invoice->seller->getAddress());
+        $this->assertInstanceOf(Seller::class, actual: $invoice->getSeller());
+        $this->assertEquals('Test Seller', $invoice->getSeller()->getName());
+        $this->assertEquals('Test Address', $invoice->getSeller()->getAddress());
     }
 
     #[Test]

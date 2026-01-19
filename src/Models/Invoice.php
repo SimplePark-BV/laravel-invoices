@@ -73,7 +73,7 @@ final class Invoice implements InvoiceInterface
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
             $items = array_map(
-                static fn (array $itemData) => InvoiceItem::make($itemData),
+                static fn ($item) => $item instanceof InvoiceItemInterface ? $item : InvoiceItem::make($item),
                 $data['items']
             );
 

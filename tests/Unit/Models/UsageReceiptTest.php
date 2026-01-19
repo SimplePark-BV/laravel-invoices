@@ -26,7 +26,7 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertInstanceOf(UsageReceipt::class, $receipt);
-        $this->assertInstanceOf(Seller::class, $receipt->seller);
+        $this->assertInstanceOf(Seller::class, $receipt->getSeller());
         $this->assertTrue($receipt->getItems()->isEmpty());
         $this->assertNull($receipt->pdf);
         $this->assertEquals('usage-receipt.index', $receipt->getTemplate());
@@ -488,9 +488,9 @@ final class UsageReceiptTest extends TestCase
         $receipt = UsageReceipt::make();
 
         // assert
-        $this->assertInstanceOf(Seller::class, $receipt->seller);
-        $this->assertEquals('Test Seller', $receipt->seller->getName());
-        $this->assertEquals('Test Address', $receipt->seller->getAddress());
+        $this->assertInstanceOf(Seller::class, actual: $receipt->getSeller());
+        $this->assertEquals('Test Seller', $receipt->getSeller()->getName());
+        $this->assertEquals('Test Address', $receipt->getSeller()->getAddress());
     }
 
     #[Test]
