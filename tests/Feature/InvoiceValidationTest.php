@@ -31,10 +31,11 @@ final class InvoiceValidationTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+        ]);
         $invoice->items([$item]);
 
         // assert
@@ -50,8 +51,7 @@ final class InvoiceValidationTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
         // assert
@@ -71,15 +71,10 @@ final class InvoiceValidationTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item = InvoiceItem::make();
-        $item->title = $itemData['title'] ?? 'Test Item';
-        $item->quantity = $itemData['quantity'] ?? 1;
-        $item->unitPrice = $itemData['unit_price'] ?? 10.00;
-        $item->taxPercentage = $itemData['tax_percentage'] ?? null;
+        $item = InvoiceItem::make($itemData);
         $invoice->items([$item]);
 
         // assert
@@ -128,15 +123,10 @@ final class InvoiceValidationTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item = InvoiceItem::make();
-        $item->title = $itemData['title'];
-        $item->quantity = $itemData['quantity'];
-        $item->unitPrice = $itemData['unit_price'];
-        $item->taxPercentage = $itemData['tax_percentage'] ?? null;
+        $item = InvoiceItem::make($itemData);
         $invoice->items([$item]);
 
         // act & assert
@@ -192,14 +182,14 @@ final class InvoiceValidationTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item1 = InvoiceItem::make();
-        $item1->title = ''; // invalid: empty title
-        $item1->quantity = 1;
-        $item1->unitPrice = 10.00;
+        $item1 = InvoiceItem::make([
+            'title' => '', // invalid: empty title
+            'quantity' => 1,
+            'unit_price' => 10.00,
+        ]);
         $invoice->items([$item1]);
 
         // assert
@@ -216,19 +206,20 @@ final class InvoiceValidationTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item1 = InvoiceItem::make();
-        $item1->title = 'Valid Item';
-        $item1->quantity = 1;
-        $item1->unitPrice = 10.00;
+        $item1 = InvoiceItem::make([
+            'title' => 'Valid Item',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+        ]);
 
-        $item2 = InvoiceItem::make();
-        $item2->title = 'Invalid Item';
-        $item2->quantity = 0; // invalid: zero quantity
-        $item2->unitPrice = 10.00;
+        $item2 = InvoiceItem::make([
+            'title' => 'Invalid Item',
+            'quantity' => 0, // invalid: zero quantity
+            'unit_price' => 10.00,
+        ]);
         $invoice->items([$item1, $item2]);
 
         // assert
@@ -244,27 +235,29 @@ final class InvoiceValidationTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item1 = InvoiceItem::make();
-        $item1->title = 'Item 1';
-        $item1->quantity = 1;
-        $item1->unitPrice = 10.00;
-        $item1->taxPercentage = 21;
+        $item1 = InvoiceItem::make([
+            'title' => 'Item 1',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'tax_percentage' => 21,
+        ]);
 
-        $item2 = InvoiceItem::make();
-        $item2->title = 'Item 2';
-        $item2->quantity = 2;
-        $item2->unitPrice = 20.00;
-        $item2->taxPercentage = null;
+        $item2 = InvoiceItem::make([
+            'title' => 'Item 2',
+            'quantity' => 2,
+            'unit_price' => 20.00,
+            'tax_percentage' => null,
+        ]);
 
-        $item3 = InvoiceItem::make();
-        $item3->title = 'Item 3';
-        $item3->quantity = 0.5;
-        $item3->unitPrice = 0;
-        $item3->taxPercentage = 0;
+        $item3 = InvoiceItem::make([
+            'title' => 'Item 3',
+            'quantity' => 0.5,
+            'unit_price' => 0,
+            'tax_percentage' => 0,
+        ]);
         $invoice->items([$item1, $item2, $item3]);
 
         // act & assert

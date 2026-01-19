@@ -3,7 +3,7 @@
 namespace SimpleParkBv\Invoices\Models\Traits;
 
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\Models\ReceiptItem;
+use SimpleParkBv\Invoices\Contracts\ReceiptItemInterface;
 use SimpleParkBv\Invoices\Services\CurrencyFormatter;
 
 /**
@@ -12,7 +12,7 @@ use SimpleParkBv\Invoices\Services\CurrencyFormatter;
 trait HasReceiptItems
 {
     /**
-     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Models\ReceiptItem>
+     * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>
      */
     public Collection $items;
 
@@ -27,7 +27,7 @@ trait HasReceiptItems
     /**
      * Set all items for the receipt (replaces existing items).
      *
-     * @param  array<int, \SimpleParkBv\Invoices\Models\ReceiptItem>  $items
+     * @param  array<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>  $items
      */
     public function items(array $items): self
     {
@@ -39,7 +39,7 @@ trait HasReceiptItems
     /**
      * Add a single item to the receipt.
      */
-    public function addItem(ReceiptItem $item): self
+    public function addItem(ReceiptItemInterface $item): self
     {
         $this->items->push($item);
 
@@ -63,7 +63,7 @@ trait HasReceiptItems
     public function getItemsTotal(): float
     {
         return $this->items->sum(
-            static fn (ReceiptItem $item): float => $item->price
+            static fn (ReceiptItemInterface $item): float => $item->getPrice()
         );
     }
 

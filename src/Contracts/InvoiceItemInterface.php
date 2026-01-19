@@ -9,8 +9,10 @@ interface InvoiceItemInterface
 {
     /**
      * Create a new invoice item instance.
+     *
+     * @param  array<string, mixed>  $data
      */
-    public static function make(): self;
+    public static function make(array $data = []): self;
 
     /**
      * Set the title of the item.
@@ -62,6 +64,11 @@ interface InvoiceItemInterface
      * Get the unit price of the item.
      */
     public function getUnitPrice(): float|int;
+
+    /**
+     * Get the tax percentage of the item.
+     */
+    public function getTaxPercentage(): ?float;
 
     /**
      * Calculate the total for this item (quantity * unit_price).

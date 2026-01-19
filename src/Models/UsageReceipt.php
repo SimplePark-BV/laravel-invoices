@@ -7,6 +7,7 @@ use Barryvdh\DomPDF\PDF as DomPDF;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use RuntimeException;
+use SimpleParkBv\Invoices\Contracts\ReceiptItemInterface;
 use SimpleParkBv\Invoices\Contracts\UsageReceiptInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
@@ -70,29 +71,28 @@ final class UsageReceipt implements UsageReceiptInterface
         ];
     }
 
-    public static function make(): self
-    {
-        return new self;
-    }
-
     /**
-     * Create a usage receipt from an array of data.
+     * Create a new usage receipt instance.
      *
      * @param  array<string, mixed>  $data
      */
-    public static function fromArray(array $data): self
+    public static function make(array $data = []): self
     {
-        $usageReceipt = self::make();
+        $usageReceipt = new self;
+
+        if (empty($data)) {
+            return $usageReceipt;
+        }
 
         // set buyer if provided
         if (isset($data['buyer']) && is_array($data['buyer'])) {
-            $usageReceipt->buyer(Buyer::make()->fill($data['buyer']));
+            $usageReceipt->buyer(Buyer::make($data['buyer']));
         }
 
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
             $items = array_map(
-                static fn (array $itemData) => ReceiptItem::fromArray($itemData),
+                static fn (array $itemData) => ReceiptItem::make($itemData),
                 $data['items']
             );
             $usageReceipt->items($items);
@@ -114,7 +114,7 @@ final class UsageReceipt implements UsageReceiptInterface
         return [
             'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
             'date' => $this->date?->toIso8601String(),
-            'items' => $this->items->map(static fn (ReceiptItem $item) => $item->toArray())->toArray(),
+            'items' => $this->items->map(static fn (ReceiptItemInterface $item) => $item->toArray())->toArray(),
             'document_id' => $this->documentId,
             'user_id' => $this->userId,
             'language' => $this->language,

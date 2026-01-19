@@ -5,7 +5,6 @@ namespace SimpleParkBv\Invoices\Contracts;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 
 /**
  * Interface for invoice implementations.
@@ -14,15 +13,10 @@ interface InvoiceInterface
 {
     /**
      * Create a new invoice instance.
-     */
-    public static function make(): self;
-
-    /**
-     * Create an invoice from an array of data.
      *
      * @param  array<string, mixed>  $data
      */
-    public static function fromArray(array $data): self;
+    public static function make(array $data = []): self;
 
     /**
      * Convert the invoice to an array.

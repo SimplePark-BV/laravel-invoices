@@ -3,6 +3,7 @@
 namespace SimpleParkBv\Invoices\Models;
 
 use Illuminate\Support\Carbon;
+use SimpleParkBv\Invoices\Contracts\ReceiptItemInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidReceiptItemException;
 use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 use SimpleParkBv\Invoices\Services\CurrencyFormatter;
@@ -19,7 +20,7 @@ use SimpleParkBv\Invoices\Services\CurrencyFormatter;
  * @property string $category
  * @property float $price
  */
-final class ReceiptItem
+final class ReceiptItem implements ReceiptItemInterface
 {
     use CanFillFromArray;
 
@@ -36,21 +37,6 @@ final class ReceiptItem
     public ?float $price = null;
 
     public string $dateFormat = 'd-m-Y H:i';
-
-    public static function make(): self
-    {
-        return new self;
-    }
-
-    /**
-     * Create a receipt item from an array of data.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    public static function fromArray(array $data): self
-    {
-        return self::make()->fill($data);
-    }
 
     /**
      * Set the user name.

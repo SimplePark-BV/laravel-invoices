@@ -8,9 +8,22 @@ use Illuminate\Support\Str;
  * Trait CanFillFromArray
  *
  * Provides functionality to fill object properties from an array
+ * and create instances with optional data.
  */
 trait CanFillFromArray
 {
+    /**
+     * Create a new instance, optionally filling it with data.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function make(array $data = []): static
+    {
+        $instance = new static;
+
+        return empty($data) ? $instance : $instance->fill($data);
+    }
+
     /**
      * Fill the object properties from an array.
      *

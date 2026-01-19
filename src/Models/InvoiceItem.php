@@ -29,21 +29,6 @@ final class InvoiceItem implements InvoiceItemInterface
 
     public ?float $taxPercentage;
 
-    public static function make(): self
-    {
-        return new self;
-    }
-
-    /**
-     * Create an invoice item from an array of data.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    public static function fromArray(array $data): self
-    {
-        return self::make()->fill($data);
-    }
-
     /**
      * Set the title of the item.
      *
@@ -147,6 +132,14 @@ final class InvoiceItem implements InvoiceItemInterface
     public function getUnitPrice(): float|int
     {
         return $this->unitPrice;
+    }
+
+    /**
+     * Get the tax percentage of the item.
+     */
+    public function getTaxPercentage(): ?float
+    {
+        return $this->taxPercentage;
     }
 
     /**

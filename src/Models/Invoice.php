@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use RuntimeException;
 use SimpleParkBv\Invoices\Contracts\InvoiceInterface;
+use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
 use SimpleParkBv\Invoices\Models\Traits\HasBuyer;
@@ -67,29 +68,28 @@ final class Invoice implements InvoiceInterface
         ];
     }
 
-    public static function make(): self
-    {
-        return new self;
-    }
-
     /**
-     * Create an invoice from an array of data.
+     * Create a new invoice instance.
      *
      * @param  array<string, mixed>  $data
      */
-    public static function fromArray(array $data): self
+    public static function make(array $data = []): self
     {
-        $invoice = self::make();
+        $invoice = new self;
+
+        if (empty($data)) {
+            return $invoice;
+        }
 
         // set buyer if provided
         if (isset($data['buyer']) && is_array($data['buyer'])) {
-            $invoice->buyer(Buyer::make()->fill($data['buyer']));
+            $invoice->buyer(Buyer::make($data['buyer']));
         }
 
         // set items if provided
         if (isset($data['items']) && is_array($data['items'])) {
             $items = array_map(
-                static fn (array $itemData) => InvoiceItem::fromArray($itemData),
+                static fn (array $itemData) => InvoiceItem::make($itemData),
                 $data['items']
             );
 
@@ -112,7 +112,7 @@ final class Invoice implements InvoiceInterface
         return [
             'buyer' => isset($this->buyer) ? $this->buyer->toArray() : null,
             'date' => $this->date?->toIso8601String(),
-            'items' => $this->items->map(static fn (InvoiceItem $item) => $item->toArray())->toArray(),
+            'items' => $this->items->map(static fn (InvoiceItemInterface $item) => $item->toArray())->toArray(),
             'serial' => $this->serial,
             'series' => $this->series,
             'sequence' => $this->sequence,

@@ -4,7 +4,6 @@ namespace SimpleParkBv\Invoices\Contracts;
 
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
-use SimpleParkBv\Invoices\Models\ReceiptItem;
 
 /**
  * Interface for usage receipt implementations.
@@ -13,15 +12,10 @@ interface UsageReceiptInterface
 {
     /**
      * Create a new usage receipt instance.
-     */
-    public static function make(): self;
-
-    /**
-     * Create a usage receipt from an array of data.
      *
      * @param  array<string, mixed>  $data
      */
-    public static function fromArray(array $data): self;
+    public static function make(array $data = []): self;
 
     /**
      * Convert the usage receipt to an array.
@@ -38,14 +32,14 @@ interface UsageReceiptInterface
     /**
      * Set all items for the usage receipt (replaces existing items).
      *
-     * @param  array<int, \SimpleParkBv\Invoices\Models\ReceiptItem>  $items
+     * @param  array<int, \SimpleParkBv\Invoices\Contracts\ReceiptItemInterface>  $items
      */
     public function items(array $items): self;
 
     /**
      * Add a single item to the usage receipt.
      */
-    public function addItem(ReceiptItem $item): self;
+    public function addItem(ReceiptItemInterface $item): self;
 
     /**
      * Set the usage receipt issue date.

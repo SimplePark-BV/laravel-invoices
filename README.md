@@ -45,22 +45,24 @@ $invoice = Invoice::make()
     ->date(Carbon::now())
     ->language('nl');
 
-// set buyer
-$buyer = Buyer::make();
-$buyer->name = 'John Doe';
-$buyer->email = 'john@example.com';
-$buyer->address = '123 Main St';
-$buyer->city = 'Amsterdam';
-$buyer->postalCode = '1000 AA';
+// set buyer - can use data array for convenience
+$buyer = Buyer::make([
+    'name' => 'John Doe',
+    'email' => 'john@example.com',
+    'address' => '123 Main St',
+    'city' => 'Amsterdam',
+    'postal_code' => '1000 AA',
+]);
 $invoice->buyer($buyer);
 
-// add items using fluent interface
-$item = InvoiceItem::make()
-    ->title('Product Name')
-    ->description('Product description')
-    ->quantity(2)
-    ->unitPrice(50.00)
-    ->taxPercentage(21.0);
+// add items - supports both fluent interface and data array
+$item = InvoiceItem::make([
+    'title' => 'Product Name',
+    'description' => 'Product description',
+    'quantity' => 2,
+    'unit_price' => 50.00,
+    'tax_percentage' => 21.0,
+]);
 
 $invoice->items([$item]);
 
@@ -70,9 +72,10 @@ return $invoice->download('invoice.pdf');
 
 ### Fluent Interface
 
-The package supports a fluent interface for building invoices:
+The package supports both fluent interface and data arrays for building invoices:
 
 ```php
+// Using fluent interface
 $invoice = Invoice::make()
     ->series('2024')
     ->sequence(123)
@@ -86,22 +89,32 @@ $item = InvoiceItem::make()
     ->taxPercentage(21.0);
 
 $invoice->items([$item]);
+
+// Or using data arrays (more concise)
+$item = InvoiceItem::make([
+    'title' => 'Service',
+    'quantity' => 1,
+    'unit_price' => 100.00,
+    'tax_percentage' => 21.0,
+]);
 ```
 
 ### Multiple Items
 
 ```php
 $items = [
-    InvoiceItem::make()
-        ->title('Item 1')
-        ->quantity(2)
-        ->unitPrice(25.00)
-        ->taxPercentage(21.0),
-    InvoiceItem::make()
-        ->title('Item 2')
-        ->quantity(1)
-        ->unitPrice(50.00)
-        ->taxPercentage(9.0),
+    InvoiceItem::make([
+        'title' => 'Item 1',
+        'quantity' => 2,
+        'unit_price' => 25.00,
+        'tax_percentage' => 21.0,
+    ]),
+    InvoiceItem::make([
+        'title' => 'Item 2',
+        'quantity' => 1,
+        'unit_price' => 50.00,
+        'tax_percentage' => 9.0,
+    ]),
 ];
 
 $invoice->items($items);
@@ -204,7 +217,7 @@ $data = [
     'sequence' => 1,
 ];
 
-$invoice = Invoice::fromArray($data);
+$invoice = Invoice::make($data);
 ```
 
 ### Converting to Array
@@ -219,11 +232,11 @@ $array = $invoice->toArray();
 
 #### Invoice Methods
 
-- `make()` - Create a new invoice instance
-- `fromArray(array $data)` - Create invoice from array
+- `make(array $data = [])` - Create a new invoice instance, optionally with data
 - `toArray()` - Convert invoice to array
 - `buyer(Buyer $buyer)` - Set the buyer
 - `items(array $items)` - Set all items for the invoice (replaces existing items)
+- `addItem(InvoiceItem $item)` - Add a single item to the invoice
 - `series(?string $series)` - Set invoice series
 - `sequence(?int $sequence)` - Set invoice sequence number
 - `date(Carbon|string $date)` - Set invoice date (accepts Carbon instance or string, strings are parsed with Carbon::parse)
@@ -251,14 +264,16 @@ $array = $invoice->toArray();
 
 #### InvoiceItem Methods
 
-- `make()` - Create a new item instance
+- `make(array $data = [])` - Create a new item instance, optionally with data
 - `title(string $title)` - Set item title
 - `description(?string $description)` - Set item description
 - `quantity(float|int $quantity)` - Set quantity (must be > 0)
 - `unitPrice(float|int $unitPrice)` - Set unit price (can be negative for discounts)
-- `taxPercentage(?float $taxPercentage)` - Set tax percentage
+- `taxPercentage(?float $taxPercentage)` - Set tax percentage (0-100 or null)
 - `getTotal()` - Calculate item total (quantity * unitPrice)
 - `getFormattedTaxPercentage()` - Get formatted tax percentage
+- `getTaxPercentage()` - Get tax percentage value
+- `validate(?int $index)` - Validate the item
 
 ## Validation Requirements
 

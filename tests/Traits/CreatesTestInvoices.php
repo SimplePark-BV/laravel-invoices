@@ -12,14 +12,14 @@ trait CreatesTestInvoices
     {
         // arrange
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+        ]);
         $invoice->items([$item]);
 
         return $invoice;
@@ -27,12 +27,11 @@ trait CreatesTestInvoices
 
     protected function create_invoice_item(string $title = 'Test Item', float|int $quantity = 1, float|int $unitPrice = 10.00, ?float $taxPercentage = null): InvoiceItem
     {
-        $item = InvoiceItem::make();
-        $item->title = $title;
-        $item->quantity = $quantity;
-        $item->unitPrice = $unitPrice;
-        $item->taxPercentage = $taxPercentage;
-
-        return $item;
+        return InvoiceItem::make([
+            'title' => $title,
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'tax_percentage' => $taxPercentage,
+        ]);
     }
 }

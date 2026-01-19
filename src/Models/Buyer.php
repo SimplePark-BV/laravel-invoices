@@ -12,17 +12,12 @@ final class Buyer extends Party
 {
     use CanFillFromArray;
 
-    public static function make(): self
-    {
-        return new self;
-    }
-
     /**
      * Create a Buyer from a PartyInterface.
      */
     public static function fromParty(PartyInterface $party): self
     {
-        return self::make()->fill([
+        return self::make([
             'name' => $party->getName(),
             'address' => $party->getAddress(),
             'city' => $party->getCity(),

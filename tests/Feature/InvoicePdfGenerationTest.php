@@ -124,14 +124,14 @@ final class InvoicePdfGenerationTest extends TestCase
         Config::set('invoices.pdf.orientation', $orientation);
 
         $invoice = Invoice::make();
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item = InvoiceItem::make();
-        $item->title = 'Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
+        $item = InvoiceItem::make([
+            'title' => 'Item',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+        ]);
         $invoice->items([$item]);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
