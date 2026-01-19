@@ -28,9 +28,9 @@ trait CanFillFromArray
      * Fill the object properties from an array.
      *
      * For each key:
-     * 1. First checks if a camelCase method exists (e.g., unit_price -> unitPrice()) and calls it
-     * 2. Otherwise checks if the exact key exists as a property and sets it directly
-     * 3. If neither exists, skips the key
+     * 1. Converts snake_case keys to camelCase method names (e.g., unit_price -> unitPrice())
+     * 2. Calls the setter method if it exists
+     * 3. Skips the key if no setter method is found
      *
      * @param  array<string, mixed>  $data
      * @return $this
@@ -49,11 +49,6 @@ trait CanFillFromArray
             // check if a setter method exists (e.g., unitPrice())
             if (method_exists($this, $method)) {
                 $this->$method($value);
-            }
-
-            // fallback to direct property assignment if property exists
-            elseif (property_exists($this, $key)) {
-                $this->$key = $value;
             }
         }
 

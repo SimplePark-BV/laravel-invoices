@@ -24,19 +24,31 @@ final class ReceiptItem implements ReceiptItemInterface
 {
     use CanFillFromArray;
 
-    public ?string $user = null;
+    private ?string $user = null;
 
-    public ?string $identifier = null;
+    private ?string $identifier = null;
 
-    public ?Carbon $startDate = null;
+    private ?Carbon $startDate = null;
 
-    public ?Carbon $endDate = null;
+    private ?Carbon $endDate = null;
 
-    public ?string $category = null;
+    private ?string $category = null;
 
-    public ?float $price = null;
+    private ?float $price = null;
 
-    public string $dateFormat = 'd-m-Y H:i';
+    private string $dateFormat = 'd-m-Y H:i';
+
+    /**
+     * Set the date format for formatting dates.
+     *
+     * @return $this
+     */
+    public function dateFormat(string $dateFormat): self
+    {
+        $this->dateFormat = $dateFormat;
+
+        return $this;
+    }
 
     /**
      * Set the user name.
@@ -121,7 +133,7 @@ final class ReceiptItem implements ReceiptItemInterface
     /**
      * Get the user name.
      */
-    public function getUser(): string
+    public function getUser(): ?string
     {
         return $this->user;
     }
@@ -129,7 +141,7 @@ final class ReceiptItem implements ReceiptItemInterface
     /**
      * Get the identifier.
      */
-    public function getIdentifier(): string
+    public function getIdentifier(): ?string
     {
         return $this->identifier;
     }
@@ -137,7 +149,7 @@ final class ReceiptItem implements ReceiptItemInterface
     /**
      * Get the start date.
      */
-    public function getStartDate(): Carbon
+    public function getStartDate(): ?Carbon
     {
         return $this->startDate;
     }
@@ -145,7 +157,7 @@ final class ReceiptItem implements ReceiptItemInterface
     /**
      * Get the end date.
      */
-    public function getEndDate(): Carbon
+    public function getEndDate(): ?Carbon
     {
         return $this->endDate;
     }
@@ -153,7 +165,7 @@ final class ReceiptItem implements ReceiptItemInterface
     /**
      * Get the category.
      */
-    public function getCategory(): string
+    public function getCategory(): ?string
     {
         return $this->category;
     }
@@ -161,7 +173,7 @@ final class ReceiptItem implements ReceiptItemInterface
     /**
      * Get the price.
      */
-    public function getPrice(): float
+    public function getPrice(): ?float
     {
         return $this->price;
     }
@@ -171,7 +183,7 @@ final class ReceiptItem implements ReceiptItemInterface
      */
     public function getFormattedStartDate(): string
     {
-        return $this->startDate->format($this->dateFormat);
+        return $this->startDate?->format($this->dateFormat) ?? '';
     }
 
     /**
@@ -179,7 +191,7 @@ final class ReceiptItem implements ReceiptItemInterface
      */
     public function getFormattedEndDate(): string
     {
-        return $this->endDate->format($this->dateFormat);
+        return $this->endDate?->format($this->dateFormat) ?? '';
     }
 
     /**
@@ -187,7 +199,7 @@ final class ReceiptItem implements ReceiptItemInterface
      */
     public function getFormattedPrice(): string
     {
-        return CurrencyFormatter::format($this->price);
+        return $this->price !== null ? CurrencyFormatter::format($this->price) : '';
     }
 
     /**
@@ -240,8 +252,8 @@ final class ReceiptItem implements ReceiptItemInterface
         return [
             'user' => $this->user,
             'identifier' => $this->identifier,
-            'start_date' => $this->startDate->toIso8601String(),
-            'end_date' => $this->endDate->toIso8601String(),
+            'start_date' => $this->startDate?->toIso8601String(),
+            'end_date' => $this->endDate?->toIso8601String(),
             'category' => $this->category,
             'price' => $this->price,
         ];

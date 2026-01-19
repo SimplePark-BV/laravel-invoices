@@ -13,8 +13,7 @@ final class PartyTest extends TestCase
     public function get_name_returns_name(): void
     {
         // arrange
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Name';
+        $buyer = Buyer::make(['name' => 'Test Name']);
 
         // act
         $name = $buyer->getName();
@@ -25,16 +24,16 @@ final class PartyTest extends TestCase
 
     #[Test]
     #[DataProvider('getter_methods_data_provider')]
-    public function getter_methods_return_value_or_null(string $property, ?string $value, string $method, ?string $expected): void
+    public function getter_methods_return_value_or_null(string $setter, ?string $value, string $getter, ?string $expected): void
     {
         // arrange
-        $buyer = Buyer::make();
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
 
-        // explicitly set property to value (including null) to avoid uninitialized property errors
-        $buyer->$property = $value;
+        // explicitly set property to value (including null)
+        $buyer->$setter($value);
 
         // act
-        $result = $buyer->$method();
+        $result = $buyer->$getter();
 
         // assert
         $this->assertEquals($expected, $result);
@@ -67,15 +66,16 @@ final class PartyTest extends TestCase
     public function to_array_includes_all_properties(): void
     {
         // arrange
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
-        $buyer->address = '123 Test St';
-        $buyer->city = 'Test City';
-        $buyer->postalCode = '12345';
-        $buyer->country = 'Test Country';
-        $buyer->email = 'test@example.com';
-        $buyer->phone = '+1234567890';
-        $buyer->website = 'https://example.com';
+        $buyer = Buyer::make([
+            'name' => 'Test Buyer',
+            'address' => '123 Test St',
+            'city' => 'Test City',
+            'postal_code' => '12345',
+            'country' => 'Test Country',
+            'email' => 'test@example.com',
+            'phone' => '+1234567890',
+            'website' => 'https://example.com',
+        ]);
 
         // act
         $array = $buyer->toArray();
@@ -95,8 +95,7 @@ final class PartyTest extends TestCase
     public function to_array_includes_null_for_unset_properties(): void
     {
         // arrange
-        $buyer = Buyer::make();
-        $buyer->name = 'Test Buyer';
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
 
         // act
         $array = $buyer->toArray();

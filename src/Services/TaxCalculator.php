@@ -80,7 +80,7 @@ final class TaxCalculator
     public static function extractTaxGroups(Collection $items): Collection
     {
         return $items
-            ->pluck('taxPercentage')
+            ->map(static fn (InvoiceItemInterface $item): ?float => $item->getTaxPercentage())
             ->filter(static fn (?float $taxPercentage): bool => $taxPercentage !== null && $taxPercentage > 0)
             ->map(static fn (float $taxPercentage): float => round($taxPercentage, self::getTaxPercentagePrecision()))
             ->unique()

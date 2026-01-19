@@ -49,32 +49,32 @@ interface ReceiptItemInterface
     /**
      * Get the user name.
      */
-    public function getUser(): string;
+    public function getUser(): ?string;
 
     /**
      * Get the identifier.
      */
-    public function getIdentifier(): string;
+    public function getIdentifier(): ?string;
 
     /**
      * Get the start date.
      */
-    public function getStartDate(): Carbon;
+    public function getStartDate(): ?Carbon;
 
     /**
      * Get the end date.
      */
-    public function getEndDate(): Carbon;
+    public function getEndDate(): ?Carbon;
 
     /**
      * Get the category.
      */
-    public function getCategory(): string;
+    public function getCategory(): ?string;
 
     /**
      * Get the price.
      */
-    public function getPrice(): float;
+    public function getPrice(): ?float;
 
     /**
      * Get the formatted start date.

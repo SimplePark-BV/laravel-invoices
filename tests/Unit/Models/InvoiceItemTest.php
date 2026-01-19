@@ -23,7 +23,7 @@ final class InvoiceItemTest extends TestCase
 
     #[Test]
     #[DataProvider('valid_setter_data_provider')]
-    public function setters_with_valid_data(string $method, mixed $value, string $property, mixed $expected): void
+    public function setters_with_valid_data(string $method, mixed $value, string $getter, mixed $expected): void
     {
         // arrange
         $item = InvoiceItem::make();
@@ -33,7 +33,7 @@ final class InvoiceItemTest extends TestCase
 
         // assert
         $this->assertSame($item, $result);
-        $this->assertEquals($expected, $item->$property);
+        $this->assertEquals($expected, $item->$getter());
     }
 
     /**
@@ -42,18 +42,18 @@ final class InvoiceItemTest extends TestCase
     public static function valid_setter_data_provider(): array
     {
         return [
-            'title' => ['title', 'Test Item', 'title', 'Test Item'],
-            'description' => ['description', 'Test Description', 'description', 'Test Description'],
-            'description null' => ['description', null, 'description', null],
-            'quantity int' => ['quantity', 5, 'quantity', 5],
-            'quantity float' => ['quantity', 2.5, 'quantity', 2.5],
-            'unit price' => ['unitPrice', 10.50, 'unitPrice', 10.50],
-            'unit price zero' => ['unitPrice', 0, 'unitPrice', 0],
-            'unit price negative' => ['unitPrice', -5.00, 'unitPrice', -5.00],
-            'tax percentage' => ['taxPercentage', 21, 'taxPercentage', 21],
-            'tax percentage zero' => ['taxPercentage', 0, 'taxPercentage', 0],
-            'tax percentage hundred' => ['taxPercentage', 100, 'taxPercentage', 100],
-            'tax percentage null' => ['taxPercentage', null, 'taxPercentage', null],
+            'title' => ['title', 'Test Item', 'getTitle', 'Test Item'],
+            'description' => ['description', 'Test Description', 'getDescription', 'Test Description'],
+            'description null' => ['description', null, 'getDescription', null],
+            'quantity int' => ['quantity', 5, 'getQuantity', 5],
+            'quantity float' => ['quantity', 2.5, 'getQuantity', 2.5],
+            'unit price' => ['unitPrice', 10.50, 'getUnitPrice', 10.50],
+            'unit price zero' => ['unitPrice', 0, 'getUnitPrice', 0],
+            'unit price negative' => ['unitPrice', -5.00, 'getUnitPrice', -5.00],
+            'tax percentage' => ['taxPercentage', 21, 'getTaxPercentage', 21],
+            'tax percentage zero' => ['taxPercentage', 0, 'getTaxPercentage', 0],
+            'tax percentage hundred' => ['taxPercentage', 100, 'getTaxPercentage', 100],
+            'tax percentage null' => ['taxPercentage', null, 'getTaxPercentage', null],
         ];
     }
 
@@ -123,9 +123,10 @@ final class InvoiceItemTest extends TestCase
     public function total_calculation(float|int $quantity, float|int $unitPrice, float $expected): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->quantity = $quantity;
-        $item->unitPrice = $unitPrice;
+        $item = InvoiceItem::make([
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+        ]);
 
         // act
         $total = $item->getTotal();
@@ -152,11 +153,12 @@ final class InvoiceItemTest extends TestCase
     public function boundary_values_pass_validation(float $taxPercentage): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
-        $item->taxPercentage = $taxPercentage;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'tax_percentage' => $taxPercentage,
+        ]);
 
         // act & assert
         $this->expectNotToPerformAssertions();
@@ -180,10 +182,11 @@ final class InvoiceItemTest extends TestCase
     public function very_small_quantity(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 0.001;
-        $item->unitPrice = 10.00;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 0.001,
+            'unit_price' => 10.00,
+        ]);
 
         // act & assert
         $this->expectNotToPerformAssertions();
@@ -194,10 +197,11 @@ final class InvoiceItemTest extends TestCase
     public function very_large_unit_price(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 999999999.99;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 1,
+            'unit_price' => 999999999.99,
+        ]);
 
         // act
         $total = $item->getTotal();
@@ -210,10 +214,11 @@ final class InvoiceItemTest extends TestCase
     public function precision_edge_case_calculation(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 0.33;
-        $item->unitPrice = 3.00;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 0.33,
+            'unit_price' => 3.00,
+        ]);
 
         // act
         $total = $item->getTotal();
@@ -228,8 +233,9 @@ final class InvoiceItemTest extends TestCase
     public function formatted_tax_percentage(?float $taxPercentage, string $expected): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->taxPercentage = $taxPercentage;
+        $item = InvoiceItem::make([
+            'tax_percentage' => $taxPercentage,
+        ]);
 
         // act
         $formatted = $item->getFormattedTaxPercentage();
@@ -255,12 +261,13 @@ final class InvoiceItemTest extends TestCase
     public function to_array_includes_all_properties(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->description = 'Test Description';
-        $item->quantity = 2;
-        $item->unitPrice = 10.50;
-        $item->taxPercentage = 21;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'description' => 'Test Description',
+            'quantity' => 2,
+            'unit_price' => 10.50,
+            'tax_percentage' => 21,
+        ]);
 
         // act
         $array = $item->toArray();
@@ -279,10 +286,11 @@ final class InvoiceItemTest extends TestCase
     public function to_array_includes_null_for_unset_properties(string $property): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+        ]);
 
         // act
         $array = $item->toArray();
@@ -307,11 +315,12 @@ final class InvoiceItemTest extends TestCase
     public function validate_passes_with_valid_item(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
-        $item->taxPercentage = 21;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'tax_percentage' => 21,
+        ]);
 
         // act & assert
         $this->expectNotToPerformAssertions();
@@ -322,10 +331,12 @@ final class InvoiceItemTest extends TestCase
     public function validate_throws_exception_for_empty_title(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = '';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
+        $item = InvoiceItem::make([
+            'title' => '',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+            'tax_percentage' => 21,
+        ]);
 
         // assert
         $this->expectException(InvalidInvoiceItemException::class);
@@ -339,10 +350,11 @@ final class InvoiceItemTest extends TestCase
     public function validate_throws_exception_with_index_prefix(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = '';
-        $item->quantity = 1;
-        $item->unitPrice = 10.00;
+        $item = InvoiceItem::make([
+            'title' => '',
+            'quantity' => 1,
+            'unit_price' => 10.00,
+        ]);
 
         // assert
         $this->expectException(InvalidInvoiceItemException::class);
@@ -356,10 +368,11 @@ final class InvoiceItemTest extends TestCase
     public function validate_throws_exception_for_zero_quantity(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 0;
-        $item->unitPrice = 10.00;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 0,
+            'unit_price' => 10.00,
+        ]);
 
         // assert
         $this->expectException(InvalidInvoiceItemException::class);
@@ -380,33 +393,35 @@ final class InvoiceItemTest extends TestCase
 
         // assert
         $this->assertSame($item, $result);
-        $this->assertEquals('Test Description', $item->description);
+        $this->assertEquals('Test Description', $item->getDescription());
     }
 
     #[Test]
     public function description_setter_with_null(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->description = 'Existing Description';
+        $item = InvoiceItem::make([
+            'description' => 'Existing Description',
+        ]);
 
         // act
         $result = $item->description(null);
 
         // assert
         $this->assertSame($item, $result);
-        $this->assertNull($item->description);
+        $this->assertNull($item->getDescription());
     }
 
     #[Test]
     public function discount_item_with_negative_unit_price(): void
     {
         // arrange
-        $item = InvoiceItem::make()
-            ->title('Discount')
-            ->quantity(1)
-            ->unitPrice(-5.00)
-            ->taxPercentage(0);
+        $item = InvoiceItem::make([
+            'title' => 'Discount',
+            'quantity' => 1,
+            'unit_price' => -5.00,
+            'tax_percentage' => 0,
+        ]);
 
         // act
         $total = $item->getTotal();
@@ -420,11 +435,12 @@ final class InvoiceItemTest extends TestCase
     public function negative_unit_price_passes_validation(): void
     {
         // arrange
-        $item = InvoiceItem::make();
-        $item->title = 'Discount Item';
-        $item->quantity = 1;
-        $item->unitPrice = -10.00;
-        $item->taxPercentage = 0;
+        $item = InvoiceItem::make([
+            'title' => 'Discount Item',
+            'quantity' => 1,
+            'unit_price' => -10.00,
+            'tax_percentage' => 0,
+        ]);
 
         // act & assert
         $this->expectNotToPerformAssertions();

@@ -32,16 +32,15 @@ final class BuyerTest extends TestCase
     public function buyer_properties_can_be_set(): void
     {
         // arrange
-        $buyer = Buyer::make();
-
-        // act
-        $buyer->name = 'Test Buyer';
-        $buyer->address = '123 Test St';
-        $buyer->email = 'buyer@test.com';
+        $buyer = Buyer::make([
+            'name' => 'Test Buyer',
+            'address' => '123 Test St',
+            'email' => 'buyer@test.com',
+        ]);
 
         // assert
-        $this->assertEquals('Test Buyer', $buyer->name);
-        $this->assertEquals('123 Test St', $buyer->address);
-        $this->assertEquals('buyer@test.com', $buyer->email);
+        $this->assertEquals('Test Buyer', $buyer->getName());
+        $this->assertEquals('123 Test St', $buyer->getAddress());
+        $this->assertEquals('buyer@test.com', $buyer->getEmail());
     }
 }

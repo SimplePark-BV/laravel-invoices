@@ -63,7 +63,7 @@ trait HasReceiptItems
     public function getItemsTotal(): float
     {
         return $this->items->sum(
-            static fn (ReceiptItemInterface $item): float => $item->getPrice()
+            static fn (ReceiptItemInterface $item): float => $item->getPrice() ?? 0.0
         );
     }
 

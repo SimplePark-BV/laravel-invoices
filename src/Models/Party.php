@@ -18,21 +18,117 @@ use SimpleParkBv\Invoices\Contracts\PartyInterface;
  */
 abstract class Party implements PartyInterface
 {
-    public string $name;
+    protected string $name;
 
-    public ?string $address;
+    protected ?string $address = null;
 
-    public ?string $city;
+    protected ?string $city = null;
 
-    public ?string $postalCode;
+    protected ?string $postalCode = null;
 
-    public ?string $country;
+    protected ?string $country = null;
 
-    public ?string $email;
+    protected ?string $email = null;
 
-    public ?string $phone;
+    protected ?string $phone = null;
 
-    public ?string $website;
+    protected ?string $website = null;
+
+    /**
+     * Set the party's name.
+     *
+     * @return $this
+     */
+    public function name(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Set the party's address.
+     *
+     * @return $this
+     */
+    public function address(?string $address): self
+    {
+        $this->address = $address;
+
+        return $this;
+    }
+
+    /**
+     * Set the party's city.
+     *
+     * @return $this
+     */
+    public function city(?string $city): self
+    {
+        $this->city = $city;
+
+        return $this;
+    }
+
+    /**
+     * Set the party's postal code.
+     *
+     * @return $this
+     */
+    public function postalCode(?string $postalCode): self
+    {
+        $this->postalCode = $postalCode;
+
+        return $this;
+    }
+
+    /**
+     * Set the party's country.
+     *
+     * @return $this
+     */
+    public function country(?string $country): self
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    /**
+     * Set the party's email address.
+     *
+     * @return $this
+     */
+    public function email(?string $email): self
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    /**
+     * Set the party's phone number.
+     *
+     * @return $this
+     */
+    public function phone(?string $phone): self
+    {
+        $this->phone = $phone;
+
+        return $this;
+    }
+
+    /**
+     * Set the party's website URL.
+     *
+     * @return $this
+     */
+    public function website(?string $website): self
+    {
+        $this->website = $website;
+
+        return $this;
+    }
 
     /**
      * Get the party's name.

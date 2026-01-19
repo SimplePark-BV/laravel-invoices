@@ -64,7 +64,7 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertInstanceOf(Buyer::class, $invoice->buyer);
-        $this->assertEquals('Test Buyer', $invoice->buyer->name);
+        $this->assertEquals('Test Buyer', $invoice->buyer->getName());
         $this->assertNotNull($invoice->date);
         $this->assertEquals('2024-01-15', $invoice->date->format('Y-m-d'));
         $this->assertCount(1, $invoice->items);
@@ -96,9 +96,10 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertInstanceOf(Buyer::class, $invoice->buyer);
-        $this->assertEquals('Test Buyer', $invoice->buyer->name);
+        $this->assertEquals('Test Buyer', $invoice->buyer->getName());
         $this->assertCount(1, $invoice->items);
-        // Optional fields should use defaults or be null
+
+        // optional fields should use defaults or be null
         $this->assertNull($invoice->series);
         $this->assertNull($invoice->sequence);
     }
@@ -177,14 +178,17 @@ final class InvoiceTest extends TestCase
     public function to_array_returns_structure(): void
     {
         // arrange
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $buyer->email = 'buyer@test.com';
+        $buyer = Buyer::make([
+            'name' => 'Test Buyer',
+            'email' => 'buyer@test.com',
+        ]);
 
-        $item = InvoiceItem::make();
-        $item->title = 'Test Item';
-        $item->quantity = 2;
-        $item->unitPrice = 10.50;
-        $item->taxPercentage = 21;
+        $item = InvoiceItem::make([
+            'title' => 'Test Item',
+            'quantity' => 2,
+            'unit_price' => 10.50,
+            'tax_percentage' => 21,
+        ]);
 
         $invoice = Invoice::make();
         $invoice->buyer($buyer);
@@ -589,8 +593,8 @@ final class InvoiceTest extends TestCase
 
         // assert
         $this->assertInstanceOf(Seller::class, $invoice->seller);
-        $this->assertEquals('Test Seller', $invoice->seller->name);
-        $this->assertEquals('Test Address', $invoice->seller->address);
+        $this->assertEquals('Test Seller', $invoice->seller->getName());
+        $this->assertEquals('Test Address', $invoice->seller->getAddress());
     }
 
     #[Test]
