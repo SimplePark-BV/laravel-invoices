@@ -1,4 +1,10 @@
-# laravel-invoices
+<div align="left">
+  <a href="https://simplepark.nl" target="_blank">
+    <img src="resources/images/laravel-invoice-banner.png" alt="Laravel Invoices Banner" />
+  </a>
+
+  <h1>Laravel Invoices</h1>
+</div>
 
 A Laravel package for generating Invoice and Usage Receipt PDFs with customizable templates and multilingual support.
 
