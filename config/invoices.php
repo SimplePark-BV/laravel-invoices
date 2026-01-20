@@ -123,6 +123,7 @@ return [
         'registration_number' => env('INVOICES_SELLER_REGISTRATION_NUMBER', null),
         'tax_id' => env('INVOICES_SELLER_TAX_ID', null),
         'bank_account' => env('INVOICES_SELLER_BANK_ACCOUNT', null),
+        'website' => env('INVOICES_SELLER_WEBSITE', 'www.example.com'),
     ],
 
     /*
