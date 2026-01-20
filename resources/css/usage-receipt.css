@@ -246,7 +246,7 @@
     margin-bottom: 4px;
 }
 
-.usage-receipt__footer-label--spaced {
+.usage-receipt__footer-label:not(:first-child) {
     margin-top: 12px;
 }
 
