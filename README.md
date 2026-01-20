@@ -1,6 +1,9 @@
 <div align="left">
   <a href="https://simplepark.nl" target="_blank">
-    <img src="resources/images/laravel-invoice-banner.png" alt="Laravel Invoices Banner" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="resources/images/readme-banner-dark.png">
+      <img alt="Laravel Invoices Banner" src="resources/images/readme-banner-light.png">
+    </picture>
   </a>
 
   <h1>Laravel Invoices</h1>
