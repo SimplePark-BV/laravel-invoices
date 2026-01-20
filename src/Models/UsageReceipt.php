@@ -110,7 +110,14 @@ final class UsageReceipt implements UsageReceiptInterface
      */
     public function getTitle(): string
     {
-        return $this->title ?? __('invoices::usage-receipt.title');
+        $baseTitle = $this->title ?? __('invoices::usage-receipt.title');
+        $date = $this->getDate();
+
+        if ($date === null) {
+            return $baseTitle;
+        }
+
+        return $baseTitle.' '.$date->format('d-m-Y H:i');
     }
 
     /**
