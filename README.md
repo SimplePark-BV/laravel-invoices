@@ -1,8 +1,8 @@
 <div align="left">
   <a href="https://simplepark.nl" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="resources/images/readme-banner-dark.png">
-      <img alt="Laravel Invoices Banner" src="resources/images/readme-banner-light.png">
+      <source media="(prefers-color-scheme: dark)" srcset="https://www.simplepark.nl/images/github/laravel-invoices-banner-dark.png">
+      <img alt="Laravel Invoices Banner" src="https://www.simplepark.nl/images/github/laravel-invoices-banner-light.png">
     </picture>
   </a>
 
