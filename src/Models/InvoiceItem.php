@@ -114,6 +114,10 @@ final class InvoiceItem implements InvoiceItemInterface
      */
     public function taxRate(float $taxRate): self
     {
+        if ($taxRate < 0 || $taxRate > 1) {
+            throw new InvalidInvoiceItemException('Tax rate must be between 0 and 1');
+        }
+
         $this->taxPercentage = $taxRate * 100;
 
         return $this;

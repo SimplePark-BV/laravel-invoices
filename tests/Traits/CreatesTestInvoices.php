@@ -52,13 +52,13 @@ trait CreatesTestInvoices
         // build attrs with defaults
         $invoiceAttrs = [
             'buyer' => ['name' => 'Test Buyer'],
-            ...$attrs,
             'items' => [[
                 'title' => 'Test Item',
                 'quantity' => 1,
                 'unit_price' => $actualTotal ?? 10.00,
                 'tax_percentage' => null,
             ]],
+            ...$attrs,
         ];
 
         $invoice = Invoice::make($invoiceAttrs);

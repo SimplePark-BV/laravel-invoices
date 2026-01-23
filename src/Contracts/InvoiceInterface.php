@@ -150,7 +150,7 @@ interface InvoiceInterface
     public function getTotal(): float;
 
     /**
-     * Get the default filename for the usage receipt.
+     * Get the default filename for the invoice.
      */
     public function getFilename(): string;
 

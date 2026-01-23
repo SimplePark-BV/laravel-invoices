@@ -82,12 +82,10 @@ trait ValidatesExpectedTotal
             // determine which exception to throw based on the class type
             if ($isInvoice) {
                 throw new InvalidInvoiceException($errorMessage);
-            } elseif ($isUsageReceipt) {
-                throw new InvalidUsageReceiptException($errorMessage);
-            } else {
-                // fallback: should not happen, but log and throw generic exception
-                throw new InvalidInvoiceException($errorMessage);
             }
+
+            // $isUsageReceipt must be true here due to early return at line 31-33
+            throw new InvalidUsageReceiptException($errorMessage);
         }
     }
 }

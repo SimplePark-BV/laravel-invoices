@@ -122,7 +122,6 @@ final class ValidatesExpectedTotalTest extends TestCase
     private function callValidateExpectedTotal(Invoice|UsageReceipt $model): void
     {
         $method = new ReflectionMethod($model, 'validateExpectedTotal');
-        $method->setAccessible(true);
         $method->invoke($model);
     }
 }
