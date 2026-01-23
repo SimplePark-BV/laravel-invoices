@@ -3,6 +3,8 @@
 namespace SimpleParkBv\Invoices\Models\Traits;
 
 use Illuminate\Support\Facades\Log;
+use SimpleParkBv\Invoices\Contracts\InvoiceInterface;
+use SimpleParkBv\Invoices\Contracts\UsageReceiptInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException;
 
@@ -78,11 +80,13 @@ trait ValidatesExpectedTotal
             $errorMessage .= sprintf(': expected %.2f, got %.2f (difference: %.2f)', $expectedTotal, $actualTotal, abs($expectedTotal - $actualTotal));
 
             // determine which exception to throw based on the class type
-            // @phpstan-ignore-next-line function.alreadyNarrowedType,function.impossibleType
-            if (method_exists($this, 'getNumber')) {
+            if ($this instanceof InvoiceInterface) {
                 throw new InvalidInvoiceException($errorMessage);
-            } else {
+            } elseif ($this instanceof UsageReceiptInterface) {
                 throw new InvalidUsageReceiptException($errorMessage);
+            } else {
+                // fallback: should not happen, but log and throw generic exception
+                throw new InvalidInvoiceException($errorMessage);
             }
         }
     }
