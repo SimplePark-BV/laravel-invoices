@@ -82,6 +82,7 @@ trait ValidatesExpectedTotal
             // determine which exception to throw based on the class type
             if ($this instanceof InvoiceInterface) {
                 throw new InvalidInvoiceException($errorMessage);
+                // @phpstan-ignore-next-line instanceof.alwaysFalse
             } elseif ($this instanceof UsageReceiptInterface) {
                 throw new InvalidUsageReceiptException($errorMessage);
             } else {

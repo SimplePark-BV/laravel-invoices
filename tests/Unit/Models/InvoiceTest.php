@@ -152,7 +152,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-public function to_array_handles_null_values(): void
+    public function to_array_handles_null_values(): void
     {
         // arrange
         $invoice = Invoice::make();
