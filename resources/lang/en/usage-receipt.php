@@ -19,7 +19,7 @@ return [
     'footer' => [
         'disclaimer' => 'PLEASE NOTE! This is not a payment request, only a usage confirmation',
         'address' => 'Address',
-        'registration_number' => 'Chamber of Commerce number',
+        'registration_number' => 'CoC number',
         'tax_id' => 'VAT number',
         'website' => 'Website',
         'email' => 'Email',

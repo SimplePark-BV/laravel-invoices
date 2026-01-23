@@ -109,7 +109,7 @@ final class UsageReceipt implements UsageReceiptInterface
      */
     public function getTitle(): string
     {
-        return $this->title ?? __('invoices::usage-receipt.title');
+        return $this->title ?? __('invoices::usage-receipt.title', [], $this->getLanguage());
     }
 
     /**
