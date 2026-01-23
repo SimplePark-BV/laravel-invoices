@@ -126,7 +126,7 @@ final class PdfGenerationTest extends TestCase
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
 
-        $item = $this->createInvoiceItem('Item');
+        $item = $this->createInvoiceItem(['title' => 'Test Item']);
         $invoice->addItem($item);
 
         $mockPdf = $this->mockPdfInstance($paperSize, $orientation);

@@ -2,7 +2,6 @@
 
 namespace SimpleParkBv\Invoices\Models;
 
-use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleParkBv\Invoices\Contracts\UsageReceiptInterface;
 use SimpleParkBv\Invoices\Contracts\UsageReceiptItemInterface;
 use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException;

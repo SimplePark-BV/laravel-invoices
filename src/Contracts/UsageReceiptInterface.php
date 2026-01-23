@@ -84,6 +84,11 @@ interface UsageReceiptInterface
     public function getFilename(): string;
 
     /**
+     * Get the expected total amount.
+     */
+    public function getExpectedTotal(): ?float;
+
+    /**
      * Set the logo path for this usage receipt.
      */
     public function logo(?string $logoPath): self;

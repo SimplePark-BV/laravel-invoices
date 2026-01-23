@@ -25,8 +25,10 @@ trait ValidatesExpectedTotal
      */
     protected function validateExpectedTotal(): void
     {
-        // @phpstan-ignore-next-line function.alreadyNarrowedType
-        if (! method_exists($this, 'getExpectedTotal') || ! method_exists($this, 'getTotal')) {
+        $isInvoice = $this instanceof InvoiceInterface;
+        $isUsageReceipt = $this instanceof UsageReceiptInterface;
+
+        if (! $isInvoice && ! $isUsageReceipt) {
             return;
         }
 
@@ -44,14 +46,12 @@ trait ValidatesExpectedTotal
         $context = [];
         $errorMessage = 'Expected total differs from calculated total';
 
-        // @phpstan-ignore-next-line function.alreadyNarrowedType,function.impossibleType
-        if (method_exists($this, 'getNumber')) {
+        if ($isInvoice && ! $isUsageReceipt) {
+            // @phpstan-ignore-next-line function.alreadyNarrowedType,function.impossibleType
             $context['invoice_number'] = $this->getNumber();
             $errorMessage .= sprintf(' (Invoice: %s)', $this->getNumber() ?? 'N/A');
-        }
-
-        // @phpstan-ignore-next-line function.alreadyNarrowedType,function.impossibleType
-        if (method_exists($this, 'getDocumentId')) {
+        } elseif ($isUsageReceipt && ! $isInvoice) {
+            // @phpstan-ignore-next-line function.alreadyNarrowedType,function.impossibleType
             $context['document_id'] = $this->getDocumentId();
             $errorMessage .= sprintf(' (Document ID: %s)', $this->getDocumentId() ?? 'N/A');
         }
@@ -76,14 +76,13 @@ trait ValidatesExpectedTotal
 
         // throw exception if configured to do so
         // @phpstan-ignore-next-line function.alreadyNarrowedType
-        if (method_exists($this, 'shouldThrowOnExpectedTotalMismatch') && $this->shouldThrowOnExpectedTotalMismatch()) {
+        if ($this->shouldThrowOnExpectedTotalMismatch()) {
             $errorMessage .= sprintf(': expected %.2f, got %.2f (difference: %.2f)', $expectedTotal, $actualTotal, abs($expectedTotal - $actualTotal));
 
             // determine which exception to throw based on the class type
-            if ($this instanceof InvoiceInterface) {
+            if ($isInvoice) {
                 throw new InvalidInvoiceException($errorMessage);
-                // @phpstan-ignore-next-line instanceof.alwaysFalse
-            } elseif ($this instanceof UsageReceiptInterface) {
+            } elseif ($isUsageReceipt) {
                 throw new InvalidUsageReceiptException($errorMessage);
             } else {
                 // fallback: should not happen, but log and throw generic exception

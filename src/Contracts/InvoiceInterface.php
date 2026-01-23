@@ -150,6 +150,16 @@ interface InvoiceInterface
     public function getTotal(): float;
 
     /**
+     * Get the default filename for the usage receipt.
+     */
+    public function getFilename(): string;
+
+    /**
+     * Get the expected total amount.
+     */
+    public function getExpectedTotal(): ?float;
+
+    /**
      * Get the formatted total amount with currency symbol.
      */
     public function getFormattedTotal(): string;

@@ -180,7 +180,7 @@ final class InvoiceTest extends TestCase
             'email' => 'buyer@test.com',
         ]);
 
-        $item = $this->createInvoiceItem('Test Item', 2, 10.50, 21);
+        $item = $this->createInvoiceItem(['title' => 'Test Item', 'quantity' => 2, 'unit_price' => 10.50, 'tax_percentage' => 21]);
 
         $invoice = Invoice::make();
         $invoice->buyer($buyer);
@@ -268,8 +268,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem('Item 1');
-        $item2 = $this->createInvoiceItem('Item 2', 2, 20.00);
+        $item1 = $this->createInvoiceItem(['title' => 'Item 1']);
+        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 2, 'unit_price' => 20.00]);
 
         // act
         $result = $invoice->items([$item1, $item2]);
@@ -326,7 +326,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 2, 121.00, 21); // 100 + 21% tax
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2, 'unit_price' => 121.00, 'tax_percentage' => 21]); // 100 + 21% tax
         $invoice->addItem($item);
 
         // act
@@ -343,7 +343,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 2);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2]);
         $invoice->addItem($item);
 
         // act
@@ -358,8 +358,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem('Item 1', 1, 121.00, 21); // 100 + 21% tax
-        $item2 = $this->createInvoiceItem('Item 2', 1, 110.00, 10); // 100 + 10% tax
+        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]); // 100 + 21% tax
+        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 110.00, 'tax_percentage' => 10]); // 100 + 10% tax
 
         $invoice->items([$item1, $item2]);
 
@@ -378,10 +378,10 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem('Item 1', 1, 10.00, 21);
-        $item2 = $this->createInvoiceItem('Item 2', 1, 10.00, 9);
-        $item3 = $this->createInvoiceItem('Item 3', 1, 10.00, 21);
-        $item4 = $this->createInvoiceItem('Item 4', 1, 10.00, null);
+        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 21]);
+        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 9]);
+        $item3 = $this->createInvoiceItem(['title' => 'Item 3', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 21]);
+        $item4 = $this->createInvoiceItem(['title' => 'Item 4', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => null]);
 
         $invoice->items([$item1, $item2, $item3, $item4]);
 
@@ -400,8 +400,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem('Item 1', 1, 121.00, 21);
-        $item2 = $this->createInvoiceItem('Item 2', 1, 110.00, 10);
+        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
+        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 110.00, 'tax_percentage' => 10]);
 
         $invoice->items([$item1, $item2]);
 
@@ -428,7 +428,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 1, 121.00, 21);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
         $invoice->addItem($item);
 
         // act
@@ -456,6 +456,17 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
+    public function expected_total_can_be_set_via_make(): void
+    {
+        // arrange & act
+        $invoice = Invoice::make(['expected_total' => 150.75]);
+
+        // assert
+        $this->assertEquals(150.75, $invoice->getExpectedTotal());
+        $this->assertFalse($invoice->shouldThrowOnExpectedTotalMismatch());
+    }
+
+    #[Test]
     public function expected_total_logs_error_when_differing_from_calculated_total(): void
     {
         // arrange
@@ -475,7 +486,7 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::make();
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem('Item', 2);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2]);
         $invoice->addItem($item);
         $invoice->expectedTotal(100.50); // differs from calculated total of 20.00
 
@@ -538,7 +549,7 @@ final class InvoiceTest extends TestCase
         Config::set('invoices.thousands_separator', '.');
 
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 1, 10.50);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 10.50]);
         $invoice->addItem($item);
 
         // act
@@ -553,7 +564,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 1, 121.00, 21);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
         $invoice->addItem($item);
 
         // act
@@ -873,7 +884,7 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::make();
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem('Item');
+        $item = $this->createInvoiceItem(['title' => 'Item']);
         $invoice->addItem($item);
         $invoice->date('2024-01-15');
         $invoice->payUntilDays(30);
