@@ -136,6 +136,7 @@ trait HasPdfRendering
             $this->pdf = Pdf::setOptions([
                 'chroot' => $packageRoot,
                 'isRemoteEnabled' => false,
+                'isFontSubsettingEnabled' => false,
             ])
                 ->loadView($template, [$viewVariableName => $this])
                 ->setPaper($paperOptions['size'], $paperOptions['orientation']);
