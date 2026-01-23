@@ -11,25 +11,16 @@ use SimpleParkBv\Invoices\Services\CurrencyFormatter;
  */
 trait HasUsageReceiptItems
 {
+    use HasExpectedTotal;
+
     /**
      * @var \Illuminate\Support\Collection<int, \SimpleParkBv\Invoices\Contracts\UsageReceiptItemInterface>
      */
     protected Collection $items;
 
-    protected ?float $forcedTotal = null;
-
     public function initializeHasUsageReceiptItems(): void
     {
         $this->items = collect();
-        $this->forcedTotal = null;
-    }
-
-    /**
-     * Get the forced total amount.
-     */
-    public function getForcedTotal(): ?float
-    {
-        return $this->forcedTotal;
     }
 
     /**
@@ -48,17 +39,6 @@ trait HasUsageReceiptItems
     public function addItem(UsageReceiptItemInterface $item): self
     {
         $this->items->push($item);
-
-        return $this;
-    }
-
-    /**
-     * Force a specific total amount that will override the calculated total.
-     * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
-     */
-    public function forcedTotal(float $amount): self
-    {
-        $this->forcedTotal = $amount;
 
         return $this;
     }
@@ -88,18 +68,11 @@ trait HasUsageReceiptItems
     /**
      * Calculate the grand total.
      *
-     * Returns the forced total if set via forcedTotal(), otherwise returns the sum of all session prices.
-     *
-     * WARNING: Do not use this method for calculations when forcedTotal() is set,
-     * as the returned amount may differ from the calculated sum of items.
-     * Use getItemsTotal() for calculations that need to match the actual sum of all items.
+     * Returns the sum of all session prices.
+     * This ensures accuracy to the cent.
      */
     public function getTotal(): float
     {
-        if ($this->getForcedTotal() !== null) {
-            return $this->getForcedTotal();
-        }
-
         // always calculate from items directly to ensure precision to the cent
         return $this->getItemsTotal();
     }

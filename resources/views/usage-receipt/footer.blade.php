@@ -19,7 +19,7 @@
                     {{ $seller->getPostalCode() }} {{ $seller->getCity() }}
                 @endif
             </div>
-        </div>
+    </div>
         <div class="usage-receipt__footer-column">
             @if($seller->getRegistrationNumber())
                 <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.registration_number') }}</div>

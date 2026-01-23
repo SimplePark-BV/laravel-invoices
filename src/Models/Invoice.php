@@ -80,7 +80,7 @@ final class Invoice implements InvoiceInterface
             $invoice->items($items);
         }
 
-        // fill remaining properties (date, serial, series, sequence, language, forced_total)
+        // fill remaining properties (date, serial, series, sequence, language, expected_total)
         $invoice->fill($data);
 
         return $invoice;
@@ -101,7 +101,7 @@ final class Invoice implements InvoiceInterface
             'series' => $this->getSeries(),
             'sequence' => $this->getSequence(),
             'language' => $this->getLanguage(),
-            'forced_total' => $this->getForcedTotal(),
+            'expected_total' => $this->getExpectedTotal(),
         ];
     }
 

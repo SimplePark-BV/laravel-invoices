@@ -16,6 +16,8 @@ use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
  */
 trait HasPdfRendering
 {
+    use ValidatesExpectedTotal;
+
     public ?DomPDF $pdf = null;
 
     public ?string $output = null;
@@ -104,6 +106,9 @@ trait HasPdfRendering
     {
         // validate document before rendering
         $this->validate();
+
+        // validate expected total if set
+        $this->validateExpectedTotal();
 
         // normalize paper options with defaults
         $paperOptions = $this->getNormalizedPaperOptions();

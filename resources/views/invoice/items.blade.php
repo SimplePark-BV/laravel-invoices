@@ -14,7 +14,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach($invoice->items as $item)
+        @foreach($invoice->getItems() as $item)
             <tr class="invoice__items-row">
                 <td class="invoice__items-cell">{{ $item->getQuantity() }}x</td>
                 <td class="invoice__items-cell">

@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -56,7 +57,7 @@ final class InvoiceTest extends TestCase
             'series' => 'INV',
             'sequence' => 1,
             'language' => 'en',
-            'forced_total' => 25.41,
+            'expected_total' => 25.41,
         ];
 
         // act
@@ -71,7 +72,7 @@ final class InvoiceTest extends TestCase
         $this->assertEquals('INV', $invoice->getSeries());
         $this->assertEquals(1, $invoice->getSequence());
         $this->assertEquals('en', $invoice->getLanguage());
-        $this->assertEquals(25.41, $invoice->getForcedTotal());
+        $this->assertEquals(25.41, $invoice->getExpectedTotal());
     }
 
     #[Test]
@@ -147,7 +148,7 @@ final class InvoiceTest extends TestCase
         $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
         $this->assertNull($invoice->getSeries());
         $this->assertNull($invoice->getSequence());
-        $this->assertNull($invoice->getForcedTotal());
+        $this->assertNull($invoice->getExpectedTotal());
     }
 
     #[Test]
@@ -167,7 +168,7 @@ final class InvoiceTest extends TestCase
         $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
         $this->assertNull($array['series']);
         $this->assertNull($array['sequence']);
-        $this->assertNull($array['forced_total']);
+        $this->assertNull($array['expected_total']);
     }
 
     #[Test]
@@ -179,7 +180,7 @@ final class InvoiceTest extends TestCase
             'email' => 'buyer@test.com',
         ]);
 
-        $item = $this->createInvoiceItem('Test Item', 2, 10.50, 21);
+        $item = $this->createInvoiceItem(['title' => 'Test Item', 'quantity' => 2, 'unit_price' => 10.50, 'tax_percentage' => 21]);
 
         $invoice = Invoice::make();
         $invoice->buyer($buyer);
@@ -267,8 +268,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem('Item 1');
-        $item2 = $this->createInvoiceItem('Item 2', 2, 20.00);
+        $item1 = $this->createInvoiceItem(['title' => 'Item 1']);
+        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 2, 'unit_price' => 20.00]);
 
         // act
         $result = $invoice->items([$item1, $item2]);
@@ -325,7 +326,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 2, 121.00, 21); // 100 + 21% tax
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2, 'unit_price' => 121.00, 'tax_percentage' => 21]); // 100 + 21% tax
         $invoice->addItem($item);
 
         // act
@@ -338,34 +339,18 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('total_data_provider')]
-    public function total(?float $forcedTotal, float $expected): void
+    public function total(): void
     {
         // arrange
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 2);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2]);
         $invoice->addItem($item);
-
-        if ($forcedTotal !== null) {
-            $invoice->forcedTotal($forcedTotal);
-        }
 
         // act
         $total = $invoice->getTotal();
 
         // assert
-        $this->assertEquals($expected, $total);
-    }
-
-    /**
-     * @return array<string, array{0: float|null, 1: float}>
-     */
-    public static function total_data_provider(): array
-    {
-        return [
-            'no forced total' => [null, 20.00],
-            'with forced total' => [25.50, 25.50],
-        ];
+        $this->assertEquals(20.00, $total);
     }
 
     #[Test]
@@ -373,8 +358,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem('Item 1', 1, 121.00, 21); // 100 + 21% tax
-        $item2 = $this->createInvoiceItem('Item 2', 1, 110.00, 10); // 100 + 10% tax
+        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]); // 100 + 21% tax
+        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 110.00, 'tax_percentage' => 10]); // 100 + 10% tax
 
         $invoice->items([$item1, $item2]);
 
@@ -393,10 +378,10 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem('Item 1', 1, 10.00, 21);
-        $item2 = $this->createInvoiceItem('Item 2', 1, 10.00, 9);
-        $item3 = $this->createInvoiceItem('Item 3', 1, 10.00, 21);
-        $item4 = $this->createInvoiceItem('Item 4', 1, 10.00, null);
+        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 21]);
+        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 9]);
+        $item3 = $this->createInvoiceItem(['title' => 'Item 3', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 21]);
+        $item4 = $this->createInvoiceItem(['title' => 'Item 4', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => null]);
 
         $invoice->items([$item1, $item2, $item3, $item4]);
 
@@ -415,8 +400,8 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem('Item 1', 1, 121.00, 21);
-        $item2 = $this->createInvoiceItem('Item 2', 1, 110.00, 10);
+        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
+        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 110.00, 'tax_percentage' => 10]);
 
         $invoice->items([$item1, $item2]);
 
@@ -443,7 +428,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 1, 121.00, 21);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
         $invoice->addItem($item);
 
         // act
@@ -455,18 +440,58 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function forced_total(): void
+    public function expected_total(): void
     {
         // arrange
         $invoice = Invoice::make();
 
         // act
-        $result = $invoice->forcedTotal(100.50);
+        $result = $invoice->expectedTotal(100.50);
 
         // assert
         $this->assertSame($invoice, $result);
-        $this->assertEquals(100.50, $invoice->getForcedTotal());
-        $this->assertEquals(100.50, $invoice->getTotal());
+        $this->assertEquals(100.50, $invoice->getExpectedTotal());
+        // expected total should not override getTotal()
+        $this->assertEquals(0.00, $invoice->getTotal());
+    }
+
+    #[Test]
+    public function expected_total_can_be_set_via_make(): void
+    {
+        // arrange & act
+        $invoice = Invoice::make(['expected_total' => 150.75]);
+
+        // assert
+        $this->assertEquals(150.75, $invoice->getExpectedTotal());
+        $this->assertFalse($invoice->shouldThrowOnExpectedTotalMismatch());
+    }
+
+    #[Test]
+    public function expected_total_logs_error_when_differing_from_calculated_total(): void
+    {
+        // arrange
+        Log::shouldReceive('error')
+            ->once()
+            ->with(
+                'Expected total differs from calculated total',
+                Mockery::on(function ($context) {
+                    return isset($context['expected_total'])
+                        && isset($context['actual_total'])
+                        && isset($context['difference'])
+                        && abs($context['expected_total'] - 100.50) < 0.01
+                        && abs($context['actual_total'] - 20.00) < 0.01;
+                })
+            );
+
+        $invoice = Invoice::make();
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
+        $invoice->buyer($buyer);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2]);
+        $invoice->addItem($item);
+        $invoice->expectedTotal(100.50); // differs from calculated total of 20.00
+
+        // act
+        $invoice->render();
     }
 
     #[Test]
@@ -524,7 +549,7 @@ final class InvoiceTest extends TestCase
         Config::set('invoices.thousands_separator', '.');
 
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 1, 10.50);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 10.50]);
         $invoice->addItem($item);
 
         // act
@@ -539,7 +564,7 @@ final class InvoiceTest extends TestCase
     {
         // arrange
         $invoice = Invoice::make();
-        $item = $this->createInvoiceItem('Item', 1, 121.00, 21);
+        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
         $invoice->addItem($item);
 
         // act
@@ -859,7 +884,7 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::make();
         $buyer = Buyer::make(['name' => 'Test Buyer']);
         $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem('Item');
+        $item = $this->createInvoiceItem(['title' => 'Item']);
         $invoice->addItem($item);
         $invoice->date('2024-01-15');
         $invoice->payUntilDays(30);

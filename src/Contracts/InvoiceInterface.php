@@ -80,9 +80,20 @@ interface InvoiceInterface
     public function template(string $template): self;
 
     /**
-     * Force a specific total amount that will override the calculated total.
+     * Set an expected total amount for validation purposes.
+     *
+     * When the invoice is rendered, if the expected total differs from the calculated total, an error will be logged.
+     * Set $throw to true to throw an exception instead of just logging.
+     *
+     * @param  float  $amount  The expected total amount
+     * @param  bool  $throw  Whether to throw an exception on mismatch (default: false)
      */
-    public function forcedTotal(float $amount): self;
+    public function expectedTotal(float $amount, bool $throw = false): self;
+
+    /**
+     * Check if exceptions should be thrown on expected total mismatch.
+     */
+    public function shouldThrowOnExpectedTotalMismatch(): bool;
 
     /**
      * Validate the invoice before rendering.
@@ -137,6 +148,16 @@ interface InvoiceInterface
      * Calculate the grand total.
      */
     public function getTotal(): float;
+
+    /**
+     * Get the default filename for the invoice.
+     */
+    public function getFilename(): string;
+
+    /**
+     * Get the expected total amount.
+     */
+    public function getExpectedTotal(): ?float;
 
     /**
      * Get the formatted total amount with currency symbol.

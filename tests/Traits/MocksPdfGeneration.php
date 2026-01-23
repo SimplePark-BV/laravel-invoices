@@ -101,7 +101,6 @@ trait MocksPdfGeneration
         // use reflection to set the headers property
         $reflection = new ReflectionClass($mockResponse);
         $property = $reflection->getProperty('headers');
-        $property->setAccessible(true);
         $property->setValue($mockResponse, $mockHeaders);
 
         /** @var \Barryvdh\DomPDF\PDF&\Mockery\MockInterface $mockPdf */

@@ -40,6 +40,11 @@ interface InvoiceItemInterface
     public function taxPercentage(?float $taxPercentage): self;
 
     /**
+     * Set the tax rate of the item (decimal, e.g. 0.21 for 21%).
+     */
+    public function taxRate(float $taxRate): self;
+
+    /**
      * Get the title of the item.
      */
     public function getTitle(): string;
