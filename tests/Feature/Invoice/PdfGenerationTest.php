@@ -162,7 +162,7 @@ final class PdfGenerationTest extends TestCase
         // arrange
         $invoice = $this->createValidInvoice();
         $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->date('2024-01-15'); // Fixed date for consistent testing
+        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -185,7 +185,7 @@ final class PdfGenerationTest extends TestCase
     public static function download_filename_data_provider(): array
     {
         return [
-            'default filename' => [null, 'invoice-20240115.pdf'],
+            'default filename' => [null, 'invoice-INV.00000123.pdf'],
             'custom filename' => ['custom-invoice.pdf', 'custom-invoice.pdf'],
         ];
     }
@@ -196,7 +196,7 @@ final class PdfGenerationTest extends TestCase
         // arrange
         $invoice = $this->createValidInvoice();
         $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->date('2024-01-15'); // Fixed date for consistent testing
+        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -204,7 +204,7 @@ final class PdfGenerationTest extends TestCase
         Pdf::shouldReceive('loadView')
             ->once()
             ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'invoice-20240115.pdf');
+        $this->mockPdfDownload($mockPdf, 'invoice-INV.00000123.pdf');
 
         // assert
         // pdf not rendered yet
@@ -245,7 +245,7 @@ final class PdfGenerationTest extends TestCase
         // arrange
         $invoice = $this->createValidInvoice();
         $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->date('2024-01-15'); // fixed date for consistent testing
+        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -269,7 +269,7 @@ final class PdfGenerationTest extends TestCase
     public static function stream_filename_data_provider(): array
     {
         return [
-            'default filename' => [null, 'invoice-20240115.pdf'],
+            'default filename' => [null, 'invoice-INV.00000123.pdf'],
             'custom filename' => ['custom-invoice.pdf', 'custom-invoice.pdf'],
         ];
     }
@@ -280,7 +280,7 @@ final class PdfGenerationTest extends TestCase
         // arrange
         $invoice = $this->createValidInvoice();
         $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->date('2024-01-15'); // Fixed date for consistent testing
+        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -289,7 +289,7 @@ final class PdfGenerationTest extends TestCase
             ->once()
             ->andReturn($mockPdf);
 
-        $this->mockPdfStream($mockPdf, 'invoice-20240115.pdf');
+        $this->mockPdfStream($mockPdf, 'invoice-INV.00000123.pdf');
 
         // act
         $response = $invoice->stream();
@@ -308,7 +308,7 @@ final class PdfGenerationTest extends TestCase
         // arrange
         $invoice = $this->createValidInvoice();
         $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->date('2024-01-15'); // Fixed date for consistent testing
+        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
         $mockPdf = $this->mockPdfInstance();
 
         $this->mockPdfFacadeChain();
@@ -317,7 +317,7 @@ final class PdfGenerationTest extends TestCase
             ->once()
             ->andReturn($mockPdf);
 
-        $this->mockPdfStream($mockPdf, 'invoice-20240115.pdf');
+        $this->mockPdfStream($mockPdf, 'invoice-INV.00000123.pdf');
 
         // assert
         // pdf not rendered yet

@@ -108,16 +108,16 @@ final class Invoice implements InvoiceInterface
     /**
      * Get the default filename for the invoice.
      *
-     * format: {translatable-base}-{date|concept}.pdf
-     * example: invoice-20260119.pdf or factuur-20260119.pdf
+     * format: {translatable-base}-{serial}.pdf
+     * example: invoice-INV.00000123.pdf or factuur-INV.00000123.pdf
      */
     public function getFilename(): string
     {
         // use the invoice's language for translation
         $base = __('invoices::invoice.filename', [], $this->getLanguage());
-        $dateString = $this->getDate()?->format('Ymd') ?? __('invoices::invoice.concept', [], $this->getLanguage());
+        $serial = $this->getSerial() ?? __('invoices::invoice.concept', [], $this->getLanguage());
 
-        return "{$base}-{$dateString}.pdf";
+        return "{$base}-{$serial}.pdf";
     }
 
     /**
