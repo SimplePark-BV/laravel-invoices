@@ -17,20 +17,21 @@ trait HasInvoiceItems
      */
     protected Collection $items;
 
-    protected ?float $forcedTotal = null;
+    protected ?float $expectedTotal = null;
+
+    protected bool $throwOnExpectedTotalMismatch = false;
 
     public function initializeHasInvoiceItems(): void
     {
         $this->items = collect();
-        $this->forcedTotal = null;
     }
 
     /**
-     * Get the forced total amount.
+     * Get the expected total amount.
      */
-    public function getForcedTotal(): ?float
+    public function getExpectedTotal(): ?float
     {
-        return $this->forcedTotal;
+        return $this->expectedTotal;
     }
 
     /**
@@ -54,14 +55,27 @@ trait HasInvoiceItems
     }
 
     /**
-     * Force a specific total amount that will override the calculated total.
-     * Useful when you need to ensure the total matches a specific amount (e.g., from external systems).
+     * Set an expected total amount for validation purposes.
+     * When the invoice is rendered, if the expected total differs from the calculated total, an error will be logged.
+     * Set $throw to true to throw an exception instead of just logging.
+     *
+     * @param  float  $amount  The expected total amount
+     * @param  bool  $throw  Whether to throw an exception on mismatch (default: false)
      */
-    public function forcedTotal(float $amount): self
+    public function expectedTotal(float $amount, bool $throw = false): self
     {
-        $this->forcedTotal = $amount;
+        $this->expectedTotal = $amount;
+        $this->throwOnExpectedTotalMismatch = $throw;
 
         return $this;
+    }
+
+    /**
+     * Check if exceptions should be thrown on expected total mismatch.
+     */
+    public function shouldThrowOnExpectedTotalMismatch(): bool
+    {
+        return $this->throwOnExpectedTotalMismatch;
     }
 
     /**
@@ -127,19 +141,11 @@ trait HasInvoiceItems
     /**
      * Calculate the grand total.
      *
-     * Returns the forced total if set via forcedTotal(), otherwise returns the sum of all items (getItemsTotal).
-     * This ensures accuracy to the cent and allows overriding when needed.
-     *
-     * WARNING: Do not use this method for calculations (e.g., subtotal + tax = total).
-     * When forcedTotal() is set, the returned amount may differ from the calculated sum of items.
-     * Use getItemsTotal() for calculations that need to match the actual sum of all items.
+     * Returns the sum of all items (getItemsTotal).
+     * This ensures accuracy to the cent.
      */
     public function getTotal(): float
     {
-        if ($this->forcedTotal !== null) {
-            return $this->forcedTotal;
-        }
-
         // always calculate from items directly to ensure precision to the cent
         return $this->getItemsTotal();
     }

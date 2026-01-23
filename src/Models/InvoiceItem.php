@@ -106,6 +106,20 @@ final class InvoiceItem implements InvoiceItemInterface
     }
 
     /**
+     * Set the tax rate of the item (as a decimal, e.g., 0.21 for 21%).
+     * This will be converted to tax_percentage by multiplying by 100.
+     *
+     * @param  float  $taxRate  The tax rate as a decimal (0.21 = 21%)
+     * @return $this
+     */
+    public function taxRate(float $taxRate): self
+    {
+        $this->taxPercentage = $taxRate * 100;
+
+        return $this;
+    }
+
+    /**
      * Set the title of the item.
      *
      * @return $this

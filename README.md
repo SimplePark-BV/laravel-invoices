@@ -71,7 +71,7 @@ return $invoice->download(); // or ->stream() for browser preview
 
 **Discounts**: Use negative `unit_price` values for discount items (quantities must be positive).
 
-**Forced Totals**: Override calculated totals with `forcedTotal(100.00)` when needed.
+**Expected Totals**: Set an expected total with `expectedTotal(100.00)` for validation. When the invoice is rendered, if the expected total differs from the calculated total, an error will be logged.
 
 ### Usage Receipts
 

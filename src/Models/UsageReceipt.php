@@ -87,7 +87,7 @@ final class UsageReceipt implements UsageReceiptInterface
             $usageReceipt->items($items);
         }
 
-        // fill remaining properties (date, document_id, user_id, title, language, note, forced_total)
+        // fill remaining properties (date, document_id, user_id, title, language, note, expected_total)
         $usageReceipt->fill($data);
 
         return $usageReceipt;
@@ -161,7 +161,7 @@ final class UsageReceipt implements UsageReceiptInterface
             'title' => $this->title,
             'language' => $this->getLanguage(),
             'note' => $this->note,
-            'forced_total' => $this->getForcedTotal(),
+            'expected_total' => $this->getExpectedTotal(),
         ];
     }
 

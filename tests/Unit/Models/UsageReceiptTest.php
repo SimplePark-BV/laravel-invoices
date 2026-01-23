@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -60,7 +61,7 @@ final class UsageReceiptTest extends TestCase
             'user_id' => 'USER-67890',
             'language' => 'en',
             'note' => 'Test note',
-            'forced_total' => 25.50,
+            'expected_total' => 25.50,
         ];
 
         // act
@@ -76,7 +77,7 @@ final class UsageReceiptTest extends TestCase
         $this->assertEquals('USER-67890', $receipt->getUserId());
         $this->assertEquals('en', $receipt->getLanguage());
         $this->assertEquals('Test note', $receipt->getNote());
-        $this->assertEquals(25.50, $receipt->getForcedTotal());
+        $this->assertEquals(25.50, $receipt->getExpectedTotal());
     }
 
     #[Test]
@@ -185,7 +186,7 @@ final class UsageReceiptTest extends TestCase
         $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
         $this->assertNull($array['document_id']);
         $this->assertNull($array['user_id']);
-        $this->assertNull($array['forced_total']);
+        $this->assertNull($array['expected_total']);
         $this->assertNull($array['note']);
     }
 
@@ -395,8 +396,7 @@ final class UsageReceiptTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('total_data_provider')]
-    public function total(?float $forcedTotal, float $expected): void
+    public function total(): void
     {
         // arrange
         $receipt = UsageReceipt::make();
@@ -410,41 +410,64 @@ final class UsageReceiptTest extends TestCase
         ]);
         $receipt->addItem($item);
 
-        if ($forcedTotal !== null) {
-            $receipt->forcedTotal($forcedTotal);
-        }
-
         // act
         $total = $receipt->getTotal();
 
         // assert
-        $this->assertEquals($expected, $total);
-    }
-
-    /**
-     * @return array<string, array{0: float|null, 1: float}>
-     */
-    public static function total_data_provider(): array
-    {
-        return [
-            'no forced total' => [null, 5.50],
-            'with forced total' => [25.50, 25.50],
-        ];
+        $this->assertEquals(5.50, $total);
     }
 
     #[Test]
-    public function forced_total(): void
+    public function expected_total(): void
     {
         // arrange
         $receipt = UsageReceipt::make();
 
         // act
-        $result = $receipt->forcedTotal(100.50);
+        $result = $receipt->expectedTotal(100.50);
 
         // assert
         $this->assertSame($receipt, $result);
-        $this->assertEquals(100.50, $receipt->getForcedTotal());
-        $this->assertEquals(100.50, $receipt->getTotal());
+        $this->assertEquals(100.50, $receipt->getExpectedTotal());
+        // expected total should not override getTotal()
+        $this->assertEquals(0.00, $receipt->getTotal());
+    }
+
+    #[Test]
+    public function expected_total_logs_error_when_differing_from_calculated_total(): void
+    {
+        // arrange
+        Log::shouldReceive('error')
+            ->once()
+            ->with(
+                'Expected total differs from calculated total',
+                Mockery::on(function ($context) {
+                    return isset($context['expected_total'])
+                        && isset($context['actual_total'])
+                        && isset($context['difference'])
+                        && isset($context['document_id'])
+                        && abs($context['expected_total'] - 100.50) < 0.01
+                        && abs($context['actual_total'] - 5.50) < 0.01;
+                })
+            );
+
+        $receipt = UsageReceipt::make();
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
+        $receipt->buyer($buyer);
+        $item = UsageReceiptItem::make([
+            'user' => 'John Doe',
+            'identifier' => 'ABC-123',
+            'start_date' => '2024-01-15 10:00:00',
+            'end_date' => '2024-01-15 12:00:00',
+            'category' => 'Standard Parking',
+            'price' => 5.50,
+        ]);
+        $receipt->addItem($item);
+        $receipt->documentId('DOC-12345');
+        $receipt->expectedTotal(100.50); // differs from calculated total of 5.50
+
+        // act
+        $receipt->render();
     }
 
     #[Test]
