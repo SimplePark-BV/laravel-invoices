@@ -42,10 +42,6 @@ trait HasInvoiceFooter
      */
     public function getCustomFooterMessage(): ?string
     {
-        if ($this->footerMessage === null) {
-            return null;
-        }
-
         return e($this->footerMessage);
     }
 
@@ -54,10 +50,6 @@ trait HasInvoiceFooter
      */
     public function getCustomConceptFooterMessage(): ?string
     {
-        if ($this->conceptFooterMessage === null) {
-            return null;
-        }
-
         return e($this->conceptFooterMessage);
     }
 
