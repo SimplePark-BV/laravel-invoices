@@ -42,7 +42,11 @@ trait HasInvoiceFooter
      */
     public function getCustomFooterMessage(): ?string
     {
-        return $this->footerMessage;
+        if ($this->footerMessage === null) {
+            return null;
+        }
+
+        return e($this->footerMessage);
     }
 
     /**
@@ -50,7 +54,11 @@ trait HasInvoiceFooter
      */
     public function getCustomConceptFooterMessage(): ?string
     {
-        return $this->conceptFooterMessage;
+        if ($this->conceptFooterMessage === null) {
+            return null;
+        }
+
+        return e($this->conceptFooterMessage);
     }
 
     /**
@@ -63,14 +71,14 @@ trait HasInvoiceFooter
         // if invoice is not issued, show concept message
         if (! $this->isIssued()) {
             if ($this->conceptFooterMessage !== null) {
-                return $this->conceptFooterMessage;
+                return e($this->conceptFooterMessage);
             }
 
             return __('invoices::invoice.concept_message');
         }
 
         /** @var string $message */
-        $message = $this->footerMessage ?? __('invoices::invoice.payment_request');
+        $message = e($this->footerMessage ?? __('invoices::invoice.payment_request'));
 
         $amountHtml = '<span class="invoice__footer-amount">'.e($this->getFormattedTotal()).'</span>';
         $dateHtml = '<span class="invoice__footer-date">'.e($this->getFormattedDueDate()).'</span>';
