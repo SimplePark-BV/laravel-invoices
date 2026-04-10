@@ -80,6 +80,18 @@ interface InvoiceInterface
     public function template(string $template): self;
 
     /**
+     * Set a custom footer message for issued invoices.
+     *
+     * Supports :amount, :date and :number placeholders.
+     */
+    public function footerMessage(?string $message): self;
+
+    /**
+     * Set a custom footer message for concept invoices.
+     */
+    public function conceptFooterMessage(?string $message): self;
+
+    /**
      * Set an expected total amount for validation purposes.
      *
      * When the invoice is rendered, if the expected total differs from the calculated total, an error will be logged.
@@ -178,6 +190,16 @@ interface InvoiceInterface
      * Get the due date formatted according to the invoice date format.
      */
     public function getFormattedDueDate(): ?string;
+
+    /**
+     * Get the custom footer message for issued invoices.
+     */
+    public function getCustomFooterMessage(): ?string;
+
+    /**
+     * Get the custom footer message for concept invoices.
+     */
+    public function getCustomConceptFooterMessage(): ?string;
 
     /**
      * Get all unique tax percentages from items.

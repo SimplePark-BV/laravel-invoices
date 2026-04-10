@@ -7,6 +7,52 @@ namespace SimpleParkBv\Invoices\Models\Traits;
  */
 trait HasInvoiceFooter
 {
+    protected ?string $footerMessage = null;
+
+    protected ?string $conceptFooterMessage = null;
+
+    /**
+     * Set a custom footer message for issued invoices.
+     *
+     * Supports :amount, :date and :number placeholders.
+     *
+     * @return $this
+     */
+    public function footerMessage(?string $message): self
+    {
+        $this->footerMessage = $message;
+
+        return $this;
+    }
+
+    /**
+     * Set a custom footer message for concept invoices.
+     *
+     * @return $this
+     */
+    public function conceptFooterMessage(?string $message): self
+    {
+        $this->conceptFooterMessage = $message;
+
+        return $this;
+    }
+
+    /**
+     * Get the custom footer message for issued invoices.
+     */
+    public function getCustomFooterMessage(): ?string
+    {
+        return e($this->footerMessage);
+    }
+
+    /**
+     * Get the custom footer message for concept invoices.
+     */
+    public function getCustomConceptFooterMessage(): ?string
+    {
+        return e($this->conceptFooterMessage);
+    }
+
     /**
      * Get the payment request message with formatted amount and date.
      *
@@ -16,16 +62,26 @@ trait HasInvoiceFooter
     {
         // if invoice is not issued, show concept message
         if (! $this->isIssued()) {
+            if ($this->conceptFooterMessage !== null) {
+                return e($this->conceptFooterMessage);
+            }
+
             return __('invoices::invoice.concept_message');
         }
 
         /** @var string $message */
-        $message = __('invoices::invoice.payment_request');
+        $message = e($this->footerMessage ?? __('invoices::invoice.payment_request'));
+
         $amountHtml = '<span class="invoice__footer-amount">'.e($this->getFormattedTotal()).'</span>';
         $dateHtml = '<span class="invoice__footer-date">'.e($this->getFormattedDueDate()).'</span>';
+        $numberHtml = '<span class="invoice__footer-number">'.e($this->getNumber() ?? '').'</span>';
 
         /** @var string $result */
-        $result = str_replace([':amount', ':date'], [$amountHtml, $dateHtml], $message);
+        $result = str_replace(
+            [':amount', ':date', ':number'],
+            [$amountHtml, $dateHtml, $numberHtml],
+            $message
+        );
 
         return $result;
     }
