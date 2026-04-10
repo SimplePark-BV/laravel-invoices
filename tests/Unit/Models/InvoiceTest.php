@@ -57,6 +57,8 @@ final class InvoiceTest extends TestCase
             'series' => 'INV',
             'sequence' => 1,
             'language' => 'en',
+            'footer_message' => 'Please pay :amount by :date.',
+            'concept_footer_message' => 'This is a custom concept message.',
             'expected_total' => 25.41,
         ];
 
@@ -72,6 +74,8 @@ final class InvoiceTest extends TestCase
         $this->assertEquals('INV', $invoice->getSeries());
         $this->assertEquals(1, $invoice->getSequence());
         $this->assertEquals('en', $invoice->getLanguage());
+        $this->assertEquals('Please pay :amount by :date.', $invoice->getCustomFooterMessage());
+        $this->assertEquals('This is a custom concept message.', $invoice->getCustomConceptFooterMessage());
         $this->assertEquals(25.41, $invoice->getExpectedTotal());
     }
 
@@ -201,6 +205,8 @@ final class InvoiceTest extends TestCase
         $this->assertArrayHasKey('series', $array);
         $this->assertArrayHasKey('sequence', $array);
         $this->assertArrayHasKey('language', $array);
+        $this->assertArrayHasKey('footer_message', $array);
+        $this->assertArrayHasKey('concept_footer_message', $array);
         $this->assertEquals('Test Buyer', $array['buyer']['name']);
         $this->assertCount(1, $array['items']);
     }
@@ -896,6 +902,45 @@ final class InvoiceTest extends TestCase
         $this->assertIsString($message); // @phpstan-ignore-line method.alreadyNarrowedType
         $this->assertStringContainsString('10,00', $message);
         $this->assertStringContainsString('14-02-2024', $message);
+    }
+
+    #[Test]
+    public function custom_footer_message_for_issued_invoice_supports_placeholders(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
+        $invoice->buyer($buyer);
+        $item = $this->createInvoiceItem(['title' => 'Item']);
+        $invoice->addItem($item);
+        $invoice->date('2024-01-15');
+        $invoice->payUntilDays(30);
+        $invoice->series('INV');
+        $invoice->sequence(42);
+        $invoice->footerMessage('Please pay :amount before :date for invoice :number.');
+
+        // act
+        $message = $invoice->getFooterMessage();
+
+        // assert
+        $this->assertStringContainsString('Please pay', $message);
+        $this->assertStringContainsString('10,00', $message);
+        $this->assertStringContainsString('14-02-2024', $message);
+        $this->assertStringContainsString('INV.00000042', $message);
+    }
+
+    #[Test]
+    public function custom_concept_footer_message_is_used_for_unissued_invoice(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+        $invoice->conceptFooterMessage('Custom draft message.');
+
+        // act
+        $message = $invoice->getFooterMessage();
+
+        // assert
+        $this->assertEquals('Custom draft message.', $message);
     }
 
     #[Test]

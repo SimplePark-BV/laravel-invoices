@@ -101,6 +101,8 @@ final class Invoice implements InvoiceInterface
             'series' => $this->getSeries(),
             'sequence' => $this->getSequence(),
             'language' => $this->getLanguage(),
+            'footer_message' => $this->getCustomFooterMessage(),
+            'concept_footer_message' => $this->getCustomConceptFooterMessage(),
             'expected_total' => $this->getExpectedTotal(),
         ];
     }
