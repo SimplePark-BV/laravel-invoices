@@ -71,7 +71,7 @@ trait HasInvoiceFooter
 
         /** @var string $message */
         $message = $this->footerMessage ?? __('invoices::invoice.payment_request');
-        
+
         $amountHtml = '<span class="invoice__footer-amount">'.e($this->getFormattedTotal()).'</span>';
         $dateHtml = '<span class="invoice__footer-date">'.e($this->getFormattedDueDate()).'</span>';
 
