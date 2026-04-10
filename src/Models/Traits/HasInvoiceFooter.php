@@ -14,7 +14,7 @@ trait HasInvoiceFooter
     /**
      * Set a custom footer message for issued invoices.
      *
-     * Supports :amount and :date placeholders.
+     * Supports :amount, :date and :number placeholders.
      *
      * @return $this
      */
@@ -74,9 +74,14 @@ trait HasInvoiceFooter
 
         $amountHtml = '<span class="invoice__footer-amount">'.e($this->getFormattedTotal()).'</span>';
         $dateHtml = '<span class="invoice__footer-date">'.e($this->getFormattedDueDate()).'</span>';
+        $numberHtml = '<span class="invoice__footer-number">'.e($this->getNumber() ?? '').'</span>';
 
         /** @var string $result */
-        $result = str_replace([':amount', ':date'], [$amountHtml, $dateHtml], $message);
+        $result = str_replace(
+            [':amount', ':date', ':number'],
+            [$amountHtml, $dateHtml, $numberHtml],
+            $message
+        );
 
         return $result;
     }

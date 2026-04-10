@@ -82,7 +82,7 @@ interface InvoiceInterface
     /**
      * Set a custom footer message for issued invoices.
      *
-     * Supports :amount and :date placeholders.
+     * Supports :amount, :date and :number placeholders.
      */
     public function footerMessage(?string $message): self;
 
