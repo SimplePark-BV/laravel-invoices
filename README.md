@@ -1,12 +1,10 @@
-<div align="left">
+<div>
   <a href="https://simplepark.nl" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://www.simplepark.nl/images/github/laravel-invoices-banner-dark.png">
-      <img alt="Laravel Invoices Banner" src="https://www.simplepark.nl/images/github/laravel-invoices-banner-light.png">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/SimplePark-BV/.github/refs/heads/main/assets/repository_banners/simplepark_laravel_invoices/dark.svg">
+      <img alt="SimplePark Laravel Invoices" src="https://raw.githubusercontent.com/SimplePark-BV/.github/refs/heads/main/assets/repository_banners/simplepark_laravel_invoices/light.svg">
     </picture>
   </a>
-
-  <h1>Laravel Invoices</h1>
 </div>
 
 A Laravel package for generating Invoice and Usage Receipt PDFs with customizable templates and multilingual support.
