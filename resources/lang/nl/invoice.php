@@ -17,5 +17,6 @@ return [
     'bank' => 'Bank:',
     'unknown' => 'Onbekend',
     'payment_request' => 'We verzoeken je vriendelijk het bovenstaande bedrag van :amount voor :date te voldoen op onze bankrekening. Voor vragen kan je contact opnemen per e-mail.',
+    'credit_transfer_request' => 'Wij zullen het bovenstaande bedrag van :amount voor :date overmaken op uw bankrekening. Voor vragen kan je contact opnemen per e-mail.',
     'concept_message' => 'Dit is een <strong>CONCEPT</strong>. Dit betekent dat deze factuur nog niet officieel is en er nog geen betaling vereist is. Je ontvangt de officiële factuur op een later moment.',
 ];
