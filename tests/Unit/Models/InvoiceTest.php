@@ -944,6 +944,47 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
+    public function footer_message_for_negative_total_shows_credit_transfer_message(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
+        $invoice->buyer($buyer);
+        $item = $this->createInvoiceItem(['title' => 'Credit', 'unit_price' => -10.00]);
+        $invoice->addItem($item);
+        $invoice->date('2024-01-15');
+        $invoice->payUntilDays(30);
+
+        // act
+        $message = $invoice->getFooterMessage();
+
+        // assert
+        $this->assertStringContainsString('transfer', $message);
+        $this->assertStringContainsString('10,00', $message);
+        $this->assertStringNotContainsString('-10,00', $message);
+    }
+
+    #[Test]
+    public function custom_footer_message_overrides_credit_transfer_for_negative_total(): void
+    {
+        // arrange
+        $invoice = Invoice::make();
+        $buyer = Buyer::make(['name' => 'Test Buyer']);
+        $invoice->buyer($buyer);
+        $item = $this->createInvoiceItem(['title' => 'Credit', 'unit_price' => -10.00]);
+        $invoice->addItem($item);
+        $invoice->date('2024-01-15');
+        $invoice->payUntilDays(30);
+        $invoice->footerMessage('Custom message with :amount.');
+
+        // act
+        $message = $invoice->getFooterMessage();
+
+        // assert
+        $this->assertStringContainsString('Custom message with', $message);
+    }
+
+    #[Test]
     #[DataProvider('set_logo_data_provider')]
     public function set_logo(?string $logoPath, ?string $initialLogo, ?string $expected): void
     {

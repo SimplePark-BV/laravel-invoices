@@ -2,6 +2,8 @@
 
 namespace SimpleParkBv\Invoices\Models\Traits;
 
+use SimpleParkBv\Invoices\Services\CurrencyFormatter;
+
 /**
  * Trait HasInvoiceFooter
  */
@@ -69,10 +71,19 @@ trait HasInvoiceFooter
             return __('invoices::invoice.concept_message');
         }
 
-        /** @var string $message */
-        $message = e($this->footerMessage ?? __('invoices::invoice.payment_request'));
+        $isNegativeTotal = $this->footerMessage === null && $this->getTotal() < 0;
 
-        $amountHtml = '<span class="invoice__footer-amount">'.e($this->getFormattedTotal()).'</span>';
+        /** @var string $message */
+        $message = e($this->footerMessage ?? ($isNegativeTotal
+            ? __('invoices::invoice.credit_transfer_request')
+            : __('invoices::invoice.payment_request')
+        ));
+
+        $formattedAmount = $isNegativeTotal
+            ? CurrencyFormatter::format(abs($this->getTotal()))
+            : $this->getFormattedTotal();
+
+        $amountHtml = '<span class="invoice__footer-amount">'.e($formattedAmount).'</span>';
         $dateHtml = '<span class="invoice__footer-date">'.e($this->getFormattedDueDate()).'</span>';
         $numberHtml = '<span class="invoice__footer-number">'.e($this->getNumber() ?? '').'</span>';
 
