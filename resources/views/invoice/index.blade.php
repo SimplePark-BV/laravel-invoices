@@ -31,6 +31,14 @@
             font-weight: 700;
             font-style: italic;
         }
+        @if($invoiceFontFile && is_readable($invoiceFontFile))
+        @font-face {
+            font-family: '{{ $invoiceFont }}';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontFile) }}') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @endif
         @if(is_readable($invoiceCssPath))
             {!! file_get_contents($invoiceCssPath) !!}
         @endif

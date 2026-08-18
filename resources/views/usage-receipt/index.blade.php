@@ -31,6 +31,14 @@
             font-weight: 700;
             font-style: italic;
         }
+        @if($usageReceiptFontFile && is_readable($usageReceiptFontFile))
+        @font-face {
+            font-family: '{{ $usageReceiptFont }}';
+            src: url('file://{{ str_replace('\\', '/', $usageReceiptFontFile) }}') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @endif
         @if(is_readable($usageReceiptCssPath))
             {!! file_get_contents($usageReceiptCssPath) !!}
         @endif
