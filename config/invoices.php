@@ -91,7 +91,7 @@ return [
     'pdf' => [
         'paper_size' => env('INVOICES_PDF_PAPER_SIZE', 'a4'),
         'orientation' => env('INVOICES_PDF_ORIENTATION', 'portrait'),
-        'font' => env('INVOICES_PDF_FONT', 'Montserrat'),
+        'font' => env('INVOICES_PDF_FONT', 'Poppins'),
         'font_file' => env('INVOICES_PDF_FONT_FILE', null),
     ],
 

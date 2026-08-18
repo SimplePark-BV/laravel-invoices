@@ -9,7 +9,7 @@
 
 /* usage receipt base styles */
 .usage-receipt {
-    font-family: var(--usage-receipt-font, Montserrat), sans-serif;
+    font-family: var(--usage-receipt-font, Poppins), sans-serif;
     font-size: 12px;
     line-height: 1.2;
     color: var(--surface-highest);
