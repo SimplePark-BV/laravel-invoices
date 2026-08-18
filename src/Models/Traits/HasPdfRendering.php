@@ -133,8 +133,16 @@ trait HasPdfRendering
 
             $viewVariableName = $this->getViewVariableName();
 
+            // allow dompdf to access a configured custom font file outside the package
+            $chroot = [$packageRoot];
+            $fontFile = config('invoices.pdf.font_file');
+
+            if (is_string($fontFile) && is_readable($fontFile)) {
+                $chroot[] = dirname($fontFile);
+            }
+
             $this->pdf = Pdf::setOptions([
-                'chroot' => $packageRoot,
+                'chroot' => $chroot,
                 'isRemoteEnabled' => false,
                 'isFontSubsettingEnabled' => false,
             ])

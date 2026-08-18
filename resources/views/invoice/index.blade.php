@@ -8,29 +8,37 @@
             --invoice-font: {{ $invoiceFont }};
         }
         @font-face {
-            font-family: 'Montserrat';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-Regular.ttf') format('truetype');
+            font-family: 'Poppins';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Poppins-Regular.ttf') format('truetype');
             font-weight: 400;
             font-style: normal;
         }
         @font-face {
-            font-family: 'Montserrat';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-Italic.ttf') format('truetype');
+            font-family: 'Poppins';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Poppins-Italic.ttf') format('truetype');
             font-weight: 400;
             font-style: italic;
         }
         @font-face {
-            font-family: 'Montserrat';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-SemiBold.ttf') format('truetype');
+            font-family: 'Poppins';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Poppins-Medium.ttf') format('truetype');
             font-weight: 700;
             font-style: normal;
         }
         @font-face {
-            font-family: 'Montserrat';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Montserrat-SemiBoldItalic.ttf') format('truetype');
+            font-family: 'Poppins';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Poppins-MediumItalic.ttf') format('truetype');
             font-weight: 700;
             font-style: italic;
         }
+        @if($invoiceFontFile && is_readable($invoiceFontFile))
+        @font-face {
+            font-family: '{{ $invoiceFont }}';
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontFile) }}') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @endif
         @if(is_readable($invoiceCssPath))
             {!! file_get_contents($invoiceCssPath) !!}
         @endif
