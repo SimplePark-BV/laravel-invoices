@@ -21,13 +21,13 @@
         }
         @font-face {
             font-family: 'Poppins';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Poppins-SemiBold.ttf') format('truetype');
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Poppins-Medium.ttf') format('truetype');
             font-weight: 700;
             font-style: normal;
         }
         @font-face {
             font-family: 'Poppins';
-            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Poppins-SemiBoldItalic.ttf') format('truetype');
+            src: url('file://{{ str_replace('\\', '/', $invoiceFontPath) }}/Poppins-MediumItalic.ttf') format('truetype');
             font-weight: 700;
             font-style: italic;
         }
