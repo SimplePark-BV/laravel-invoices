@@ -486,7 +486,7 @@ final class UsageReceiptTest extends TestCase
         $this->assertEquals(10.85, $receipt->getTotal());
         $this->assertEquals([21.0], $receipt->getLinesTaxGroups()->all());
         $this->assertEquals(1.88, $receipt->getLinesTaxAmountForTaxGroup(21.0));
-        $this->assertEquals(8.97, $receipt->getLinesSubTotal());
+        $this->assertEquals(1.88, $receipt->getLinesTaxAmount());
     }
 
     #[Test]
@@ -504,7 +504,7 @@ final class UsageReceiptTest extends TestCase
         $this->assertEquals([21.0, 9.0], $receipt->getLinesTaxGroups()->all());
         $this->assertEquals(2.10, $receipt->getLinesTaxAmountForTaxGroup(21.0));
         $this->assertEquals(0.09, $receipt->getLinesTaxAmountForTaxGroup(9.0));
-        $this->assertEquals(12.00, $receipt->getLinesSubTotal());
+        $this->assertEquals(2.19, $receipt->getLinesTaxAmount());
         $this->assertEquals(14.19, $receipt->getTotal());
     }
 

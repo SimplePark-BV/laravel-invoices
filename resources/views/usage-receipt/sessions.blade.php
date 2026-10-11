@@ -30,24 +30,15 @@
     @foreach($usageReceipt->getLines() as $line)
     <tr>
         <td class="usage-receipt__lines-label">{{ $line->getLabel() }}</td>
-        <td class="usage-receipt__lines-tax">{{ $line->getFormattedTaxPercentage() }}</td>
         <td class="usage-receipt__lines-value">{{ $line->getFormattedAmount() }}</td>
     </tr>
     @endforeach
-    {{-- tax breakdown (only shown when a line has a tax percentage) --}}
+    {{-- tax included in the lines (only shown when a line has a tax percentage) --}}
     @if($usageReceipt->getLinesTaxGroups()->isNotEmpty())
-    <tr class="usage-receipt__lines-row--subtotal">
-        <td class="usage-receipt__lines-label">{{ __('invoices::usage-receipt.subtotal') }}</td>
-        <td class="usage-receipt__lines-tax"></td>
-        <td class="usage-receipt__lines-value">{{ \SimpleParkBv\Invoices\Services\CurrencyFormatter::format($usageReceipt->getLinesSubTotal()) }}</td>
-    </tr>
-    @foreach($usageReceipt->getLinesTaxGroups() as $taxPercentage)
     <tr>
-        <td class="usage-receipt__lines-label">{{ __('invoices::usage-receipt.tax_percentage', ['percentage' => $taxPercentage + 0]) }}</td>
-        <td class="usage-receipt__lines-tax"></td>
-        <td class="usage-receipt__lines-value">{{ \SimpleParkBv\Invoices\Services\CurrencyFormatter::format($usageReceipt->getLinesTaxAmountForTaxGroup($taxPercentage)) }}</td>
+        <td class="usage-receipt__lines-label">{{ __('invoices::usage-receipt.tax') }}</td>
+        <td class="usage-receipt__lines-value">{{ \SimpleParkBv\Invoices\Services\CurrencyFormatter::format($usageReceipt->getLinesTaxAmount()) }}</td>
     </tr>
-    @endforeach
     @endif
 </table>
 @endif

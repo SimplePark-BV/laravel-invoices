@@ -14,8 +14,7 @@ return [
         'category' => 'Categorie',
         'price' => 'Prijs',
     ],
-    'subtotal' => 'Subtotaal excl. btw',
-    'tax_percentage' => ':percentage% btw',
+    'tax' => 'Btw',
     'total' => 'Totaal',
     'note' => 'Notitie',
     'footer' => [

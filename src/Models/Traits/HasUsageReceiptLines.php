@@ -90,16 +90,13 @@ trait HasUsageReceiptLines
     }
 
     /**
-     * Get the lines total excluding tax, for display.
+     * Get the tax included in the lines.
      *
-     * Calculated as: lines total - sum of all rounded tax groups, so the displayed subtotal and
-     * tax groups always add up to the displayed total.
+     * The sum of the tax groups, each rounded to cents, so it matches the tax on an invoice of the same lines.
      */
-    public function getLinesSubTotal(): float
+    public function getLinesTaxAmount(): float
     {
-        $sumOfRoundedTaxGroups = $this->getLinesTaxGroups()
-            ->sum(fn (float $taxPercentage): float => round($this->getLinesTaxAmountForTaxGroup($taxPercentage), 2));
-
-        return round($this->getLinesTotal() - $sumOfRoundedTaxGroups, 2);
+        return round($this->getLinesTaxGroups()
+            ->sum(fn (float $taxPercentage): float => round($this->getLinesTaxAmountForTaxGroup($taxPercentage), 2)), 2);
     }
 }
