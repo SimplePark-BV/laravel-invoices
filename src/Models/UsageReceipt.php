@@ -39,6 +39,8 @@ final class UsageReceipt extends Document
 
     private string $dateTimeFormat;
 
+    private bool $itemPrices = true;
+
     /**
      * @throws \SimpleParkBv\Invoices\Exceptions\UnsupportedLanguageException when the default language has no translations
      */
@@ -191,6 +193,24 @@ final class UsageReceipt extends Document
         return $this;
     }
 
+    /**
+     * Show or hide the price column of the sessions, e.g. hide it when the lines already break the total down.
+     * The sessions still need a price: without lines, the total is their sum.
+     *
+     * @return $this
+     */
+    public function itemPrices(bool $itemPrices = true): static
+    {
+        $this->itemPrices = $itemPrices;
+
+        return $this;
+    }
+
+    public function showsItemPrices(): bool
+    {
+        return $this->itemPrices;
+    }
+
     public function getDocumentId(): ?string
     {
         return $this->documentId;
@@ -266,6 +286,7 @@ final class UsageReceipt extends Document
             'title' => $this->title,
             'note' => $this->note,
             'date_time_format' => $this->dateTimeFormat,
+            'item_prices' => $this->itemPrices,
         ];
     }
 
@@ -328,6 +349,7 @@ final class UsageReceipt extends Document
             'title' => 'title',
             'note' => 'note',
             'date_time_format' => 'dateTimeFormat',
+            'item_prices' => 'itemPrices',
             // the name of the config key, invoices.datetime_format
             'datetime_format' => 'dateTimeFormat',
         ];

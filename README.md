@@ -126,6 +126,8 @@ $receipt->lines([
 
 The buyer of a receipt needs no name. Sessions may end at the moment they start, but not before.
 
+Hide the price column of the sessions with `itemPrices(false)`, e.g. when the lines already break the total down. The sessions still need a price, because a receipt without lines totals them.
+
 ## Building documents
 
 Every document, item, line and party can be built with fluent setters or from an array: `Invoice::make([...])`, `InvoiceItem::make([...])`, `Buyer::make([...])`. Array keys are the snake_case names of the setters (camelCase works too). Unknown keys throw, so a typo never silently leaves a field empty. `toArray()` returns the same keys, so `Invoice::make($invoice->toArray())` gives an identical invoice.
@@ -145,7 +147,7 @@ Dates accept any `DateTimeInterface` (Carbon included) or a string, and are stor
 
 Array values must have the type of their setter: strings for texts and ids, numbers or numeric strings for amounts, booleans for `paid`. `null` is accepted wherever `toArray()` can return it.
 
-The seller comes from the config. Set another one per document with `->seller([...])`.
+The seller comes from the config. Set another one per document with `->seller([...])`. A country given as a two-letter ISO code (`'NL'`) is shown by its name in the document language, "Nederland" or "Netherlands", when the intl extension is installed. The buyer's country is left out when it is the seller's, as on a domestic invoice.
 
 ## Output
 

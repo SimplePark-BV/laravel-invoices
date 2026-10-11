@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\UsageReceipt;
 
+use Illuminate\Support\Facades\Config;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
@@ -98,5 +100,55 @@ final class OptionalSectionsTest extends TestCase
         // assert
         $this->assertStringContainsString('Telefoon', $html);
         $this->assertStringContainsString('+31 20 1234567', $html);
+    }
+
+    #[Test]
+    public function the_price_column_of_the_sessions_can_be_hidden(): void
+    {
+        // arrange
+        $receipt = $this->createReceipt()->itemPrices(false);
+
+        // act
+        $html = $receipt->toHtml();
+
+        // assert — the total of the sessions is still shown
+        $this->assertStringNotContainsString('<th class="usage-receipt__sessions-header usage-receipt__sessions-header--right"', $html);
+        $this->assertStringContainsString('usage-receipt__totals-value--total', $html);
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('intl')]
+    public function the_buyer_country_is_left_out_when_it_is_the_seller_country(): void
+    {
+        // arrange
+        Config::set('invoices.seller.country', 'NL');
+        $receipt = $this->createReceipt(['buyer' => ['name' => 'Jan', 'city' => 'Utrecht', 'country' => 'nl']]);
+
+        // act
+        $html = $receipt->toHtml();
+
+        // assert — the seller's own address in the footer still names the country
+        $this->assertFalse($receipt->showsBuyerCountry());
+        $this->assertSame(1, substr_count($html, 'Nederland'));
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('intl')]
+    public function a_foreign_buyer_country_is_named_in_the_document_language(): void
+    {
+        // arrange
+        Config::set('invoices.seller.country', 'NL');
+        $receipt = $this->createReceipt([
+            'language' => 'en',
+            'buyer' => ['name' => 'Jan', 'city' => 'Antwerpen', 'country' => 'BE'],
+        ]);
+
+        // act
+        $html = $receipt->toHtml();
+
+        // assert
+        $this->assertTrue($receipt->showsBuyerCountry());
+        $this->assertStringContainsString('Belgium', $html);
+        $this->assertStringContainsString('Netherlands', $html);
     }
 }

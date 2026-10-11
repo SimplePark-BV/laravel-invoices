@@ -47,7 +47,8 @@
         "phpunit/phpunit": "^11.5|^12.0"
     },
     "suggest": {
-        "ext-gd": "Needed by dompdf to show PNG, JPG and GIF logos"
+        "ext-gd": "Needed by dompdf to show PNG, JPG and GIF logos",
+        "ext-intl": "Needed to show countries given as an ISO code by their name"
     },
     "autoload": {
         "psr-4": {

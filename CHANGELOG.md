@@ -1,5 +1,16 @@
 # Changelog
 
+## v4.1.0
+
+### Added
+
+- `UsageReceipt::itemPrices(false)` hides the price column of the sessions, e.g. when the lines already break the total down.
+- Countries given as a two-letter ISO code are shown by their name in the document language (with the intl extension).
+
+### Changed
+
+- The buyer's country is left out when it is the seller's country.
+
 ## v4.0.0
 
 A rewrite of the internals after a review of the package. See the [upgrade guide](UPGRADE.md) for every breaking change.

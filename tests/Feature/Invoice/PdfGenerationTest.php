@@ -33,7 +33,9 @@ final class PdfGenerationTest extends TestCase
 
         // assert: buyer
         $this->assertStringContainsString('Jan de Vries', $html);
-        $this->assertStringContainsString('Keizersgracht 123<br>1015 CJ Amsterdam<br>Nederland', $html);
+        // the buyer is in the seller's country, so the country is left out as on a domestic invoice
+        $this->assertStringContainsString('Keizersgracht 123<br>1015 CJ Amsterdam', $html);
+        $this->assertStringNotContainsString('1015 CJ Amsterdam<br>Nederland', $html);
         $this->assertStringContainsString('jan@example.test<br>+31 6 12345678', $html);
 
         // assert: title and dates
