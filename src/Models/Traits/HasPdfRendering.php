@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use RuntimeException;
 use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
+use SimpleParkBv\Invoices\Services\FontResolver;
 
 /**
  * Trait HasPdfRendering
@@ -135,9 +136,9 @@ trait HasPdfRendering
 
             // allow dompdf to access a configured custom font file outside the package
             $chroot = [$packageRoot];
-            $fontFile = config('invoices.pdf.font_file');
+            $fontFile = FontResolver::getFontFile();
 
-            if (is_string($fontFile) && is_readable($fontFile)) {
+            if ($fontFile !== null) {
                 $chroot[] = dirname($fontFile);
             }
 

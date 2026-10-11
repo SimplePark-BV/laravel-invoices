@@ -32,12 +32,15 @@
             font-style: italic;
         }
         @if($invoiceFontFile && is_readable($invoiceFontFile))
+        {{-- register the custom font for every weight/style, dompdf only matches exact faces --}}
+        @foreach([[400, 'normal'], [400, 'italic'], [700, 'normal'], [700, 'italic']] as [$fontWeight, $fontStyle])
         @font-face {
             font-family: '{{ $invoiceFont }}';
             src: url('file://{{ str_replace('\\', '/', $invoiceFontFile) }}') format('truetype');
-            font-weight: 400;
-            font-style: normal;
+            font-weight: {{ $fontWeight }};
+            font-style: {{ $fontStyle }};
         }
+        @endforeach
         @endif
         @if(is_readable($invoiceCssPath))
             {!! file_get_contents($invoiceCssPath) !!}

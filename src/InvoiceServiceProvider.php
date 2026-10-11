@@ -4,6 +4,7 @@ namespace SimpleParkBv\Invoices;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use SimpleParkBv\Invoices\Services\FontResolver;
 
 class InvoiceServiceProvider extends ServiceProvider
 {
@@ -31,13 +32,13 @@ class InvoiceServiceProvider extends ServiceProvider
             $view->with('invoiceCssPath', realpath(__DIR__.'/../resources/css/invoice.css'));
             $view->with('invoiceFont', config('invoices.pdf.font', 'Poppins'));
             $view->with('invoiceFontPath', realpath(__DIR__.'/../resources/fonts'));
-            $view->with('invoiceFontFile', config('invoices.pdf.font_file'));
+            $view->with('invoiceFontFile', FontResolver::getFontFile());
 
             // usage receipt css and fonts
             $view->with('usageReceiptCssPath', realpath(__DIR__.'/../resources/css/usage-receipt.css'));
             $view->with('usageReceiptFont', config('invoices.pdf.font', 'Poppins'));
             $view->with('usageReceiptFontPath', realpath(__DIR__.'/../resources/fonts'));
-            $view->with('usageReceiptFontFile', config('invoices.pdf.font_file'));
+            $view->with('usageReceiptFontFile', FontResolver::getFontFile());
         });
 
         // publish config
