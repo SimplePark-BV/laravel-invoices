@@ -6,6 +6,7 @@ namespace SimpleParkBv\Invoices\Services;
 
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
+use Locale;
 use SimpleParkBv\Invoices\Support\Dates;
 
 /**
@@ -84,6 +85,24 @@ final class Formatter
             ->setTimezone(Dates::displayTimezone())
             ->settings(['locale' => $this->language])
             ->translatedFormat($format);
+    }
+
+    /**
+     * Format a country: a two-letter ISO code becomes its name in the document language, e.g. "NL" becomes
+     * "Nederland" or "Netherlands". Any other text is kept as it is, and so is a code when the intl
+     * extension is missing or does not know it.
+     */
+    public function country(?string $country): ?string
+    {
+        if ($country === null || preg_match('/^[A-Za-z]{2}$/', $country) !== 1 || ! class_exists(Locale::class)) {
+            return $country;
+        }
+
+        $code = strtoupper($country);
+        $name = Locale::getDisplayRegion("und-{$code}", $this->language);
+
+        // intl answers with the code itself, or an unknown region, when it has no name for it
+        return $name === false || $name === '' || $name === $code || $name === 'Unknown Region' ? $code : $name;
     }
 
     private function decimalSeparator(): string

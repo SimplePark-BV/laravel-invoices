@@ -159,6 +159,23 @@ abstract class Document
     }
 
     /**
+     * Whether the buyer's address shows its country: not when the buyer is in the seller's country, as on a
+     * domestic invoice. Codes and names are compared as the document shows them, so "NL" and "Nederland" match.
+     */
+    public function showsBuyerCountry(): bool
+    {
+        $buyerCountry = $this->getFormatter()->country($this->buyer?->getCountry());
+
+        if ($buyerCountry === null) {
+            return false;
+        }
+
+        $sellerCountry = $this->getFormatter()->country($this->seller->getCountry());
+
+        return $sellerCountry === null || mb_strtolower($buyerCountry) !== mb_strtolower($sellerCountry);
+    }
+
+    /**
      * Set the language of the document, e.g. "nl" or "en".
      *
      * Any language with translations works, including one added by publishing the translations. A regional

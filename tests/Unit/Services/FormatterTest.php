@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Config;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use SimpleParkBv\Invoices\Services\Formatter;
 use Tests\TestCase;
@@ -135,5 +136,29 @@ final class FormatterTest extends TestCase
 
         // assert
         $this->assertSame("€\u{00A0}1.234,50", $formatted);
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('intl')]
+    #[DataProvider('countries')]
+    public function country_names_an_iso_code_in_the_language(string $language, ?string $country, ?string $expected): void
+    {
+        // act & assert
+        $this->assertSame($expected, (new Formatter($language))->country($country));
+    }
+
+    /**
+     * @return array<string, array{string, string|null, string|null}>
+     */
+    public static function countries(): array
+    {
+        return [
+            'dutch' => ['nl', 'NL', 'Nederland'],
+            'english' => ['en', 'NL', 'Netherlands'],
+            'lowercase code' => ['nl', 'be', 'België'],
+            'a name is kept' => ['en', 'Nederland', 'Nederland'],
+            'an unknown code is kept' => ['en', 'ZZ', 'ZZ'],
+            'none' => ['nl', null, null],
+        ];
     }
 }
