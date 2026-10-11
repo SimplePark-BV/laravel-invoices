@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Dompdf\Options;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
@@ -80,9 +81,11 @@ final class FontRenderingTest extends TestCase
     }
 
     #[Test]
+    #[RunInSeparateProcess]
     public function the_fonts_are_cached_in_the_configured_font_directory(): void
     {
-        // arrange
+        // arrange: in its own process, because dompdf caches font paths for the whole process, so later
+        // tests would otherwise get the fonts of this directory after it is deleted, and fall back to Helvetica
         $fontDirectory = sys_get_temp_dir().'/laravel-invoices-tests/fonts-'.uniqid();
         $this->tempFontDir = $fontDirectory;
         Config::set('dompdf.options.font_dir', $fontDirectory);
