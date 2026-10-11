@@ -58,7 +58,7 @@ jobs:
         run: composer require --dev --no-update --no-interaction "orchestra/testbench:${{ matrix.laravel == '12' && '^10.0' || '^11.0' }}"
 
       - name: Install Composer dependencies
-        uses: ramsey/composer-install@v3
+        uses: ramsey/composer-install@a8d0d959dab41457692a5e2041bd9b757a119e3f # 3.2.1
         with:
           dependency-versions: ${{ matrix.dependencies }}
           composer-options: --prefer-dist --no-progress

@@ -212,7 +212,7 @@ composer format  # fix the formatting
 Without PHP installed locally, run the same in Docker:
 
 ```bash
-docker run --rm -v "$PWD":/app -w /app laravelsail/php84-composer:latest composer check
+docker run --rm -v "$PWD":/app -w /app laravelsail/php84-composer:latest sh -c 'composer install --no-interaction && composer check'
 ```
 
 ## License
