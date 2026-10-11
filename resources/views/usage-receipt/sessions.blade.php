@@ -24,6 +24,18 @@
     </tbody>
 </table>
 
+{{-- cost breakdown (optional - only shown when the receipt has lines) --}}
+@if($usageReceipt->getLines()->isNotEmpty())
+<table class="usage-receipt__lines">
+    @foreach($usageReceipt->getLines() as $line)
+    <tr>
+        <td class="usage-receipt__lines-label">{{ $line->getLabel() }}</td>
+        <td class="usage-receipt__lines-value">{{ $line->getFormattedAmount() }}</td>
+    </tr>
+    @endforeach
+</table>
+@endif
+
 {{-- total section --}}
 <table class="usage-receipt__total">
     <tr>

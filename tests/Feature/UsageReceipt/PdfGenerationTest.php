@@ -404,4 +404,28 @@ final class PdfGenerationTest extends TestCase
         // assert
         $this->assertInstanceOf(Response::class, $response);
     }
+
+    #[Test]
+    public function template_shows_lines_and_their_total(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt(['language' => 'en']);
+        $receipt->lines([
+            ['label' => 'Parking fee', 'amount' => 5.15],
+            ['label' => 'Discount', 'amount' => -1.00],
+        ]);
+
+        /** @var view-string $view */
+        $view = 'invoices::usage-receipt.index';
+
+        // act
+        $html = view($view, ['usageReceipt' => $receipt])->render();
+
+        // assert
+        $this->assertStringContainsString('Parking fee', $html);
+        $this->assertStringContainsString('€ 5,15', $html);
+        $this->assertStringContainsString('Discount', $html);
+        $this->assertStringContainsString('€ -1,00', $html);
+        $this->assertStringContainsString('€ 4,15', $html);
+    }
 }

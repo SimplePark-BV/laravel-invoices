@@ -116,6 +116,18 @@ $receipt = UsageReceipt::make()
 return $receipt->download(); // filename is locale-aware
 ```
 
+**Cost breakdown**: Add lines under the sessions with `->lines([...])` or `->addLine(UsageReceiptLine::make([...]))`, e.g. a fee and a discount (negative amount). When a receipt has lines, its total is the sum of the lines instead of the item prices.
+
+```php
+use SimpleParkBv\Invoices\Models\UsageReceiptLine;
+
+$receipt->lines([
+    ['label' => 'Parking fee', 'amount' => 12.50],
+    ['label' => 'Service fee', 'amount' => 0.35],
+    UsageReceiptLine::make(['label' => 'Discount', 'amount' => -2.00]),
+]);
+```
+
 **Locale-Aware Filenames**: The package generates filenames based on the selected language (e.g., `gebruiksbevestiging-2026-01-19-14-30-00.pdf` for Dutch).
 
 ### Common Features

@@ -12,6 +12,7 @@ use SimpleParkBv\Invoices\Models\Buyer;
 use SimpleParkBv\Invoices\Models\Seller;
 use SimpleParkBv\Invoices\Models\UsageReceipt;
 use SimpleParkBv\Invoices\Models\UsageReceiptItem;
+use SimpleParkBv\Invoices\Models\UsageReceiptLine;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
 
@@ -415,6 +416,43 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertEquals(5.50, $total);
+    }
+
+    #[Test]
+    public function total_is_sum_of_lines_when_receipt_has_lines(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt();
+        $receipt->lines([
+            ['label' => 'Parking fee', 'amount' => 5.15],
+            ['label' => 'Service fee', 'amount' => 0.35],
+            UsageReceiptLine::make(['label' => 'Discount', 'amount' => -2.00]),
+        ]);
+
+        // act
+        $total = $receipt->getTotal();
+
+        // assert
+        $this->assertEquals(3.50, $total);
+        $this->assertEquals('€ 3,50', $receipt->getFormattedTotal());
+    }
+
+    #[Test]
+    public function from_array_creates_lines(): void
+    {
+        // act
+        $receipt = UsageReceipt::make([
+            'lines' => [
+                ['label' => 'Parking fee', 'amount' => 5.15],
+                ['label' => 'Discount', 'amount' => -1.00],
+            ],
+        ]);
+
+        // assert
+        $this->assertSame([
+            ['label' => 'Parking fee', 'amount' => 5.15],
+            ['label' => 'Discount', 'amount' => -1.00],
+        ], $receipt->toArray()['lines']);
     }
 
     #[Test]

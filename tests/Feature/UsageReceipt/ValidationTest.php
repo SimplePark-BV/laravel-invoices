@@ -319,4 +319,34 @@ final class ValidationTest extends TestCase
         $this->expectNotToPerformAssertions();
         $receipt->validate();
     }
+
+    /**
+     * @param  array<string, mixed>  $lineData
+     */
+    #[Test]
+    #[DataProvider('invalid_line_data_provider')]
+    public function invalid_lines_throw_exception(array $lineData, string $expectedMessage): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt();
+        $receipt->lines([$lineData]);
+
+        // assert
+        $this->expectException(InvalidUsageReceiptException::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        // act
+        $receipt->validate();
+    }
+
+    /**
+     * @return array<string, array{0: array<string, mixed>, 1: string}>
+     */
+    public static function invalid_line_data_provider(): array
+    {
+        return [
+            'missing label' => [['amount' => 1.00], 'Line at index 0 must have a label'],
+            'missing amount' => [['label' => 'Parking fee'], 'Line at index 0 must have an amount'],
+        ];
+    }
 }
