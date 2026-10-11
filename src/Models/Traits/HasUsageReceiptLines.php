@@ -4,6 +4,7 @@ namespace SimpleParkBv\Invoices\Models\Traits;
 
 use Illuminate\Support\Collection;
 use SimpleParkBv\Invoices\Models\UsageReceiptLine;
+use SimpleParkBv\Invoices\Services\TaxCalculator;
 
 /**
  * Trait HasUsageReceiptLines
@@ -68,5 +69,37 @@ trait HasUsageReceiptLines
         return round($this->getLines()->sum(
             static fn (UsageReceiptLine $line): float => $line->getAmount() ?? 0.0
         ), 2);
+    }
+
+    /**
+     * Get all unique tax percentages of the lines, excluding null values.
+     *
+     * @return \Illuminate\Support\Collection<int, float>
+     */
+    public function getLinesTaxGroups(): Collection
+    {
+        return TaxCalculator::extractTaxGroups($this->lines);
+    }
+
+    /**
+     * Calculate the tax amount of the lines with a specific tax percentage.
+     */
+    public function getLinesTaxAmountForTaxGroup(float $taxPercentage): float
+    {
+        return TaxCalculator::calculateTaxForGroup($this->lines, $taxPercentage);
+    }
+
+    /**
+     * Get the lines total excluding tax, for display.
+     *
+     * Calculated as: lines total - sum of all rounded tax groups, so the displayed subtotal and
+     * tax groups always add up to the displayed total.
+     */
+    public function getLinesSubTotal(): float
+    {
+        $sumOfRoundedTaxGroups = $this->getLinesTaxGroups()
+            ->sum(fn (float $taxPercentage): float => round($this->getLinesTaxAmountForTaxGroup($taxPercentage), 2));
+
+        return round($this->getLinesTotal() - $sumOfRoundedTaxGroups, 2);
     }
 }

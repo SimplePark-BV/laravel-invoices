@@ -5,7 +5,7 @@ namespace SimpleParkBv\Invoices\Contracts;
 /**
  * Interface for invoice item implementations.
  */
-interface InvoiceItemInterface
+interface InvoiceItemInterface extends TaxableInterface
 {
     /**
      * Create a new invoice item instance.

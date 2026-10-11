@@ -450,9 +450,62 @@ final class UsageReceiptTest extends TestCase
 
         // assert
         $this->assertSame([
-            ['label' => 'Parking fee', 'amount' => 5.15],
-            ['label' => 'Discount', 'amount' => -1.00],
+            ['label' => 'Parking fee', 'amount' => 5.15, 'tax_percentage' => null],
+            ['label' => 'Discount', 'amount' => -1.00, 'tax_percentage' => null],
         ], $receipt->toArray()['lines']);
+    }
+
+    #[Test]
+    public function from_array_creates_lines_with_tax_percentage(): void
+    {
+        // act
+        $receipt = UsageReceipt::make([
+            'lines' => [
+                ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
+            ],
+        ]);
+
+        // assert
+        $this->assertSame([
+            ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
+        ], $receipt->toArray()['lines']);
+    }
+
+    #[Test]
+    public function lines_tax_is_calculated_from_amounts_including_tax(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt();
+        $receipt->lines([
+            ['label' => 'Parking fee', 'amount' => 12.50, 'tax_percentage' => 21.0],
+            ['label' => 'Service fee', 'amount' => 0.35, 'tax_percentage' => 21.0],
+            ['label' => 'Discount', 'amount' => -2.00, 'tax_percentage' => 21.0],
+        ]);
+
+        // act & assert
+        $this->assertEquals(10.85, $receipt->getTotal());
+        $this->assertEquals([21.0], $receipt->getLinesTaxGroups()->all());
+        $this->assertEquals(1.88, $receipt->getLinesTaxAmountForTaxGroup(21.0));
+        $this->assertEquals(8.97, $receipt->getLinesSubTotal());
+    }
+
+    #[Test]
+    public function lines_tax_is_grouped_per_percentage(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt();
+        $receipt->lines([
+            ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
+            ['label' => 'Snack', 'amount' => 1.09, 'tax_percentage' => 9.0],
+            ['label' => 'Untaxed fee', 'amount' => 1.00],
+        ]);
+
+        // act & assert
+        $this->assertEquals([21.0, 9.0], $receipt->getLinesTaxGroups()->all());
+        $this->assertEquals(2.10, $receipt->getLinesTaxAmountForTaxGroup(21.0));
+        $this->assertEquals(0.09, $receipt->getLinesTaxAmountForTaxGroup(9.0));
+        $this->assertEquals(12.00, $receipt->getLinesSubTotal());
+        $this->assertEquals(14.19, $receipt->getTotal());
     }
 
     #[Test]

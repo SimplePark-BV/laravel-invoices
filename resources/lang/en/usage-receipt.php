@@ -14,6 +14,8 @@ return [
         'category' => 'Category',
         'price' => 'Price',
     ],
+    'subtotal' => 'Subtotal excl. VAT',
+    'tax_percentage' => ':percentage% VAT',
     'total' => 'Total',
     'note' => 'Note',
     'footer' => [

@@ -427,5 +427,33 @@ final class PdfGenerationTest extends TestCase
         $this->assertStringContainsString('Discount', $html);
         $this->assertStringContainsString('€ -1,00', $html);
         $this->assertStringContainsString('€ 4,15', $html);
+        $this->assertStringNotContainsString('Subtotal excl. VAT', $html);
+    }
+
+    #[Test]
+    public function template_shows_tax_breakdown_of_lines(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt(['language' => 'en']);
+        $receipt->lines([
+            ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
+            ['label' => 'Snack', 'amount' => 1.09, 'tax_percentage' => 9.0],
+        ]);
+
+        /** @var view-string $view */
+        $view = 'invoices::usage-receipt.index';
+
+        // act
+        $html = view($view, ['usageReceipt' => $receipt])->render();
+
+        // assert
+        $this->assertStringContainsString('21%', $html);
+        $this->assertStringContainsString('Subtotal excl. VAT', $html);
+        $this->assertStringContainsString('€ 11,00', $html);
+        $this->assertStringContainsString('21% VAT', $html);
+        $this->assertStringContainsString('€ 2,10', $html);
+        $this->assertStringContainsString('9% VAT', $html);
+        $this->assertStringContainsString('€ 0,09', $html);
+        $this->assertStringContainsString('€ 13,19', $html);
     }
 }

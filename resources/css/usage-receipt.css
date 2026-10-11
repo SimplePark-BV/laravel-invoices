@@ -181,9 +181,19 @@
     padding-right: 15px;
 }
 
+.usage-receipt__lines-tax {
+    text-align: right;
+    width: 50px;
+    color: var(--surface-high);
+}
+
 .usage-receipt__lines-value {
     text-align: right;
     width: 80px;
+}
+
+.usage-receipt__lines-row--subtotal td {
+    padding-top: 8px;
 }
 
 /* usage receipt total */
