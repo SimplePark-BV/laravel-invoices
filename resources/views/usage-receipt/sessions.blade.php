@@ -1,52 +1,45 @@
-{{-- usage sessions table --}}
+{{-- usage sessions; fixed column widths keep long texts from pushing the prices off the page --}}
 <table class="usage-receipt__sessions">
     <thead>
         <tr>
-            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.user') }}</th>
-            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.identifier') }}</th>
-            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.start_date') }}</th>
-            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.end_date') }}</th>
-            <th class="usage-receipt__sessions-header">{{ __('invoices::usage-receipt.table.category') }}</th>
-            <th class="usage-receipt__sessions-header usage-receipt__sessions-header--right">{{ __('invoices::usage-receipt.table.price') }}</th>
+            <th class="usage-receipt__sessions-header" style="width: 17%">{{ __('invoices::usage-receipt.table.user') }}</th>
+            <th class="usage-receipt__sessions-header" style="width: 16%">{{ __('invoices::usage-receipt.table.identifier') }}</th>
+            <th class="usage-receipt__sessions-header" style="width: 19%">{{ __('invoices::usage-receipt.table.start_date') }}</th>
+            <th class="usage-receipt__sessions-header" style="width: 19%">{{ __('invoices::usage-receipt.table.end_date') }}</th>
+            <th class="usage-receipt__sessions-header" style="width: 15%">{{ __('invoices::usage-receipt.table.category') }}</th>
+            <th class="usage-receipt__sessions-header usage-receipt__sessions-header--right" style="width: 14%">{{ __('invoices::usage-receipt.table.price') }}</th>
         </tr>
     </thead>
     <tbody>
         @foreach($usageReceipt->getItems() as $item)
-        <tr>
-            <td class="usage-receipt__sessions-cell">{{ $item->getUser() }}</td>
-            <td class="usage-receipt__sessions-cell">{{ $item->getIdentifier() }}</td>
-            <td class="usage-receipt__sessions-cell">{{ $item->getFormattedStartDate() }}</td>
-            <td class="usage-receipt__sessions-cell">{{ $item->getFormattedEndDate() }}</td>
-            <td class="usage-receipt__sessions-cell">{{ $item->getCategory() }}</td>
-            <td class="usage-receipt__sessions-cell usage-receipt__sessions-cell--right">{{ $item->getFormattedPrice() }}</td>
-        </tr>
+            <tr>
+                <td class="usage-receipt__sessions-cell document__text">{{ $item->getUser() }}</td>
+                <td class="usage-receipt__sessions-cell document__text">{{ $item->getIdentifier() }}</td>
+                <td class="usage-receipt__sessions-cell document__nowrap">{{ $format->date($item->getStartDate(), $usageReceipt->getDateTimeFormat()) }}</td>
+                <td class="usage-receipt__sessions-cell document__nowrap">{{ $format->date($item->getEndDate(), $usageReceipt->getDateTimeFormat()) }}</td>
+                <td class="usage-receipt__sessions-cell document__text">{{ $item->getCategory() }}</td>
+                <td class="usage-receipt__sessions-cell usage-receipt__sessions-cell--right document__amount">{{ $format->money($item->getPriceCents() ?? 0) }}</td>
+            </tr>
         @endforeach
     </tbody>
 </table>
 
-{{-- cost breakdown (optional - only shown when the receipt has lines) --}}
-@if($usageReceipt->getLines()->isNotEmpty())
-<table class="usage-receipt__lines">
+{{-- the cost breakdown when the receipt has lines, then the total, then the tax the total includes --}}
+<table class="usage-receipt__totals">
     @foreach($usageReceipt->getLines() as $line)
-    <tr>
-        <td class="usage-receipt__lines-label">{{ $line->getLabel() }}</td>
-        <td class="usage-receipt__lines-value">{{ $line->getFormattedAmount() }}</td>
-    </tr>
+        <tr>
+            <td class="usage-receipt__totals-label document__text">{{ $line->getLabel() }}</td>
+            <td class="usage-receipt__totals-value document__amount">{{ $format->money($line->getAmountCents() ?? 0) }}</td>
+        </tr>
     @endforeach
-    {{-- tax included in the lines, one line per rate (only shown when a line has a tax percentage) --}}
-    @foreach($usageReceipt->getLinesTaxGroups() as $taxPercentage)
     <tr>
-        <td class="usage-receipt__lines-label">{{ __('invoices::usage-receipt.tax', ['percentage' => $taxPercentage + 0]) }}</td>
-        <td class="usage-receipt__lines-value">{{ \SimpleParkBv\Invoices\Services\CurrencyFormatter::format($usageReceipt->getLinesTaxAmountForTaxGroup($taxPercentage)) }}</td>
+        <td class="usage-receipt__totals-label usage-receipt__totals-label--total">{{ __('invoices::usage-receipt.total') }}</td>
+        <td class="usage-receipt__totals-value usage-receipt__totals-value--total document__amount">{{ $format->money($totals->getTotalCents()) }}</td>
     </tr>
+    @foreach($totals->getTaxGroups() as $taxGroup)
+        <tr class="usage-receipt__totals-tax">
+            <td class="usage-receipt__totals-label">{{ __('invoices::usage-receipt.tax', ['percentage' => $format->number($taxGroup->getPercentage(), 2)]) }}</td>
+            <td class="usage-receipt__totals-value document__amount">{{ $format->money($taxGroup->getTaxCents()) }}</td>
+        </tr>
     @endforeach
-</table>
-@endif
-
-{{-- total section --}}
-<table class="usage-receipt__total">
-    <tr>
-        <td class="usage-receipt__total-label">{{ __('invoices::usage-receipt.total') }}</td>
-        <td class="usage-receipt__total-value">{{ $usageReceipt->getFormattedTotal() }}</td>
-    </tr>
 </table>

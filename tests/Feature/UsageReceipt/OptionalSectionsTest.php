@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\UsageReceipt;
 
-use Illuminate\Support\Facades\App;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Models\UsageReceipt;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
 
@@ -12,116 +10,93 @@ final class OptionalSectionsTest extends TestCase
 {
     use CreatesTestReceipts;
 
-    protected function setUp(): void
+    #[Test]
+    public function a_minimal_receipt_leaves_out_every_optional_section(): void
     {
-        parent::setUp();
+        // arrange
+        $receipt = $this->createReceipt(['buyer' => ['email' => 'anonymous@example.test']]);
 
-        App::setLocale('en');
-    }
+        // act
+        $html = $receipt->toHtml();
 
-    private function renderIds(UsageReceipt $receipt): string
-    {
-        /** @var view-string $view */
-        $view = 'invoices::usage-receipt.ids';
-
-        return view($view, ['usageReceipt' => $receipt])->render();
+        // assert
+        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringNotContainsString('class="usage-receipt__date-cell"', $html);
+        $this->assertStringNotContainsString('class="document__buyer-name', $html);
+        $this->assertStringNotContainsString('class="usage-receipt__ids"', $html);
+        $this->assertStringNotContainsString('class="usage-receipt__notes"', $html);
+        $this->assertStringNotContainsString('Waarvan', $html);
+        $this->assertStringContainsString('anonymous@example.test', $html);
     }
 
     #[Test]
-    public function ids_section_is_hidden_when_no_ids_are_given(): void
+    public function only_the_ids_that_are_set_are_shown(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
+        $receipt = $this->createReceipt(['user_id' => 'USR-1']);
 
         // act
-        $html = $this->renderIds($receipt);
+        $html = $receipt->toHtml();
 
         // assert
-        $this->assertStringNotContainsString('usage-receipt__ids', $html);
-        $this->assertStringNotContainsString('Document ID', $html);
-        $this->assertStringNotContainsString('User ID', $html);
+        $this->assertStringContainsString('Gebruikers-ID', $html);
+        $this->assertStringNotContainsString('Document-ID', $html);
     }
 
     #[Test]
-    public function ids_section_shows_both_ids_when_given(): void
+    public function a_note_of_zero_is_shown(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->documentId('DOC-001');
-        $receipt->userId('USER-001');
+        $receipt = $this->createReceipt(['note' => '0']);
 
         // act
-        $html = $this->renderIds($receipt);
+        $html = $receipt->toHtml();
 
         // assert
-        $this->assertStringContainsString('Document ID', $html);
-        $this->assertStringContainsString('DOC-001', $html);
-        $this->assertStringContainsString('User ID', $html);
-        $this->assertStringContainsString('USER-001', $html);
+        $this->assertStringContainsString('class="usage-receipt__notes"', $html);
     }
 
     #[Test]
-    public function ids_section_only_shows_given_id(): void
+    public function without_lines_only_the_total_of_the_sessions_is_shown(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->userId('USER-001');
+        $receipt = $this->createReceipt(['items' => [$this->receiptItemData(['price' => 1.10]), $this->receiptItemData(['price' => 2.20])]]);
 
         // act
-        $html = $this->renderIds($receipt);
+        $html = $receipt->toHtml();
 
         // assert
-        $this->assertStringNotContainsString('Document ID', $html);
-        $this->assertStringContainsString('User ID', $html);
-        $this->assertStringContainsString('USER-001', $html);
-        $this->assertSame(3, substr_count($html, 'class="usage-receipt__id-column"'));
+        $this->assertSame(1, substr_count($html, 'class="usage-receipt__totals-label'));
+        $this->assertStringContainsString("€\u{00A0}3,30", $html);
     }
 
     #[Test]
-    public function ids_section_treats_empty_string_as_missing(): void
+    public function the_seller_footer_leaves_out_missing_details(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->documentId('');
+        $receipt = $this->createReceipt(['seller' => ['name' => 'Seller B.V.']]);
 
         // act
-        $html = $this->renderIds($receipt);
+        $html = $receipt->toHtml();
 
         // assert
-        $this->assertStringNotContainsString('usage-receipt__ids', $html);
+        $this->assertStringContainsString('Seller B.V.', $html);
+        $this->assertStringNotContainsString('KvK-nummer', $html);
+        $this->assertStringNotContainsString('Website', $html);
+        $this->assertStringNotContainsString('E-mail', $html);
     }
 
     #[Test]
-    public function date_is_hidden_when_no_date_is_given(): void
+    public function the_phone_of_the_seller_is_shown_when_set(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-
-        /** @var view-string $view */
-        $view = 'invoices::usage-receipt.title';
+        $receipt = $this->createReceipt(['seller' => ['name' => 'Seller B.V.', 'phone' => '+31 20 1234567']]);
 
         // act
-        $html = view($view, ['usageReceipt' => $receipt])->render();
+        $html = $receipt->toHtml();
 
         // assert
-        $this->assertStringNotContainsString('usage-receipt__date-label', $html);
-    }
-
-    #[Test]
-    public function date_is_shown_when_given(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->date('2026-10-11');
-
-        /** @var view-string $view */
-        $view = 'invoices::usage-receipt.title';
-
-        // act
-        $html = view($view, ['usageReceipt' => $receipt])->render();
-
-        // assert
-        $this->assertStringContainsString('Date', $html);
-        $this->assertStringContainsString('11-10-2026', $html);
+        $this->assertStringContainsString('Telefoon', $html);
+        $this->assertStringContainsString('+31 20 1234567', $html);
     }
 }

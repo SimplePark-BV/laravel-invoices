@@ -3,117 +3,97 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Default Currency
+    | Currency Symbol
     |--------------------------------------------------------------------------
     |
-    | The default currency code for invoices (ISO 4217 format).
-    |
-    */
-    'currency' => env('INVOICES_CURRENCY', 'EUR'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Default Currency Symbol
-    |--------------------------------------------------------------------------
-    |
-    | The default currency symbol to display.
+    | The symbol shown before amounts. The decimal and thousands separators
+    | follow the language of the document, see the invoices::format
+    | translations.
     |
     */
     'currency_symbol' => env('INVOICES_CURRENCY_SYMBOL', '€'),
 
     /*
     |--------------------------------------------------------------------------
-    | Decimal Separator
-    |--------------------------------------------------------------------------
-    |
-    | The character used to separate the decimal part of currency amounts.
-    | Common values: ',' (European) or '.' (US/UK).
-    |
-    */
-    'decimal_separator' => env('INVOICES_DECIMAL_SEPARATOR', ','),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Thousands Separator
-    |--------------------------------------------------------------------------
-    |
-    | The character used to separate thousands in currency amounts.
-    | Common values: '.' (European) or ',' (US/UK).
-    |
-    */
-    'thousands_separator' => env('INVOICES_THOUSANDS_SEPARATOR', '.'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Calculation Precision
-    |--------------------------------------------------------------------------
-    |
-    | Precision settings for tax calculations to prevent rounding drift.
-    | These values control how many decimal places are used when rounding
-    | monetary values and tax percentages.
-    |
-    */
-    'precision' => [
-        'monetary' => env('INVOICES_PRECISION_MONETARY', 2),
-        'tax_percentage' => env('INVOICES_PRECISION_TAX_PERCENTAGE', 2),
-        'tax_percentage_epsilon' => env('INVOICES_PRECISION_TAX_PERCENTAGE_EPSILON', 0.005),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Default Payment Terms
-    |--------------------------------------------------------------------------
-    |
-    | Default number of days until payment is due.
-    |
-    */
-    'default_payment_terms_days' => env('INVOICES_PAYMENT_TERMS_DAYS', 30),
-
-    /*
-    |--------------------------------------------------------------------------
     | Default Language
     |--------------------------------------------------------------------------
     |
-    | Default language for invoices. Supported: 'nl' (Dutch), 'en' (English).
-    | Can be overridden per invoice using language() method.
+    | The language of new documents: 'nl' (Dutch) or 'en' (English), or any
+    | language you added by publishing the translations. Override it per
+    | document with language().
     |
     */
     'default_language' => env('INVOICES_DEFAULT_LANGUAGE', 'nl'),
 
     /*
     |--------------------------------------------------------------------------
+    | Payment Terms
+    |--------------------------------------------------------------------------
+    |
+    | The number of days after the invoice date an invoice is due. Override
+    | it per invoice with paymentTermsDays(), or set the due date itself
+    | with dueDate().
+    |
+    */
+    'default_payment_terms_days' => (int) env('INVOICES_PAYMENT_TERMS_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dates
+    |--------------------------------------------------------------------------
+    |
+    | The timezone dates are shown in (null uses the app timezone), and the
+    | PHP date formats of dates and of the sessions on usage receipts.
+    | Month and day names follow the language of the document.
+    |
+    */
+    'timezone' => env('INVOICES_TIMEZONE'),
+
+    'date_format' => env('INVOICES_DATE_FORMAT', 'd-m-Y'),
+
+    'datetime_format' => env('INVOICES_DATETIME_FORMAT', 'd-m-Y H:i'),
+
+    /*
+    |--------------------------------------------------------------------------
     | PDF Settings
     |--------------------------------------------------------------------------
     |
-    | Configuration for PDF generation.
+    | The paper and the font of the PDFs. By default the bundled Poppins font
+    | is used. Set a font file (a .ttf, relative to the base path of the
+    | app) to use your own font for all text, or only a font name that
+    | dompdf knows, such as 'DejaVu Sans'. Other dompdf options, such as
+    | the font cache directory, come from the config of barryvdh/laravel-dompdf.
     |
     */
     'pdf' => [
         'paper_size' => env('INVOICES_PDF_PAPER_SIZE', 'a4'),
         'orientation' => env('INVOICES_PDF_ORIENTATION', 'portrait'),
         'font' => env('INVOICES_PDF_FONT', 'Poppins'),
-        'font_file' => env('INVOICES_PDF_FONT_FILE', null),
+        'font_file' => env('INVOICES_PDF_FONT_FILE'),
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Default Seller
+    | Seller
     |--------------------------------------------------------------------------
     |
-    | Default seller information used when creating invoices.
+    | The company that issues the documents. The name is required; documents
+    | without a seller name fail validation. Override the seller per
+    | document with seller().
     |
     */
     'seller' => [
-        'name' => env('INVOICES_SELLER_NAME', 'Your Company Name'),
-        'address' => env('INVOICES_SELLER_ADDRESS', 'Street Address'),
-        'postal_code' => env('INVOICES_SELLER_POSTAL_CODE', '1234 AB'),
-        'city' => env('INVOICES_SELLER_CITY', 'City'),
-        'country' => env('INVOICES_SELLER_COUNTRY', 'Country'),
-        'email' => env('INVOICES_SELLER_EMAIL', 'info@example.com'),
-        'registration_number' => env('INVOICES_SELLER_REGISTRATION_NUMBER', null),
-        'tax_id' => env('INVOICES_SELLER_TAX_ID', null),
-        'bank_account' => env('INVOICES_SELLER_BANK_ACCOUNT', null),
-        'website' => env('INVOICES_SELLER_WEBSITE', 'www.example.com'),
+        'name' => env('INVOICES_SELLER_NAME'),
+        'address' => env('INVOICES_SELLER_ADDRESS'),
+        'postal_code' => env('INVOICES_SELLER_POSTAL_CODE'),
+        'city' => env('INVOICES_SELLER_CITY'),
+        'country' => env('INVOICES_SELLER_COUNTRY'),
+        'email' => env('INVOICES_SELLER_EMAIL'),
+        'phone' => env('INVOICES_SELLER_PHONE'),
+        'website' => env('INVOICES_SELLER_WEBSITE'),
+        'registration_number' => env('INVOICES_SELLER_REGISTRATION_NUMBER'),
+        'tax_id' => env('INVOICES_SELLER_TAX_ID'),
+        'bank_account' => env('INVOICES_SELLER_BANK_ACCOUNT'),
     ],
 
     /*
@@ -121,13 +101,12 @@ return [
     | Logo
     |--------------------------------------------------------------------------
     |
-    | Default logo path for invoices. Can be absolute path or relative to
-    | the package resources directory. Set to null to disable logo.
-    |
-    | Supported formats: PNG (recommended), JPG, JPEG, GIF, SVG
-    | Note: SVG has limited support in PDFs and may render incorrectly.
-    | PNG is recommended for best compatibility and transparency support.
+    | The logo of the documents: an absolute path, a path relative to the
+    | base path of the app, or a data URI, of a PNG, JPG, GIF or SVG image.
+    | Null shows no logo. A logo that cannot be read is left out and
+    | logged as a warning. Keep the image small (about 600 pixels wide):
+    | large images make rendering slow and the PDFs big.
     |
     */
-    'logo' => env('INVOICES_LOGO', null),
+    'logo' => env('INVOICES_LOGO'),
 ];

@@ -1,211 +1,213 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleParkBv\Invoices\Models;
 
-use SimpleParkBv\Invoices\Contracts\InvoiceItemInterface;
-use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
+use SimpleParkBv\Invoices\Contracts\TaxableInterface;
+use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
+use SimpleParkBv\Invoices\Support\Money;
+use SimpleParkBv\Invoices\Support\Text;
 
 /**
- * Class InvoiceItem
- *
- * @property string $title
- * @property string|null $description
- * @property float|int $quantity
- * @property float|int $unitPrice
- * @property float|null $taxPercentage
+ * A line of an invoice. The unit price includes tax; a negative unit price is a discount.
  */
-final class InvoiceItem implements InvoiceItemInterface
+final class InvoiceItem implements TaxableInterface
 {
     use CanFillFromArray;
 
-    private string $title = '';
+    private ?string $title = null;
 
     private ?string $description = null;
 
-    private float|int $quantity = 0;
+    private float|int $quantity = 1;
 
-    private float|int $unitPrice = 0;
+    private ?int $unitPriceCents = null;
 
     private ?float $taxPercentage = null;
 
     /**
-     * Get the description of the item.
+     * Set the title.
+     *
+     * @return $this
      */
-    public function getDescription(): ?string
+    public function title(?string $title): static
     {
-        return $this->description ?? null;
+        $this->title = Text::clean($title);
+
+        return $this;
     }
 
     /**
-     * Get the quantity of the item.
+     * Set the description, shown below the title.
+     *
+     * @return $this
      */
+    public function description(?string $description): static
+    {
+        $this->description = Text::clean($description);
+
+        return $this;
+    }
+
+    /**
+     * Set the quantity, 1 by default. Fractional quantities such as 1.5 are allowed.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException when the quantity is not a number
+     */
+    public function quantity(float|int|string $quantity): static
+    {
+        $quantity = Money::toNumber($quantity, 'quantity', InvalidInvoiceException::class);
+
+        $this->quantity = floor($quantity) === $quantity && abs($quantity) < 1e15 ? (int) $quantity : $quantity;
+
+        return $this;
+    }
+
+    /**
+     * Set the price of one unit, including tax, with at most 2 decimals.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException when the price is not a number with at most 2 decimals
+     */
+    public function unitPrice(float|int|string|null $unitPrice): static
+    {
+        $this->unitPriceCents = Money::toCents($unitPrice, 'unit price', InvalidInvoiceException::class);
+
+        return $this;
+    }
+
+    /**
+     * Set the tax percentage the unit price includes, e.g. 21, or null when no tax applies.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException when the percentage is not a number
+     */
+    public function taxPercentage(float|int|string|null $taxPercentage): static
+    {
+        $this->taxPercentage = $taxPercentage === null
+            ? null
+            : Money::toNumber($taxPercentage, 'tax percentage', InvalidInvoiceException::class);
+
+        return $this;
+    }
+
+    public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
     public function getQuantity(): float|int
     {
         return $this->quantity;
     }
 
-    /**
-     * Get the tax percentage of the item.
-     */
+    public function getUnitPrice(): ?float
+    {
+        return $this->unitPriceCents === null ? null : Money::toFloat($this->unitPriceCents);
+    }
+
+    public function getUnitPriceCents(): ?int
+    {
+        return $this->unitPriceCents;
+    }
+
     public function getTaxPercentage(): ?float
     {
         return $this->taxPercentage;
     }
 
     /**
-     * Get the title of the item.
-     */
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
-
-    /**
-     * Get the unit price of the item.
-     */
-    public function getUnitPrice(): float|int
-    {
-        return $this->unitPrice;
-    }
-
-    /**
-     * Set the description of the item.
+     * Get the line total (quantity times unit price) including tax, rounded to whole cents.
      *
-     * @return $this
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException when the line total is too large
      */
-    public function description(?string $description): self
+    public function getTotalCents(): int
     {
-        $this->description = $description;
-
-        return $this;
+        return Money::multiply($this->unitPriceCents ?? 0, $this->quantity, 'line total', InvalidInvoiceException::class);
     }
 
     /**
-     * Set the quantity of the item.
-     *
-     * @return $this
-     */
-    public function quantity(float|int $quantity): self
-    {
-        $this->quantity = $quantity;
-
-        return $this;
-    }
-
-    /**
-     * Set the tax percentage of the item.
-     *
-     * @return $this
-     */
-    public function taxPercentage(?float $taxPercentage): self
-    {
-        $this->taxPercentage = $taxPercentage;
-
-        return $this;
-    }
-
-    /**
-     * Set the tax rate of the item (as a decimal, e.g., 0.21 for 21%).
-     * This will be converted to tax_percentage by multiplying by 100.
-     *
-     * @param  float  $taxRate  The tax rate as a decimal (0.21 = 21%)
-     * @return $this
-     */
-    public function taxRate(float $taxRate): self
-    {
-        if ($taxRate < 0 || $taxRate > 1) {
-            throw new InvalidInvoiceItemException('Tax rate must be between 0 and 1');
-        }
-
-        $this->taxPercentage = $taxRate * 100;
-
-        return $this;
-    }
-
-    /**
-     * Set the title of the item.
-     *
-     * @return $this
-     */
-    public function title(string $title): self
-    {
-        $this->title = $title;
-
-        return $this;
-    }
-
-    /**
-     * Set the unit price of the item.
-     * Negative values are allowed for discount items.
-     *
-     * @return $this
-     */
-    public function unitPrice(float|int $unitPrice): self
-    {
-        $this->unitPrice = $unitPrice;
-
-        return $this;
-    }
-
-    /**
-     * Calculate the total for this item (quantity * unitPrice).
+     * Get the line total (quantity times unit price) including tax, rounded to whole cents.
      */
     public function getTotal(): float
     {
-        return $this->unitPrice * $this->quantity;
+        return Money::toFloat($this->getTotalCents());
     }
 
     /**
-     * Get the formatted tax percentage for display.
-     * Returns empty string if tax percentage is null, otherwise returns the percentage with % sign.
-     */
-    public function getFormattedTaxPercentage(): string
-    {
-        if ($this->taxPercentage === null) {
-            return '';
-        }
-
-        return $this->taxPercentage.'%';
-    }
-
-    /**
-     * Validate the invoice item.
+     * Validate the item.
      *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException
+     * @param  int|null  $index  the position of the item on the invoice, used in the message
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException
      */
     public function validate(?int $index = null): void
     {
-        $prefix = $index !== null ? "Item at index {$index}" : 'Item';
+        $prefix = $index === null ? 'Item' : "Item at index {$index}";
 
-        if (empty($this->title)) {
-            throw new InvalidInvoiceItemException("{$prefix} must have a title");
+        if ($this->title === null) {
+            throw new InvalidInvoiceException("{$prefix} must have a title");
         }
 
         if ($this->quantity <= 0) {
-            throw new InvalidInvoiceItemException("{$prefix} must have a quantity greater than 0");
+            throw new InvalidInvoiceException("{$prefix} must have a quantity greater than 0");
         }
 
-        // unit price can be negative for discount items
+        if ($this->unitPriceCents === null) {
+            throw new InvalidInvoiceException("{$prefix} must have a unit price");
+        }
 
-        if (isset($this->taxPercentage) && ($this->taxPercentage < 0 || $this->taxPercentage > 100)) {
-            throw new InvalidInvoiceItemException("{$prefix} must have a taxPercentage between 0 and 100, or null");
+        if ($this->taxPercentage !== null && ($this->taxPercentage < 0 || $this->taxPercentage > 100)) {
+            throw new InvalidInvoiceException("{$prefix} must have a tax percentage between 0 and 100, or null");
         }
     }
 
     /**
-     * Convert the invoice item to an array representation.
+     * Convert the item to an array that make() accepts.
      *
-     * @return array<string, mixed>
+     * @return array{title: string|null, description: string|null, quantity: float|int, unit_price: float|null, tax_percentage: float|null}
      */
     public function toArray(): array
     {
         return [
             'title' => $this->title,
-            'description' => $this->description ?? null,
+            'description' => $this->description,
             'quantity' => $this->quantity,
-            'unit_price' => $this->unitPrice,
-            'tax_percentage' => $this->taxPercentage ?? null,
+            'unit_price' => $this->getUnitPrice(),
+            'tax_percentage' => $this->taxPercentage,
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected static function fillable(): array
+    {
+        return [
+            'title' => 'title',
+            'description' => 'description',
+            'quantity' => 'quantity',
+            'unit_price' => 'unitPrice',
+            'tax_percentage' => 'taxPercentage',
+        ];
+    }
+
+    /**
+     * @return class-string<\SimpleParkBv\Invoices\Exceptions\InvalidDocumentException>
+     */
+    protected static function invalidDataException(): string
+    {
+        return InvalidInvoiceException::class;
     }
 }

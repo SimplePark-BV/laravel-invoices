@@ -1,145 +1,86 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleParkBv\Invoices\Services;
 
-use Illuminate\Support\Collection;
-use SimpleParkBv\Invoices\Contracts\TaxableInterface;
+use SimpleParkBv\Invoices\Models\TaxGroup;
+use SimpleParkBv\Invoices\Models\Totals;
 
 /**
- * Service class for calculating taxes on invoice items and usage receipt lines.
+ * Calculates the totals of documents whose amounts include tax.
  *
- * All monetary values and tax percentages are rounded to a fixed precision
- * to prevent rounding drift and ensure consistent results across calculations.
- * Precision values are configurable via the invoices config file.
+ * The tax of a rate is calculated once over the sum of all amounts with that rate, and rounded half
+ * away from zero to whole cents. All arithmetic is done in integer cents, so there is no float drift.
  */
 final class TaxCalculator
 {
     /**
-     * Get the decimal precision for monetary values (e.g., currency amounts).
-     */
-    private static function getPrecision(): int
-    {
-        return (int) config('invoices.precision.monetary', 2);
-    }
-
-    /**
-     * Get the decimal precision for tax percentages.
-     */
-    private static function getTaxPercentagePrecision(): int
-    {
-        return (int) config('invoices.precision.tax_percentage', 2);
-    }
-
-    /**
-     * Get the epsilon value for tax percentage comparison.
-     */
-    private static function getTaxPercentageEpsilon(): float
-    {
-        return (float) config('invoices.precision.tax_percentage_epsilon', 0.005);
-    }
-
-    /**
-     * Calculate the total tax amount for a collection of items.
+     * Calculate the totals of the given lines.
      *
-     * Sums taxes only for items that have a taxPercentage set (excludes null items).
-     * Calculates tax from the item total which includes tax.
-     *
-     * Returns the total tax amount rounded to the configured precision to prevent rounding drift.
-     *
-     * @param  \Illuminate\Support\Collection<int, covariant \SimpleParkBv\Invoices\Contracts\TaxableInterface>  $items
-     * @return float The total tax amount, rounded to the configured precision
+     * @param  iterable<\SimpleParkBv\Invoices\Contracts\TaxableInterface>  $lines
      */
-    public static function calculateTaxAmount(Collection $items): float
+    public static function calculate(iterable $lines): Totals
     {
-        $total = $items->sum(function (TaxableInterface $item): float {
-            $taxPercentage = $item->getTaxPercentage();
-            if ($taxPercentage === null || $taxPercentage <= 0) {
-                return 0;
+        $totalCents = 0;
+
+        /** @var array<int, int> $grossCentsPerRate gross cents, keyed by tax rate in basis points */
+        $grossCentsPerRate = [];
+
+        foreach ($lines as $line) {
+            $cents = $line->getTotalCents();
+            $totalCents += $cents;
+
+            $percentage = $line->getTaxPercentage();
+
+            if ($percentage === null) {
+                continue;
             }
 
-            $taxRate = $taxPercentage / 100;
-            $itemTotal = $item->getTotal();
+            $basisPoints = self::toBasisPoints($percentage);
+            $grossCentsPerRate[$basisPoints] = ($grossCentsPerRate[$basisPoints] ?? 0) + $cents;
+        }
 
-            // tax amount = price including tax * taxRate / (1 + taxRate)
-            return $itemTotal * $taxRate / (1 + $taxRate);
-        });
+        krsort($grossCentsPerRate);
 
-        return round($total, self::getPrecision());
+        $groups = [];
+
+        foreach ($grossCentsPerRate as $basisPoints => $grossCents) {
+            $groups[] = new TaxGroup($basisPoints / 100, $grossCents, self::includedTax($grossCents, $basisPoints));
+        }
+
+        return new Totals($totalCents, $groups);
     }
 
     /**
-     * Get all unique tax percentages from items, excluding null values.
+     * Calculate the tax included in an amount, in cents, rounded half away from zero.
      *
-     * Returns a collection sorted in descending order. All tax percentages are
-     * rounded to the configured precision to ensure consistent grouping of
-     * equivalent percentages that may have different floating-point representations.
-     *
-     * @param  \Illuminate\Support\Collection<int, covariant \SimpleParkBv\Invoices\Contracts\TaxableInterface>  $items
-     * @return \Illuminate\Support\Collection<int, float> Tax percentages rounded to the configured precision
+     * tax = gross * rate / (1 + rate), with the rate in basis points (21% is 2100).
      */
-    public static function extractTaxGroups(Collection $items): Collection
+    public static function includedTax(int $grossCents, int $basisPoints): int
     {
-        return $items
-            ->map(static fn (TaxableInterface $item): ?float => $item->getTaxPercentage())
-            ->filter(static fn (?float $taxPercentage): bool => $taxPercentage !== null && $taxPercentage > 0)
-            ->map(static fn (float $taxPercentage): float => round($taxPercentage, self::getTaxPercentagePrecision()))
-            ->unique()
-            ->sortByDesc(static fn (float $taxPercentage): float => $taxPercentage)
-            ->values();
+        $divisor = 10_000 + $basisPoints;
+
+        if ($grossCents === 0 || $basisPoints <= 0 || $divisor <= 0) {
+            return 0;
+        }
+
+        $absoluteCents = abs($grossCents);
+
+        // round(x / d) half up is floor((2x + d) / 2d), done in integers to avoid float noise, unless
+        // the amount is so large that the integers would overflow
+        $tax = $absoluteCents <= intdiv(PHP_INT_MAX - 2 * $divisor, 2 * $basisPoints)
+            ? intdiv(2 * $absoluteCents * $basisPoints + $divisor, 2 * $divisor)
+            : (int) round($absoluteCents * $basisPoints / $divisor);
+
+        return $grossCents < 0 ? -$tax : $tax;
     }
 
     /**
-     * Calculate the tax amount for items with a specific tax percentage.
-     *
-     * Calculates tax from the item total which includes tax. Items are matched by
-     * comparing tax percentages using epsilon comparison to handle floating-point
-     * precision differences. Returns the total rounded to the configured precision.
-     *
-     * @param  \Illuminate\Support\Collection<int, covariant \SimpleParkBv\Invoices\Contracts\TaxableInterface>  $items
-     * @param  float  $taxPercentage  The tax percentage to filter by (will be normalized)
-     * @return float The tax amount for the group, rounded to the configured precision
+     * Convert a tax percentage to basis points, e.g. 21.0 to 2100 and 9.5 to 950.
      */
-    public static function calculateTaxForGroup(Collection $items, float $taxPercentage): float
+    public static function toBasisPoints(float $percentage): int
     {
-        $taxRate = $taxPercentage / 100;
-        $taxPercentagePrecision = self::getTaxPercentagePrecision();
-        $normalizedTaxPercentage = round($taxPercentage, $taxPercentagePrecision);
-        $epsilon = self::getTaxPercentageEpsilon();
-
-        $total = $items
-            ->filter(fn (TaxableInterface $item) => $item->getTaxPercentage() !== null && abs(round($item->getTaxPercentage(), $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
-            ->sum(function (TaxableInterface $item) use ($taxRate): float {
-                $itemTotal = $item->getTotal();
-
-                // tax amount = price including tax * taxRate / (1 + taxRate)
-                return $itemTotal * $taxRate / (1 + $taxRate);
-            });
-
-        return round($total, self::getPrecision());
-    }
-
-    /**
-     * Calculate the subtotal for items with a specific tax percentage.
-     *
-     * Calculated as: sum of items in this tax group - tax amount for this group.
-     * Items are matched by comparing tax percentages using epsilon comparison.
-     * Returns the subtotal rounded to the configured precision.
-     *
-     * @param  \Illuminate\Support\Collection<int, covariant \SimpleParkBv\Invoices\Contracts\TaxableInterface>  $items
-     * @param  float  $taxPercentage  The tax percentage to filter by (will be normalized)
-     * @return float The subtotal for the group, rounded to the configured precision
-     */
-    public static function calculateSubTotalForTaxGroup(Collection $items, float $taxPercentage): float
-    {
-        $taxPercentagePrecision = self::getTaxPercentagePrecision();
-        $normalizedTaxPercentage = round($taxPercentage, $taxPercentagePrecision);
-        $epsilon = self::getTaxPercentageEpsilon();
-        $itemsTotal = $items
-            ->filter(fn (TaxableInterface $item) => $item->getTaxPercentage() !== null && abs(round($item->getTaxPercentage(), $taxPercentagePrecision) - $normalizedTaxPercentage) < $epsilon)
-            ->sum(fn (TaxableInterface $item): float => $item->getTotal());
-
-        $subtotal = $itemsTotal - self::calculateTaxForGroup($items, $taxPercentage);
-
-        return round($subtotal, self::getPrecision());
+        return (int) round($percentage * 100);
     }
 }

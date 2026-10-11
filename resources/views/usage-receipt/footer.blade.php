@@ -1,40 +1,43 @@
-{{-- usage receipt footer --}}
+{{-- usage receipt footer with the disclaimer and the seller details, at the bottom of every page --}}
 @php($seller = $usageReceipt->getSeller())
 
 <div class="usage-receipt__footer">
     <div class="usage-receipt__footer-disclaimer">{{ __('invoices::usage-receipt.footer.disclaimer') }}</div>
-    <div class="usage-receipt__footer-info">
-        <div class="usage-receipt__footer-column">
-            <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.address') }}</div>
-            <div class="usage-receipt__footer-value">
-                {{ $seller->getName() }}<br>
-                @if($seller->getAddress())
-                    {{ $seller->getAddress() }}<br>
+    <table class="usage-receipt__footer-info">
+        <tr>
+            <td class="usage-receipt__footer-column">
+                <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.address') }}</div>
+                <div class="usage-receipt__footer-value">
+                    {{ $seller->getName() }}
+                    @if($seller->hasAddress())
+                        <br>@include('invoices::partials.address', ['party' => $seller])
+                    @endif
+                </div>
+            </td>
+            <td class="usage-receipt__footer-column">
+                @if($seller->getRegistrationNumber() !== null)
+                    <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.registration_number') }}</div>
+                    <div class="usage-receipt__footer-value">{{ $seller->getRegistrationNumber() }}</div>
                 @endif
-                @if($seller->getPostalCode() || $seller->getCity())
-                    {{ $seller->getPostalCode() }} {{ $seller->getCity() }}
+                @if($seller->getTaxId() !== null)
+                    <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.tax_id') }}</div>
+                    <div class="usage-receipt__footer-value">{{ $seller->getTaxId() }}</div>
                 @endif
-            </div>
-    </div>
-        <div class="usage-receipt__footer-column">
-            @if($seller->getRegistrationNumber())
-                <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.registration_number') }}</div>
-                <div class="usage-receipt__footer-value">{{ $seller->getRegistrationNumber() }}</div>
-            @endif
-            @if($seller->getTaxId())
-                <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.tax_id') }}</div>
-                <div class="usage-receipt__footer-value">{{ $seller->getTaxId() }}</div>
-            @endif
-        </div>
-        <div class="usage-receipt__footer-column">
-            @if($seller->getWebsite())
-                <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.website') }}</div>
-                <div class="usage-receipt__footer-value">{{ $seller->getWebsite() }}</div>
-            @endif
-            @if($seller->getEmail())
-                <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.email') }}</div>
-                <div class="usage-receipt__footer-value">{{ $seller->getEmail() }}</div>
-            @endif
-        </div>
-    </div>
+            </td>
+            <td class="usage-receipt__footer-column">
+                @if($seller->getWebsite() !== null)
+                    <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.website') }}</div>
+                    <div class="usage-receipt__footer-value">{{ $seller->getWebsite() }}</div>
+                @endif
+                @if($seller->getEmail() !== null)
+                    <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.email') }}</div>
+                    <div class="usage-receipt__footer-value">{{ $seller->getEmail() }}</div>
+                @endif
+                @if($seller->getPhone() !== null)
+                    <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.phone') }}</div>
+                    <div class="usage-receipt__footer-value">{{ $seller->getPhone() }}</div>
+                @endif
+            </td>
+        </tr>
+    </table>
 </div>

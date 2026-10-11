@@ -4,10 +4,9 @@ namespace Tests\Feature\UsageReceipt;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use SimpleParkBv\Invoices\Exceptions\ExpectedTotalMismatchException;
 use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException;
-use SimpleParkBv\Invoices\Models\Buyer;
 use SimpleParkBv\Invoices\Models\UsageReceipt;
-use SimpleParkBv\Invoices\Models\UsageReceiptItem;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
 
@@ -16,339 +15,70 @@ final class ValidationTest extends TestCase
     use CreatesTestReceipts;
 
     #[Test]
-    public function valid_receipt_passes(): void
+    #[DataProvider('outputs')]
+    public function every_output_validates_the_receipt_first(string $output): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-
-        // act & assert
-        $this->expectNotToPerformAssertions();
-        $receipt->validate();
-    }
-
-    #[Test]
-    public function missing_buyer_throws_exception(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $item = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-        $receipt->addItem($item);
+        $receipt = UsageReceipt::make(['buyer' => ['name' => 'Jan']]);
 
         // assert
         $this->expectException(InvalidUsageReceiptException::class);
-        $this->expectExceptionMessage('Buyer is required for usage receipt');
+        $this->expectExceptionMessage('A usage receipt must have at least one item');
 
         // act
-        $receipt->validate();
-    }
-
-    #[Test]
-    public function empty_items_throws_exception(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-
-        // assert
-        $this->expectException(InvalidUsageReceiptException::class);
-        $this->expectExceptionMessage('Usage receipt must have at least one item');
-
-        // act
-        $receipt->validate();
+        $receipt->{$output}();
     }
 
     /**
-     * @param  array<string, mixed>  $itemData
+     * @return array<string, array{string}>
      */
-    #[Test]
-    #[DataProvider('invalid_item_data_provider')]
-    public function invalid_items_throw_exception(array $itemData, string $expectedMessage): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-
-        $item = UsageReceiptItem::make($itemData);
-        $receipt->addItem($item);
-
-        // assert
-        $this->expectException(InvalidUsageReceiptException::class);
-        $this->expectExceptionMessage($expectedMessage);
-
-        // act
-        $receipt->validate();
-    }
-
-    /**
-     * @return array<string, array{0: array<string, mixed>, 1: string}>
-     */
-    public static function invalid_item_data_provider(): array
+    public static function outputs(): array
     {
         return [
-            'empty user' => [
-                [
-                    'user' => '',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => 5.50,
-                ],
-                'Item at index 0 must have a user',
-            ],
-            'empty identifier' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => '',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => 5.50,
-                ],
-                'Item at index 0 must have a identifier',
-            ],
-            'empty category' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => '',
-                    'price' => 5.50,
-                ],
-                'Item at index 0 must have a category',
-            ],
-            'end date before start date' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 12:00:00',
-                    'end_date' => '2024-01-15 10:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => 5.50,
-                ],
-                'Item at index 0 end date must be after start date',
-            ],
-            'negative price' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => -5.50,
-                ],
-                'Item at index 0 price cannot be negative',
-            ],
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $itemData
-     */
-    #[Test]
-    #[DataProvider('valid_item_data_provider')]
-    public function valid_items_pass_validation(array $itemData): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-
-        $item = UsageReceiptItem::make($itemData);
-        $receipt->addItem($item);
-
-        // act & assert
-        $this->expectNotToPerformAssertions();
-        $receipt->validate();
-    }
-
-    /**
-     * @return array<string, array{0: array<string, mixed>}>
-     */
-    public static function valid_item_data_provider(): array
-    {
-        return [
-            'zero price (free parking)' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => 'Free Parking',
-                    'price' => 0,
-                ],
-            ],
-            'very long strings in fields' => [
-                [
-                    'user' => str_repeat('A', 255),
-                    'identifier' => str_repeat('B', 255),
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => str_repeat('C', 255),
-                    'price' => 5.50,
-                ],
-            ],
+            'html' => ['toHtml'],
+            'pdf' => ['toPdf'],
+            'download' => ['download'],
+            'stream' => ['stream'],
         ];
     }
 
     #[Test]
-    public function validation_called_before_rendering(): void
+    #[DataProvider('outputs')]
+    public function every_output_checks_the_expected_total(string $output): void
     {
         // arrange
-        $receipt = UsageReceipt::make();
-        // missing buyer
+        $receipt = $this->createReceipt(['expected_total' => 5.49]);
 
         // assert
-        $this->expectException(InvalidUsageReceiptException::class);
-        $this->expectExceptionMessage('Buyer is required for usage receipt');
+        $this->expectException(ExpectedTotalMismatchException::class);
 
         // act
-        // render() should call validate() internally
-        $receipt->render();
+        $receipt->{$output}();
     }
 
     #[Test]
-    public function multiple_items_first_invalid(): void
+    public function a_session_without_duration_renders(): void
     {
         // arrange
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-
-        $item1 = UsageReceiptItem::make([
-            'user' => '', // invalid: empty user
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-        $receipt->addItem($item1);
-
-        // assert
-        // should throw exception for first invalid item
-        $this->expectException(InvalidUsageReceiptException::class);
-        $this->expectExceptionMessage('Item at index 0 must have a user');
+        $receipt = $this->createReceipt(['items' => [$this->receiptItemData(['end_date' => '2026-10-02 10:00'])]]);
 
         // act
-        $receipt->validate();
+        $pdf = $receipt->toPdf();
+
+        // assert
+        $this->assertStringStartsWith('%PDF-', $pdf);
     }
 
     #[Test]
-    public function multiple_items_second_invalid(): void
+    public function a_buyer_without_a_name_renders(): void
     {
         // arrange
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-
-        $item1 = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-
-        $item2 = UsageReceiptItem::make([
-            'user' => 'Jane Doe',
-            'identifier' => 'XYZ-789',
-            'start_date' => '2024-01-15 16:00:00', // invalid: end before start
-            'end_date' => '2024-01-15 14:00:00',
-            'category' => 'Premium Parking',
-            'price' => 10.00,
-        ]);
-        $receipt->items([$item1, $item2]);
-
-        // assert
-        $this->expectException(InvalidUsageReceiptException::class);
-        $this->expectExceptionMessage('Item at index 1 end date must be after start date');
+        $receipt = $this->createReceipt(['buyer' => ['name' => null, 'phone' => '0612345678']]);
 
         // act
-        $receipt->validate();
-    }
-
-    #[Test]
-    public function all_valid_items_pass(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-
-        $item1 = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-
-        $item2 = UsageReceiptItem::make([
-            'user' => 'Jane Doe',
-            'identifier' => 'XYZ-789',
-            'start_date' => '2024-01-15 14:00:00',
-            'end_date' => '2024-01-15 16:00:00',
-            'category' => 'Premium Parking',
-            'price' => 10.00,
-        ]);
-
-        $item3 = UsageReceiptItem::make([
-            'user' => 'Bob Smith',
-            'identifier' => 'DEF-456',
-            'start_date' => '2024-01-15 18:00:00',
-            'end_date' => '2024-01-15 20:00:00',
-            'category' => 'Free Parking',
-            'price' => 0,
-        ]);
-        $receipt->items([$item1, $item2, $item3]);
-
-        // act & assert
-        $this->expectNotToPerformAssertions();
-        $receipt->validate();
-    }
-
-    /**
-     * @param  array<string, mixed>  $lineData
-     */
-    #[Test]
-    #[DataProvider('invalid_line_data_provider')]
-    public function invalid_lines_throw_exception(array $lineData, string $expectedMessage): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->lines([$lineData]);
+        $html = $receipt->toHtml();
 
         // assert
-        $this->expectException(InvalidUsageReceiptException::class);
-        $this->expectExceptionMessage($expectedMessage);
-
-        // act
-        $receipt->validate();
-    }
-
-    /**
-     * @return array<string, array{0: array<string, mixed>, 1: string}>
-     */
-    public static function invalid_line_data_provider(): array
-    {
-        return [
-            'missing label' => [['amount' => 1.00], 'Line at index 0 must have a label'],
-            'missing amount' => [['label' => 'Parking fee'], 'Line at index 0 must have an amount'],
-            'negative tax percentage' => [['label' => 'Parking fee', 'amount' => 1.00, 'tax_percentage' => -1.0], 'Line at index 0 must have a taxPercentage between 0 and 100, or null'],
-            'tax percentage above 100' => [['label' => 'Parking fee', 'amount' => 1.00, 'tax_percentage' => 101.0], 'Line at index 0 must have a taxPercentage between 0 and 100, or null'],
-        ];
+        $this->assertStringContainsString('0612345678', $html);
     }
 }

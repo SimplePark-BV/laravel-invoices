@@ -1,26 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleParkBv\Invoices\Models;
 
-use Illuminate\Support\Carbon;
-use SimpleParkBv\Invoices\Contracts\UsageReceiptItemInterface;
-use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException;
+use Carbon\CarbonImmutable;
+use DateTimeInterface;
+use SimpleParkBv\Invoices\Contracts\TaxableInterface;
+use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException;
 use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
-use SimpleParkBv\Invoices\Services\CurrencyFormatter;
+use SimpleParkBv\Invoices\Support\Dates;
+use SimpleParkBv\Invoices\Support\Money;
+use SimpleParkBv\Invoices\Support\Text;
 
 /**
- * Class UsageReceiptItem
- *
- * Represents a single item/session in a usage receipt
- *
- * @property string $user
- * @property string $identifier
- * @property \Illuminate\Support\Carbon $startDate
- * @property \Illuminate\Support\Carbon $endDate
- * @property string $category
- * @property float $price
+ * A session on a usage receipt, such as a parking session.
  */
-final class UsageReceiptItem implements UsageReceiptItemInterface
+final class UsageReceiptItem implements TaxableInterface
 {
     use CanFillFromArray;
 
@@ -28,228 +24,185 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
 
     private ?string $identifier = null;
 
-    private ?Carbon $startDate = null;
+    private ?CarbonImmutable $startDate = null;
 
-    private ?Carbon $endDate = null;
+    private ?CarbonImmutable $endDate = null;
 
     private ?string $category = null;
 
-    private ?float $price = null;
-
-    private string $dateFormat = 'd-m-Y H:i';
+    private ?int $priceCents = null;
 
     /**
-     * Get the category.
+     * Set the name of the user of the session.
+     *
+     * @return $this
      */
-    public function getCategory(): ?string
+    public function user(?string $user): static
     {
-        return $this->category;
+        $this->user = Text::clean($user);
+
+        return $this;
     }
 
     /**
-     * Get the end date.
+     * Set what was used, such as a license plate.
+     *
+     * @return $this
      */
-    public function getEndDate(): ?Carbon
+    public function identifier(?string $identifier): static
     {
-        return $this->endDate;
+        $this->identifier = Text::clean($identifier);
+
+        return $this;
     }
 
     /**
-     * Get the identifier.
+     * Set the start of the session. Strings are read in the app timezone.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException when the string is not a valid date
      */
-    public function getIdentifier(): ?string
+    public function startDate(DateTimeInterface|string|null $startDate): static
     {
-        return $this->identifier;
+        $this->startDate = Dates::parse($startDate, 'start date', InvalidUsageReceiptException::class);
+
+        return $this;
     }
 
     /**
-     * Get the price.
+     * Set the end of the session. Strings are read in the app timezone.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException when the string is not a valid date
      */
-    public function getPrice(): ?float
+    public function endDate(DateTimeInterface|string|null $endDate): static
     {
-        return $this->price;
+        $this->endDate = Dates::parse($endDate, 'end date', InvalidUsageReceiptException::class);
+
+        return $this;
     }
 
     /**
-     * Get the start date.
+     * Set the category of the session, such as a zone.
+     *
+     * @return $this
      */
-    public function getStartDate(): ?Carbon
+    public function category(?string $category): static
     {
-        return $this->startDate;
+        $this->category = Text::clean($category);
+
+        return $this;
     }
 
     /**
-     * Get the user name.
+     * Set the price of the session, with at most 2 decimals.
+     *
+     * @return $this
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException when the price is not a number with at most 2 decimals
      */
+    public function price(float|int|string|null $price): static
+    {
+        $this->priceCents = Money::toCents($price, 'price', InvalidUsageReceiptException::class);
+
+        return $this;
+    }
+
     public function getUser(): ?string
     {
         return $this->user;
     }
 
+    public function getIdentifier(): ?string
+    {
+        return $this->identifier;
+    }
+
+    public function getStartDate(): ?CarbonImmutable
+    {
+        return $this->startDate;
+    }
+
+    public function getEndDate(): ?CarbonImmutable
+    {
+        return $this->endDate;
+    }
+
+    public function getCategory(): ?string
+    {
+        return $this->category;
+    }
+
+    public function getPrice(): ?float
+    {
+        return $this->priceCents === null ? null : Money::toFloat($this->priceCents);
+    }
+
+    public function getPriceCents(): ?int
+    {
+        return $this->priceCents;
+    }
+
     /**
-     * Set the category.
+     * Sessions carry no tax information.
+     */
+    public function getTaxPercentage(): ?float
+    {
+        return null;
+    }
+
+    /**
+     * Get the price in cents, used for the total of a receipt without lines.
+     */
+    public function getTotalCents(): int
+    {
+        return $this->priceCents ?? 0;
+    }
+
+    /**
+     * Validate the session.
      *
-     * @return $this
-     */
-    public function category(string $category): self
-    {
-        $this->category = $category;
-
-        return $this;
-    }
-
-    /**
-     * Set the date format for formatting dates.
+     * @param  int|null  $index  the position of the session on the receipt, used in the message
      *
-     * @return $this
-     */
-    public function dateFormat(string $dateFormat): self
-    {
-        $this->dateFormat = $dateFormat;
-
-        return $this;
-    }
-
-    /**
-     * Set the end date.
-     *
-     * @return $this
-     */
-    public function endDate(Carbon|string $endDate): self
-    {
-        if (is_string($endDate)) {
-            $this->endDate = Carbon::parse($endDate);
-
-            return $this;
-        }
-
-        $this->endDate = $endDate;
-
-        return $this;
-    }
-
-    /**
-     * Set the identifier.
-     *
-     * @return $this
-     */
-    public function identifier(string $identifier): self
-    {
-        $this->identifier = $identifier;
-
-        return $this;
-    }
-
-    /**
-     * Set the price.
-     *
-     * @return $this
-     */
-    public function price(float $price): self
-    {
-        $this->price = $price;
-
-        return $this;
-    }
-
-    /**
-     * Set the start date.
-     *
-     * @return $this
-     */
-    public function startDate(Carbon|string $startDate): self
-    {
-        if (is_string($startDate)) {
-            $this->startDate = Carbon::parse($startDate);
-
-            return $this;
-        }
-
-        $this->startDate = $startDate;
-
-        return $this;
-    }
-
-    /**
-     * Set the user name.
-     *
-     * @return $this
-     */
-    public function user(string $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
-    /**
-     * Get the formatted start date.
-     */
-    public function getFormattedStartDate(): string
-    {
-        return $this->startDate?->format($this->dateFormat) ?? '';
-    }
-
-    /**
-     * Get the formatted end date.
-     */
-    public function getFormattedEndDate(): string
-    {
-        return $this->endDate?->format($this->dateFormat) ?? '';
-    }
-
-    /**
-     * Get the formatted price with currency symbol.
-     */
-    public function getFormattedPrice(): string
-    {
-        return $this->price !== null ? CurrencyFormatter::format($this->price) : '';
-    }
-
-    /**
-     * Validate the receipt item.
-     *
-     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptItemException
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException
      */
     public function validate(?int $index = null): void
     {
-        $prefix = $index !== null ? "Item at index {$index}" : 'Item';
+        $prefix = $index === null ? 'Item' : "Item at index {$index}";
 
-        // validate required string fields
-        foreach (['user', 'identifier', 'category'] as $field) {
-            if ($this->$field === null || $this->$field === '') {
-                throw new InvalidUsageReceiptItemException("{$prefix} must have a {$field}");
+        foreach (['a user' => $this->user, 'an identifier' => $this->identifier, 'a category' => $this->category] as $field => $value) {
+            if ($value === null) {
+                throw new InvalidUsageReceiptException("{$prefix} must have {$field}");
             }
         }
 
-        // validate required date fields
         if ($this->startDate === null) {
-            throw new InvalidUsageReceiptItemException("{$prefix} must have a start date");
+            throw new InvalidUsageReceiptException("{$prefix} must have a start date");
         }
 
         if ($this->endDate === null) {
-            throw new InvalidUsageReceiptItemException("{$prefix} must have an end date");
+            throw new InvalidUsageReceiptException("{$prefix} must have an end date");
         }
 
-        // validate date logic
-        if ($this->endDate->lte($this->startDate)) {
-            throw new InvalidUsageReceiptItemException("{$prefix} end date must be after start date");
+        if ($this->endDate->lt($this->startDate)) {
+            throw new InvalidUsageReceiptException("{$prefix} must not end before it starts");
         }
 
-        // validate price
-        if ($this->price === null) {
-            throw new InvalidUsageReceiptItemException("{$prefix} must have a price");
+        if ($this->priceCents === null) {
+            throw new InvalidUsageReceiptException("{$prefix} must have a price");
         }
 
-        if ($this->price < 0) {
-            throw new InvalidUsageReceiptItemException("{$prefix} price cannot be negative");
+        if ($this->priceCents < 0) {
+            throw new InvalidUsageReceiptException("{$prefix} must not have a negative price");
         }
     }
 
     /**
-     * Convert the receipt item to an array representation.
+     * Convert the session to an array that make() accepts.
      *
-     * @return array<string, mixed>
+     * @return array{user: string|null, identifier: string|null, start_date: string|null, end_date: string|null, category: string|null, price: float|null}
      */
     public function toArray(): array
     {
@@ -259,7 +212,30 @@ final class UsageReceiptItem implements UsageReceiptItemInterface
             'start_date' => $this->startDate?->toIso8601String(),
             'end_date' => $this->endDate?->toIso8601String(),
             'category' => $this->category,
-            'price' => $this->price,
+            'price' => $this->getPrice(),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected static function fillable(): array
+    {
+        return [
+            'user' => 'user',
+            'identifier' => 'identifier',
+            'start_date' => 'startDate',
+            'end_date' => 'endDate',
+            'category' => 'category',
+            'price' => 'price',
+        ];
+    }
+
+    /**
+     * @return class-string<\SimpleParkBv\Invoices\Exceptions\InvalidDocumentException>
+     */
+    protected static function invalidDataException(): string
+    {
+        return InvalidUsageReceiptException::class;
     }
 }

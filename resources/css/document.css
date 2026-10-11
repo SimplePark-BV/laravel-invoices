@@ -1,0 +1,73 @@
+/* styles every document shares */
+:root {
+    --surface-low: #9E9E9E;
+    --surface-high: #616161;
+    --surface-highest: #172240;
+
+    --container-highest: #E0E0E0;
+    --container-low: #FAFAFA;
+}
+
+body {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 400;
+    color: var(--surface-highest);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td,
+th {
+    padding: 0;
+}
+
+/* logo */
+.document__logo {
+    height: 50px;
+    width: auto;
+}
+
+/* buyer */
+.document__buyer {
+    margin-bottom: 40px;
+    color: var(--surface-high);
+}
+
+.document__buyer-name {
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--surface-highest);
+}
+
+.document__buyer-detail {
+    margin-bottom: 18px;
+}
+
+.document__buyer-detail:last-child {
+    margin-bottom: 0;
+}
+
+/* text that may hold long words, such as identifiers and urls, wraps anywhere instead of overflowing */
+.document__text {
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+}
+
+/* amounts never wrap, so the currency symbol stays with the amount */
+.document__amount {
+    white-space: nowrap;
+    text-align: right;
+}
+
+.document__amount--left {
+    text-align: left;
+}
+
+.document__nowrap {
+    white-space: nowrap;
+}
