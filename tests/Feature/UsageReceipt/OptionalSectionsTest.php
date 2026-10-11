@@ -8,7 +8,7 @@ use SimpleParkBv\Invoices\Models\UsageReceipt;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
 
-final class IdsRenderingTest extends TestCase
+final class OptionalSectionsTest extends TestCase
 {
     use CreatesTestReceipts;
 
@@ -89,5 +89,39 @@ final class IdsRenderingTest extends TestCase
 
         // assert
         $this->assertStringNotContainsString('usage-receipt__ids', $html);
+    }
+
+    #[Test]
+    public function date_is_hidden_when_no_date_is_given(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt();
+
+        /** @var view-string $view */
+        $view = 'invoices::usage-receipt.title';
+
+        // act
+        $html = view($view, ['usageReceipt' => $receipt])->render();
+
+        // assert
+        $this->assertStringNotContainsString('usage-receipt__date-label', $html);
+    }
+
+    #[Test]
+    public function date_is_shown_when_given(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt();
+        $receipt->date('2026-10-11');
+
+        /** @var view-string $view */
+        $view = 'invoices::usage-receipt.title';
+
+        // act
+        $html = view($view, ['usageReceipt' => $receipt])->render();
+
+        // assert
+        $this->assertStringContainsString('Date', $html);
+        $this->assertStringContainsString('11-10-2026', $html);
     }
 }
