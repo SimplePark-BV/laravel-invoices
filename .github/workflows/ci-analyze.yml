@@ -10,11 +10,18 @@ on:
     branches:
       - main
       - 'release/**'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out code
@@ -25,10 +32,18 @@ jobs:
         with:
           php-version: '8.4'
           tools: composer
+          coverage: none
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-progress
+
+      - name: Check for security advisories
+        run: composer audit --locked
 
       - name: Run PHPStan
-        run: ./vendor/bin/phpstan analyse --memory-limit=2g
-
+        run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress --error-format=github

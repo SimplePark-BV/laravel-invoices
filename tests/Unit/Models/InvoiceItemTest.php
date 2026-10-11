@@ -4,446 +4,225 @@ namespace Tests\Unit\Models;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceItemException;
+use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
 use SimpleParkBv\Invoices\Models\InvoiceItem;
 use Tests\TestCase;
+use Tests\Traits\CreatesTestInvoices;
 
 final class InvoiceItemTest extends TestCase
 {
+    use CreatesTestInvoices;
+
     #[Test]
-    public function make_creates_instance(): void
+    public function make_fills_the_item_from_an_array(): void
     {
-        // arrange
         // act
-        $item = InvoiceItem::make();
-
-        // assert
-        $this->assertInstanceOf(InvoiceItem::class, $item);
-    }
-
-    #[Test]
-    #[DataProvider('valid_setter_data_provider')]
-    public function setters_with_valid_data(string $method, mixed $value, string $getter, mixed $expected): void
-    {
-        // arrange
-        $item = InvoiceItem::make();
-
-        // act
-        $result = $item->$method($value);
-
-        // assert
-        $this->assertSame($item, $result);
-        $this->assertEquals($expected, $item->$getter());
-    }
-
-    /**
-     * @return array<string, array{0: string, 1: mixed, 2: string, 3: mixed}>
-     */
-    public static function valid_setter_data_provider(): array
-    {
-        return [
-            'title' => ['title', 'Test Item', 'getTitle', 'Test Item'],
-            'description' => ['description', 'Test Description', 'getDescription', 'Test Description'],
-            'description null' => ['description', null, 'getDescription', null],
-            'quantity int' => ['quantity', 5, 'getQuantity', 5],
-            'quantity float' => ['quantity', 2.5, 'getQuantity', 2.5],
-            'unit price' => ['unitPrice', 10.50, 'getUnitPrice', 10.50],
-            'unit price zero' => ['unitPrice', 0, 'getUnitPrice', 0],
-            'unit price negative' => ['unitPrice', -5.00, 'getUnitPrice', -5.00],
-            'tax percentage' => ['taxPercentage', 21, 'getTaxPercentage', 21],
-            'tax percentage zero' => ['taxPercentage', 0, 'getTaxPercentage', 0],
-            'tax percentage hundred' => ['taxPercentage', 100, 'getTaxPercentage', 100],
-            'tax percentage null' => ['taxPercentage', null, 'getTaxPercentage', null],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('invalid_quantity_data_provider')]
-    public function validate_throws_exception_for_invalid_quantity(mixed $quantity): void
-    {
-        // arrange
         $item = InvoiceItem::make([
-            'title' => 'Test',
-            'quantity' => $quantity,
-            'unit_price' => 10.00,
-        ]);
-
-        // assert
-        $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Item must have a quantity greater than 0');
-
-        // act
-        $item->validate();
-    }
-
-    /**
-     * @return array<string, array{0: mixed}>
-     */
-    public static function invalid_quantity_data_provider(): array
-    {
-        return [
-            'zero' => [0],
-            'negative' => [-1],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('invalid_tax_percentage_data_provider')]
-    public function validate_throws_exception_for_invalid_tax_percentage(mixed $taxPercentage): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test',
-            'quantity' => 1,
-            'unit_price' => 10.00,
-            'tax_percentage' => $taxPercentage,
-        ]);
-
-        // assert
-        $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Item must have a taxPercentage between 0 and 100, or null');
-
-        // act
-        $item->validate();
-    }
-
-    /**
-     * @return array<string, array{0: mixed}>
-     */
-    public static function invalid_tax_percentage_data_provider(): array
-    {
-        return [
-            'negative' => [-1],
-            'greater than hundred' => [101],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('total_calculation_data_provider')]
-    public function total_calculation(float|int $quantity, float|int $unitPrice, float $expected): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice,
-        ]);
-
-        // act
-        $total = $item->getTotal();
-
-        // assert
-        $this->assertEquals($expected, $total);
-    }
-
-    /**
-     * @return array<string, array{0: float|int, 1: float|int, 2: float}>
-     */
-    public static function total_calculation_data_provider(): array
-    {
-        return [
-            'int values' => [3, 10.50, 31.50],
-            'float quantity' => [2.5, 10.00, 25.00],
-            'negative unit price (discount)' => [1, -5.00, -5.00],
-            'multiple quantity with negative price' => [2, -10.00, -20.00],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('boundary_values_data_provider')]
-    public function boundary_values_pass_validation(float $taxPercentage): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 1,
-            'unit_price' => 10.00,
-            'tax_percentage' => $taxPercentage,
-        ]);
-
-        // act & assert
-        $this->expectNotToPerformAssertions();
-        $item->validate();
-    }
-
-    /**
-     * @return array<string, array{0: float}>
-     */
-    public static function boundary_values_data_provider(): array
-    {
-        return [
-            'tax percentage 0.01' => [0.01],
-            'tax percentage 99.99' => [99.99],
-            'tax percentage exactly 0' => [0.0],
-            'tax percentage exactly 100' => [100.0],
-        ];
-    }
-
-    #[Test]
-    public function very_small_quantity(): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 0.001,
-            'unit_price' => 10.00,
-        ]);
-
-        // act & assert
-        $this->expectNotToPerformAssertions();
-        $item->validate();
-    }
-
-    #[Test]
-    public function very_large_unit_price(): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 1,
-            'unit_price' => 999999999.99,
-        ]);
-
-        // act
-        $total = $item->getTotal();
-
-        // assert
-        $this->assertEquals(999999999.99, $total);
-    }
-
-    #[Test]
-    public function precision_edge_case_calculation(): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 0.33,
-            'unit_price' => 3.00,
-        ]);
-
-        // act
-        $total = $item->getTotal();
-
-        // assert
-        // 0.33 * 3.00 = 0.99 (precision test)
-        $this->assertEquals(0.99, $total);
-    }
-
-    #[Test]
-    #[DataProvider('formatted_tax_percentage_data_provider')]
-    public function formatted_tax_percentage(?float $taxPercentage, string $expected): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'tax_percentage' => $taxPercentage,
-        ]);
-
-        // act
-        $formatted = $item->getFormattedTaxPercentage();
-
-        // assert
-        $this->assertEquals($expected, $formatted);
-    }
-
-    /**
-     * @return array<string, array{0: float|null, 1: string}>
-     */
-    public static function formatted_tax_percentage_data_provider(): array
-    {
-        return [
-            'with value' => [21, '21%'],
-            'with zero' => [0, '0%'],
-            'with null' => [null, ''],
-            'with decimal' => [9.5, '9.5%'],
-        ];
-    }
-
-    #[Test]
-    public function to_array_includes_all_properties(): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'description' => 'Test Description',
+            'title' => 'Parking',
+            'description' => 'Zone 1001',
             'quantity' => 2,
-            'unit_price' => 10.50,
+            'unit_price' => 12.10,
             'tax_percentage' => 21,
         ]);
 
-        // act
-        $array = $item->toArray();
-
         // assert
-        $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
-        $this->assertEquals('Test Item', $array['title']);
-        $this->assertEquals('Test Description', $array['description']);
-        $this->assertEquals(2, $array['quantity']);
-        $this->assertEquals(10.50, $array['unit_price']); // toArray uses snake_case
-        $this->assertEquals(21, $array['tax_percentage']); // toArray uses snake_case
+        $this->assertSame('Parking', $item->getTitle());
+        $this->assertSame('Zone 1001', $item->getDescription());
+        $this->assertSame(2, $item->getQuantity());
+        $this->assertSame(12.10, $item->getUnitPrice());
+        $this->assertSame(1210, $item->getUnitPriceCents());
+        $this->assertSame(21.0, $item->getTaxPercentage());
     }
 
     #[Test]
-    #[DataProvider('to_array_null_properties_data_provider')]
-    public function to_array_includes_null_for_unset_properties(string $property): void
+    public function make_accepts_camel_case_keys(): void
     {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 1,
-            'unit_price' => 10.00,
-        ]);
-
         // act
-        $array = $item->toArray();
+        $item = InvoiceItem::make(['title' => 'Parking', 'unitPrice' => 12.10, 'taxPercentage' => 21]);
 
         // assert
-        $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
-        $this->assertNull($array[$property]); // toArray uses snake_case keys
-    }
-
-    /**
-     * @return array<string, array{0: string}>
-     */
-    public static function to_array_null_properties_data_provider(): array
-    {
-        return [
-            'description null' => ['description'],
-            'tax_percentage null' => ['tax_percentage'],
-        ];
+        $this->assertSame(1210, $item->getUnitPriceCents());
+        $this->assertSame(21.0, $item->getTaxPercentage());
     }
 
     #[Test]
-    public function validate_passes_with_valid_item(): void
+    public function make_rejects_unknown_keys(): void
     {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 1,
-            'unit_price' => 10.00,
-            'tax_percentage' => 21,
-        ]);
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+        $this->expectExceptionMessage("Unknown key 'price' for InvoiceItem");
 
+        // act
+        InvoiceItem::make(['title' => 'Parking', 'price' => 12.10]);
+    }
+
+    #[Test]
+    public function make_rejects_values_of_the_wrong_type(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+        $this->expectExceptionMessage("Invalid value for 'title' of InvoiceItem: array");
+
+        // act
+        InvoiceItem::make(['title' => ['Parking']]);
+    }
+
+    #[Test]
+    public function the_quantity_is_one_by_default(): void
+    {
         // act & assert
-        $this->expectNotToPerformAssertions();
-        $item->validate();
+        $this->assertSame(1, InvoiceItem::make()->getQuantity());
     }
 
     #[Test]
-    public function validate_throws_exception_for_empty_title(): void
+    public function quantity_keeps_fractions_and_turns_whole_numbers_into_integers(): void
     {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => '',
-            'quantity' => 1,
-            'unit_price' => 10.00,
-            'tax_percentage' => 21,
-        ]);
-
-        // assert
-        $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Item must have a title');
-
-        // act
-        $item->validate();
+        // act & assert
+        $this->assertSame(1.5, InvoiceItem::make(['quantity' => 1.5])->getQuantity());
+        $this->assertSame(3, InvoiceItem::make(['quantity' => 3.0])->getQuantity());
+        $this->assertSame(2, InvoiceItem::make(['quantity' => '2'])->getQuantity());
     }
 
     #[Test]
-    public function validate_throws_exception_with_index_prefix(): void
+    public function texts_are_trimmed_and_empty_texts_become_null(): void
     {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => '',
-            'quantity' => 1,
-            'unit_price' => 10.00,
-        ]);
+        // act
+        $item = InvoiceItem::make(['title' => '  Parking  ', 'description' => '   ']);
 
         // assert
-        $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Item at index 5 must have a title');
-
-        // act
-        $item->validate(5);
-    }
-
-    #[Test]
-    public function validate_throws_exception_for_zero_quantity(): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Test Item',
-            'quantity' => 0,
-            'unit_price' => 10.00,
-        ]);
-
-        // assert
-        $this->expectException(InvalidInvoiceItemException::class);
-        $this->expectExceptionMessage('Item must have a quantity greater than 0');
-
-        // act
-        $item->validate();
-    }
-
-    #[Test]
-    public function description_setter(): void
-    {
-        // arrange
-        $item = InvoiceItem::make();
-
-        // act
-        $result = $item->description('Test Description');
-
-        // assert
-        $this->assertSame($item, $result);
-        $this->assertEquals('Test Description', $item->getDescription());
-    }
-
-    #[Test]
-    public function description_setter_with_null(): void
-    {
-        // arrange
-        $item = InvoiceItem::make([
-            'description' => 'Existing Description',
-        ]);
-
-        // act
-        $result = $item->description(null);
-
-        // assert
-        $this->assertSame($item, $result);
+        $this->assertSame('Parking', $item->getTitle());
         $this->assertNull($item->getDescription());
     }
 
     #[Test]
-    public function discount_item_with_negative_unit_price(): void
+    #[DataProvider('totals')]
+    public function the_total_is_rounded_to_whole_cents(float $unitPrice, float|int $quantity, int $expectedCents): void
     {
         // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Discount',
-            'quantity' => 1,
-            'unit_price' => -5.00,
-            'tax_percentage' => 0,
-        ]);
+        $item = $this->createInvoiceItem(['unit_price' => $unitPrice, 'quantity' => $quantity]);
 
-        // act
-        $total = $item->getTotal();
+        // act & assert
+        $this->assertSame($expectedCents, $item->getTotalCents());
+        $this->assertSame($expectedCents / 100.0, $item->getTotal());
+    }
 
-        // assert
-        $this->assertEquals(-5.00, $total);
-        $this->assertEquals(-5.00, $item->getUnitPrice());
+    /**
+     * @return array<string, array{float, float|int, int}>
+     */
+    public static function totals(): array
+    {
+        return [
+            'whole quantity' => [12.10, 2, 2420],
+            'fractional quantity rounds half up' => [14.79, 2.5, 3698],
+            'discount' => [-1.00, 1, -100],
+            'half a cent' => [0.33, 1.5, 50],
+        ];
     }
 
     #[Test]
-    public function negative_unit_price_passes_validation(): void
+    public function unit_price_rejects_more_than_two_decimals(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+        $this->expectExceptionMessage('The unit price must have at most 2 decimals');
+
+        // act
+        $this->createInvoiceItem(['unit_price' => 33.333]);
+    }
+
+    #[Test]
+    public function unit_price_rejects_text_that_is_not_a_number(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+
+        // act
+        $this->createInvoiceItem(['unit_price' => '12,50']);
+    }
+
+    #[Test]
+    public function tax_percentage_rejects_text_that_is_not_a_number(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+
+        // act
+        $this->createInvoiceItem(['tax_percentage' => 'high']);
+    }
+
+    #[Test]
+    public function a_valid_item_passes_validation(): void
     {
         // arrange
-        $item = InvoiceItem::make([
-            'title' => 'Discount Item',
-            'quantity' => 1,
-            'unit_price' => -10.00,
-            'tax_percentage' => 0,
-        ]);
+        $item = $this->createInvoiceItem(['tax_percentage' => 21]);
+
+        // act
+        $item->validate();
+
+        // assert
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    #[Test]
+    #[DataProvider('invalidItems')]
+    public function validate_rejects_invalid_items(array $data, string $message): void
+    {
+        // arrange
+        $item = InvoiceItem::make($data);
+
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+        $this->expectExceptionMessage($message);
+
+        // act
+        $item->validate(3);
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function invalidItems(): array
+    {
+        return [
+            'no title' => [['unit_price' => 10], 'Item at index 3 must have a title'],
+            'blank title' => [['title' => '   ', 'unit_price' => 10], 'Item at index 3 must have a title'],
+            'no unit price' => [['title' => 'Parking'], 'Item at index 3 must have a unit price'],
+            'zero quantity' => [['title' => 'Parking', 'unit_price' => 10, 'quantity' => 0], 'Item at index 3 must have a quantity greater than 0'],
+            'negative quantity' => [['title' => 'Parking', 'unit_price' => 10, 'quantity' => -1], 'Item at index 3 must have a quantity greater than 0'],
+            'negative tax' => [['title' => 'Parking', 'unit_price' => 10, 'tax_percentage' => -1], 'Item at index 3 must have a tax percentage between 0 and 100, or null'],
+            'tax above 100' => [['title' => 'Parking', 'unit_price' => 10, 'tax_percentage' => 100.01], 'Item at index 3 must have a tax percentage between 0 and 100, or null'],
+        ];
+    }
+
+    #[Test]
+    public function a_title_of_zero_is_valid(): void
+    {
+        // arrange
+        $item = $this->createInvoiceItem(['title' => '0']);
+
+        // act
+        $item->validate();
+
+        // assert
+        $this->assertSame('0', $item->getTitle());
+    }
+
+    #[Test]
+    public function to_array_returns_the_fields(): void
+    {
+        // arrange
+        $item = $this->createInvoiceItem(['description' => 'Zone 1001', 'quantity' => 1.5, 'tax_percentage' => 9]);
 
         // act & assert
-        $this->expectNotToPerformAssertions();
-        $item->validate();
+        $this->assertSame([
+            'title' => 'Test Item',
+            'description' => 'Zone 1001',
+            'quantity' => 1.5,
+            'unit_price' => 10.0,
+            'tax_percentage' => 9.0,
+        ], $item->toArray());
     }
 }

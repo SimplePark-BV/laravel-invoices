@@ -2,13 +2,8 @@ includes:
     - vendor/larastan/larastan/extension.neon
 
 parameters:
+    level: max
+
     paths:
         - src
         - tests
-
-    # Rule level
-    level: 8
-
-    excludePaths:
-        - ./*/*/vendor/*
-        - ./*/*/node_modules/*

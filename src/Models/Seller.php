@@ -1,68 +1,119 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleParkBv\Invoices\Models;
 
-use RuntimeException;
+use SimpleParkBv\Invoices\Support\Text;
 
 /**
- * Class Seller
- *
- * @property string|null $registrationNumber
- * @property string|null $taxId
- * @property string|null $bankAccount
+ * The party that issues a document. Documents use the seller from the invoices.seller config by default.
  */
 final class Seller extends Party
 {
-    public ?string $registrationNumber;
+    private ?string $registrationNumber = null;
 
-    public ?string $taxId;
+    private ?string $taxId = null;
 
-    public ?string $bankAccount;
+    private ?string $bankAccount = null;
 
-    public function __construct()
+    /**
+     * Create a seller from the invoices.seller config. Keys the seller does not know are ignored.
+     */
+    public static function fromConfig(): self
     {
-        $seller = config('invoices.seller');
+        $config = config('invoices.seller');
+        $seller = new self;
 
-        $this->name = $seller['name'] ?? throw new RuntimeException('Seller name is required');
+        if (! is_array($config)) {
+            return $seller;
+        }
 
-        $this->address = $seller['address'] ?? null;
-        $this->postalCode = $seller['postal_code'] ?? null;
-        $this->city = $seller['city'] ?? null;
-        $this->country = $seller['country'] ?? null;
-        $this->email = $seller['email'] ?? null;
-        $this->phone = $seller['phone'] ?? null;
-        $this->website = $seller['website'] ?? null;
-        $this->registrationNumber = $seller['registration_number'] ?? null;
-        $this->taxId = $seller['tax_id'] ?? null;
-        $this->bankAccount = $seller['bank_account'] ?? null;
-    }
+        foreach (self::fillable() as $key => $setter) {
+            $value = $config[$key] ?? null;
 
-    public static function make(): self
-    {
-        return new self;
+            $seller->{$setter}(is_scalar($value) ? (string) $value : null);
+        }
+
+        return $seller;
     }
 
     /**
-     * Get the seller's registration number.
+     * Set the chamber of commerce (KvK) registration number.
+     *
+     * @return $this
      */
+    public function registrationNumber(?string $registrationNumber): static
+    {
+        $this->registrationNumber = Text::clean($registrationNumber);
+
+        return $this;
+    }
+
+    /**
+     * Set the VAT identification number.
+     *
+     * @return $this
+     */
+    public function taxId(?string $taxId): static
+    {
+        $this->taxId = Text::clean($taxId);
+
+        return $this;
+    }
+
+    /**
+     * Set the bank account (IBAN).
+     *
+     * @return $this
+     */
+    public function bankAccount(?string $bankAccount): static
+    {
+        $this->bankAccount = Text::clean($bankAccount);
+
+        return $this;
+    }
+
     public function getRegistrationNumber(): ?string
     {
-        return $this->registrationNumber ?? null;
+        return $this->registrationNumber;
     }
 
-    /**
-     * Get the seller's tax ID.
-     */
     public function getTaxId(): ?string
     {
-        return $this->taxId ?? null;
+        return $this->taxId;
+    }
+
+    public function getBankAccount(): ?string
+    {
+        return $this->bankAccount;
     }
 
     /**
-     * Get the seller's bank account.
+     * Convert the seller to an array that make() accepts.
+     *
+     * @return array<string, string|null>
      */
-    public function getBankAccount(): ?string
+    public function toArray(): array
     {
-        return $this->bankAccount ?? null;
+        return [
+            ...parent::toArray(),
+            'registration_number' => $this->registrationNumber,
+            'tax_id' => $this->taxId,
+            'bank_account' => $this->bankAccount,
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected static function fillable(): array
+    {
+        return [
+            ...parent::fillable(),
+            'registration_number' => 'registrationNumber',
+            'tax_id' => 'taxId',
+            'bank_account' => 'bankAccount',
+        ];
     }
 }

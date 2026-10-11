@@ -27,67 +27,77 @@ final class FontRenderingTest extends TestCase
     }
 
     #[Test]
-    public function invoice_embeds_poppins_fonts_by_default(): void
+    public function an_invoice_embeds_the_poppins_fonts_by_default(): void
     {
-        // arrange
-        $invoice = $this->createValidInvoice();
-
         // act
-        $fonts = $this->getEmbeddedFonts($invoice->render()->pdf?->output() ?? '');
+        $fonts = $this->getEmbeddedFonts($this->createInvoice()->toPdf());
 
         // assert
         $this->assertEqualsCanonicalizing(['Poppins-Regular', 'Poppins-Medium'], $fonts);
     }
 
     #[Test]
-    public function usage_receipt_embeds_poppins_fonts_by_default(): void
+    public function a_usage_receipt_embeds_the_poppins_fonts_by_default(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->note('Italic note');
+        $receipt = $this->createReceipt(['note' => 'An italic note']);
 
         // act
-        $fonts = $this->getEmbeddedFonts($receipt->render()->pdf?->output() ?? '');
+        $fonts = $this->getEmbeddedFonts($receipt->toPdf());
 
         // assert
         $this->assertEqualsCanonicalizing(['Poppins-Regular', 'Poppins-Medium', 'Poppins-Italic'], $fonts);
     }
 
     #[Test]
-    public function invoice_uses_custom_font_file_for_all_text(): void
+    public function a_custom_font_file_is_used_for_all_text(): void
     {
         // arrange
         Config::set('invoices.pdf.font', 'Custom Font');
         Config::set('invoices.pdf.font_file', $this->createCustomFontFile());
 
-        $invoice = $this->createValidInvoice();
-
         // act
-        $fonts = $this->getEmbeddedFonts($invoice->render()->pdf?->output() ?? '');
+        $invoiceFonts = $this->getEmbeddedFonts($this->createInvoice()->toPdf());
+        $receiptFonts = $this->getEmbeddedFonts($this->createReceipt(['note' => 'An italic note'])->toPdf());
 
         // assert
-        $this->assertSame(['DejaVuSerif'], $fonts);
+        $this->assertSame(['DejaVuSerif'], $invoiceFonts);
+        $this->assertSame(['DejaVuSerif'], $receiptFonts);
     }
 
     #[Test]
-    public function usage_receipt_uses_custom_font_file_for_all_text(): void
+    public function a_missing_custom_font_file_falls_back_to_poppins(): void
     {
         // arrange
         Config::set('invoices.pdf.font', 'Custom Font');
-        Config::set('invoices.pdf.font_file', $this->createCustomFontFile());
-
-        $receipt = $this->createValidReceipt();
-        $receipt->note('Italic note');
+        Config::set('invoices.pdf.font_file', '/non/existent/font.ttf');
 
         // act
-        $fonts = $this->getEmbeddedFonts($receipt->render()->pdf?->output() ?? '');
+        $fonts = $this->getEmbeddedFonts($this->createInvoice()->toPdf());
 
         // assert
-        $this->assertSame(['DejaVuSerif'], $fonts);
+        $this->assertEqualsCanonicalizing(['Poppins-Regular', 'Poppins-Medium'], $fonts);
+    }
+
+    #[Test]
+    public function the_fonts_are_cached_in_the_configured_font_directory(): void
+    {
+        // arrange
+        $fontDirectory = sys_get_temp_dir().'/laravel-invoices-tests/fonts-'.uniqid();
+        $this->tempFontDir = $fontDirectory;
+        Config::set('dompdf.options.font_dir', $fontDirectory);
+        Config::set('dompdf.options.font_cache', $fontDirectory);
+
+        // act
+        $this->createInvoice()->toPdf();
+
+        // assert: the directory is created, and the bundled fonts are cached there instead of in vendor
+        $this->assertDirectoryExists($fontDirectory);
+        $this->assertNotEmpty(glob($fontDirectory.'/poppins_*'));
     }
 
     /**
-     * Copy a font shipped with dompdf to a directory outside the package root
+     * Copy a font shipped with dompdf to a directory outside the package
      */
     private function createCustomFontFile(): string
     {

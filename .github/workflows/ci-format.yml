@@ -10,11 +10,18 @@ on:
     branches:
       - main
       - 'release/**'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   format:
     name: Format
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out code
@@ -25,9 +32,12 @@ jobs:
         with:
           php-version: '8.4'
           tools: composer
+          coverage: none
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-progress
 
       - name: Run Laravel Pint
         run: vendor/bin/pint --test

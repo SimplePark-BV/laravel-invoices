@@ -2,7 +2,7 @@
 
 return [
     'title' => 'Usage Confirmation',
-    'filename' => 'usage-receipt',
+    'filename' => 'usage-confirmation',
     'date' => 'Date',
     'document_id' => 'Document ID',
     'user_id' => 'User ID',
@@ -14,7 +14,7 @@ return [
         'category' => 'Category',
         'price' => 'Price',
     ],
-    'tax' => 'VAT (:percentage%)',
+    'tax' => 'Of which :percentage% VAT',
     'total' => 'Total',
     'note' => 'Note',
     'footer' => [
@@ -24,5 +24,6 @@ return [
         'tax_id' => 'VAT number',
         'website' => 'Website',
         'email' => 'Email',
+        'phone' => 'Phone',
     ],
 ];

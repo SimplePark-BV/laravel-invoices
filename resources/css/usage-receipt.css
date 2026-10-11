@@ -1,55 +1,15 @@
-:root {
-    --surface-low: #9E9E9E;
-    --surface-high: #616161;
-    --surface-highest: #172240;
-
-    --container-highest: #E0E0E0;
-    --container-low: #FAFAFA;
+/* the bottom margin of the page holds the footer, so content never runs under it */
+@page {
+    margin: 45px 45px 235px 45px;
 }
 
-/* usage receipt base styles */
-.usage-receipt {
-    font-family: var(--usage-receipt-font, Poppins), sans-serif;
-    font-size: 12px;
-    line-height: 1.2;
-    color: var(--surface-highest);
-    font-weight: 400;
-    padding-bottom: 160px;
-}
-
-.usage-receipt table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.usage-receipt tr {
-    page-break-inside: avoid;
-}
-
-.usage-receipt td,
-.usage-receipt th {
-    padding: 0;
-}
-
-/* usage receipt header */
+/* header */
 .usage-receipt__header {
     margin-bottom: 20px;
 }
 
-.usage-receipt__logo {
-    height: 50px;
-    width: auto;
-}
-
-.usage-receipt__logo-placeholder {
-    width: 200px;
-    height: 50px;
-    background-color: var(--container-highest);
-}
-
-/* usage receipt title section */
+/* title and date */
 .usage-receipt__title-section {
-    width: 100%;
     margin-bottom: 30px;
 }
 
@@ -64,56 +24,28 @@
 }
 
 .usage-receipt__date-cell {
+    width: 30%;
     vertical-align: bottom;
     text-align: right;
-}
-
-.usage-receipt__date-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
 }
 
 .usage-receipt__date-label {
     font-weight: 700;
 }
 
-/* usage receipt buyer */
-.usage-receipt__buyer {
-    margin-bottom: 40px;
-    font-size: 12px;
-    color: var(--surface-high);
-}
-
-.usage-receipt__buyer-name {
-    font-weight: 700;
-    color: var(--surface-highest);
-    margin-bottom: 6px;
-}
-
-.usage-receipt__buyer-detail {
-    margin-bottom: 18px;
-}
-
-.usage-receipt__buyer-detail:last-child {
-    margin-bottom: 0;
-}
-
-/* usage receipt IDs section */
+/* ids */
 .usage-receipt__ids {
-    display: table;
-    width: 100%;
     margin-bottom: 40px;
+    table-layout: fixed;
 }
 
 .usage-receipt__id-column {
-    display: table-cell;
-    width: 33.3%;
+    width: 33.33%;
+    vertical-align: top;
 }
 
 .usage-receipt__id-label {
     font-weight: 700;
-    color: var(--surface-highest);
     margin-bottom: 4px;
 }
 
@@ -121,97 +53,80 @@
     color: var(--surface-high);
 }
 
-/* usage receipt sessions table */
+/* sessions */
 .usage-receipt__sessions {
-    width: 100%;
     margin-bottom: 40px;
-}
-
-.usage-receipt__sessions thead,
-.usage-receipt__sessions tbody {
+    table-layout: fixed;
     background-color: var(--container-low);
 }
 
-.usage-receipt__sessions th.usage-receipt__sessions-header {
+.usage-receipt__sessions-header {
     text-align: left;
     padding: 6px 8px 8px 0;
     border-bottom: 1px solid var(--container-highest);
     font-weight: 700;
-    font-size: 12px;
 }
 
-.usage-receipt__sessions th.usage-receipt__sessions-header:first-child {
+.usage-receipt__sessions-header:first-child {
     padding-left: 12px;
 }
 
-.usage-receipt__sessions th.usage-receipt__sessions-header--right {
+.usage-receipt__sessions-header--right {
     text-align: right;
     padding-right: 12px;
 }
 
-.usage-receipt__sessions td.usage-receipt__sessions-cell {
+.usage-receipt__sessions-cell {
     padding: 6px 8px 0 0;
     vertical-align: top;
-    font-size: 12px;
     color: var(--surface-high);
 }
 
-.usage-receipt__sessions td.usage-receipt__sessions-cell:first-child {
+.usage-receipt__sessions-cell:first-child {
     padding-left: 12px;
 }
 
-.usage-receipt__sessions td.usage-receipt__sessions-cell--right {
-    text-align: right;
+.usage-receipt__sessions-cell--right {
     padding-right: 12px;
 }
 
-.usage-receipt__sessions tbody tr:last-child td.usage-receipt__sessions-cell {
+.usage-receipt__sessions tbody tr:last-child .usage-receipt__sessions-cell {
     padding-bottom: 10px;
 }
 
-/* usage receipt cost breakdown */
-.usage-receipt__lines {
-    width: 100%;
-    margin-bottom: 8px;
-    padding-right: 8px;
-}
-
-.usage-receipt__lines-label {
-    text-align: right;
-    padding-right: 15px;
-}
-
-.usage-receipt__lines-value {
-    text-align: right;
-    width: 80px;
-}
-
-/* usage receipt total */
-.usage-receipt__total {
-    width: 100%;
+/* cost breakdown, total and the tax it includes, kept together on one page */
+.usage-receipt__totals {
     margin-bottom: 40px;
-    padding-right: 8px;
+    page-break-inside: avoid;
 }
 
-.usage-receipt__total-label {
+.usage-receipt__totals-label {
     text-align: right;
+    padding: 2px 15px 2px 0;
+}
+
+.usage-receipt__totals-value {
+    width: 90px;
+    padding: 2px 12px 2px 0;
+}
+
+.usage-receipt__totals-label--total,
+.usage-receipt__totals-value--total {
     font-weight: 700;
-    padding-right: 15px;
+    padding-top: 8px;
 }
 
-.usage-receipt__total-value {
-    text-align: right;
-    width: 80px;
+.usage-receipt__totals-tax td {
+    color: var(--surface-high);
 }
 
-/* usage receipt notes */
+/* note */
 .usage-receipt__notes {
     margin-bottom: 30px;
 }
 
 .usage-receipt__notes-label {
     font-weight: 700;
-    color: var(--surface-highest);
     margin-bottom: 6px;
 }
 
@@ -220,50 +135,36 @@
     color: var(--surface-high);
 }
 
-/* usage receipt footer */
+/* footer, in the bottom margin of every page */
 .usage-receipt__footer {
     position: fixed;
-    bottom: 0;
     left: 0;
     right: 0;
-    font-size: 12px;
+    bottom: -190px;
     color: var(--surface-high);
 }
 
 .usage-receipt__footer-disclaimer {
     margin-bottom: 15px;
-    color: var(--surface-high);
 }
 
 .usage-receipt__footer-info {
-    display: table;
-    width: 100%;
+    table-layout: fixed;
     border-top: 1px solid var(--container-highest);
-    padding-top: 15px;
 }
 
 .usage-receipt__footer-column {
-    display: table-cell;
     width: 33.33%;
+    padding-top: 15px;
     vertical-align: top;
 }
 
 .usage-receipt__footer-label {
     font-weight: 700;
-    color: var(--surface-highest);
     margin-bottom: 4px;
-}
-
-.usage-receipt__footer-label:not(:first-child) {
-    margin-top: 12px;
+    color: var(--surface-highest);
 }
 
 .usage-receipt__footer-value {
-    color: var(--surface-high);
-    margin-bottom: 4px;
-}
-
-.usage-receipt__footer-company {
-    display: inline-block;
-    padding-bottom: 6px;
+    margin-bottom: 12px;
 }

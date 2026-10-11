@@ -4,134 +4,81 @@ namespace Tests\Unit\Models;
 
 use Illuminate\Support\Facades\Config;
 use PHPUnit\Framework\Attributes\Test;
-use RuntimeException;
 use SimpleParkBv\Invoices\Models\Seller;
 use Tests\TestCase;
 
 final class SellerTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // set default config for seller
-        Config::set('invoices.seller', [
-            'name' => 'Test Seller',
-            'address' => 'Test Address',
-            'city' => 'Test City',
-            'postal_code' => '12345',
-            'country' => 'Test Country',
-            'email' => 'seller@test.com',
-            'registration_number' => '12345678',
-            'tax_id' => 'NL123456789B01',
-            'bank_account' => 'NL91ABNA0417164300',
-        ]);
-    }
-
     #[Test]
-    public function make_creates_instance(): void
+    public function from_config_reads_the_invoices_seller_config(): void
     {
-        // arrange & act
-        $seller = Seller::make();
-
-        // assert
-        $this->assertInstanceOf(Seller::class, $seller);
-    }
-
-    #[Test]
-    public function seller_is_instance_of_party(): void
-    {
-        // arrange & act
-        $seller = Seller::make();
-
-        // assert
-        $this->assertInstanceOf(\SimpleParkBv\Invoices\Models\Party::class, $seller);
-    }
-
-    #[Test]
-    public function seller_initializes_from_config(): void
-    {
-        // arrange
-        Config::set('invoices.seller', [
-            'name' => 'Config Seller',
-            'address' => 'Config Address',
-            'city' => 'Config City',
-            'postal_code' => '54321',
-            'country' => 'Config Country',
-            'email' => 'config@test.com',
-            'registration_number' => '87654321',
-            'tax_id' => 'NL987654321B02',
-            'bank_account' => 'NL91ABNA0417164301',
-        ]);
-
         // act
-        $seller = Seller::make();
+        $seller = Seller::fromConfig();
 
         // assert
-        $this->assertEquals('Config Seller', $seller->getName());
-        $this->assertEquals('Config Address', $seller->getAddress());
-        $this->assertEquals('Config City', $seller->getCity());
-        $this->assertEquals('54321', $seller->getPostalCode());
-        $this->assertEquals('Config Country', $seller->getCountry());
-        $this->assertEquals('config@test.com', $seller->getEmail());
-        $this->assertEquals('87654321', $seller->getRegistrationNumber());
-        $this->assertEquals('NL987654321B02', $seller->getTaxId());
-        $this->assertEquals('NL91ABNA0417164301', $seller->getBankAccount());
-    }
-
-    #[Test]
-    public function seller_throws_exception_when_name_missing(): void
-    {
-        // arrange
-        Config::set('invoices.seller', []);
-
-        // assert
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Seller name is required');
-
-        // act
-        Seller::make();
-    }
-
-    #[Test]
-    public function seller_handles_partial_config(): void
-    {
-        // arrange
-        Config::set('invoices.seller', [
-            'name' => 'Partial Seller',
-        ]);
-
-        // act
-        $seller = Seller::make();
-
-        // assert
-        $this->assertEquals('Partial Seller', $seller->getName());
-        $this->assertNull($seller->getAddress());
-        $this->assertNull($seller->getCity());
-        $this->assertNull($seller->getPostalCode());
-        $this->assertNull($seller->getCountry());
-        $this->assertNull($seller->getEmail());
+        $this->assertSame('Test Seller B.V.', $seller->getName());
+        $this->assertSame('Teststraat 1', $seller->getAddress());
+        $this->assertSame('1234 AB', $seller->getPostalCode());
+        $this->assertSame('Teststad', $seller->getCity());
+        $this->assertSame('Nederland', $seller->getCountry());
+        $this->assertSame('info@seller.test', $seller->getEmail());
         $this->assertNull($seller->getPhone());
-        $this->assertNull($seller->getWebsite());
-        $this->assertNull($seller->registrationNumber);
-        $this->assertNull($seller->taxId);
-        $this->assertNull($seller->bankAccount);
+        $this->assertSame('www.seller.test', $seller->getWebsite());
+        $this->assertSame('12345678', $seller->getRegistrationNumber());
+        $this->assertSame('NL123456789B01', $seller->getTaxId());
+        $this->assertSame('NL00 TEST 0123 4567 89', $seller->getBankAccount());
     }
 
     #[Test]
-    public function seller_has_additional_properties(): void
+    public function from_config_ignores_unknown_keys_and_casts_numbers(): void
     {
         // arrange
-        $seller = Seller::make();
+        Config::set('invoices.seller', ['name' => 'Seller', 'registration_number' => 12345678, 'unknown' => 'value']);
 
         // act
-        $seller->registrationNumber = '12345678';
-        $seller->taxId = 'NL123456789B01';
-        $seller->bankAccount = 'NL91ABNA0417164300';
+        $seller = Seller::fromConfig();
 
         // assert
-        $this->assertEquals('12345678', $seller->registrationNumber);
-        $this->assertEquals('NL123456789B01', $seller->taxId);
-        $this->assertEquals('NL91ABNA0417164300', $seller->bankAccount);
+        $this->assertSame('Seller', $seller->getName());
+        $this->assertSame('12345678', $seller->getRegistrationNumber());
+    }
+
+    #[Test]
+    public function from_config_without_config_has_no_fields(): void
+    {
+        // arrange
+        Config::set('invoices.seller', null);
+
+        // act & assert
+        $this->assertNull(Seller::fromConfig()->getName());
+    }
+
+    #[Test]
+    public function make_fills_the_seller_from_an_array(): void
+    {
+        // act
+        $seller = Seller::make(['name' => 'Other B.V.', 'registration_number' => '87654321', 'tax_id' => 'NL1', 'bank_account' => 'NL2']);
+
+        // assert
+        $this->assertSame('Other B.V.', $seller->getName());
+        $this->assertSame('87654321', $seller->getRegistrationNumber());
+        $this->assertSame('NL1', $seller->getTaxId());
+        $this->assertSame('NL2', $seller->getBankAccount());
+    }
+
+    #[Test]
+    public function to_array_includes_the_seller_fields_and_round_trips(): void
+    {
+        // arrange
+        $seller = Seller::fromConfig();
+
+        // act
+        $array = $seller->toArray();
+
+        // assert
+        $this->assertSame('12345678', $array['registration_number']);
+        $this->assertSame('NL123456789B01', $array['tax_id']);
+        $this->assertSame('NL00 TEST 0123 4567 89', $array['bank_account']);
+        $this->assertEquals($seller, Seller::make($array));
     }
 }

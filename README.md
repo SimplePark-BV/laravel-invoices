@@ -7,7 +7,15 @@
   </a>
 </div>
 
-A Laravel package for generating Invoice and Usage Receipt PDFs with customizable templates and multilingual support.
+A Laravel package that generates invoice and usage receipt PDFs, in Dutch and English, with dompdf.
+
+Upgrading from v3? Read the [upgrade guide](UPGRADE.md).
+
+## Requirements
+
+- PHP 8.3 or higher
+- Laravel 12 or 13
+- The `gd` extension, to show PNG, JPG and GIF logos
 
 ## Installation
 
@@ -15,185 +23,197 @@ A Laravel package for generating Invoice and Usage Receipt PDFs with customizabl
 composer require simplepark-bv/laravel-invoices
 ```
 
-### Publish Configuration
+Publish the config and set at least the name of the seller:
 
 ```bash
-php artisan vendor:publish --provider="SimpleParkBv\Invoices\InvoiceServiceProvider" --tag="invoices-config"
+php artisan vendor:publish --tag="invoices-config"
 ```
-
-Customize currency, tax rates, payment terms, PDF settings, and seller information in `config/invoices.php`.
-
-### Fonts
-
-PDFs are rendered with the bundled [Poppins](https://fonts.google.com/specimen/Poppins) font (Regular, Italic, and Medium for bold text). To use a different font, set:
 
 ```env
-INVOICES_PDF_FONT="My Font"
-INVOICES_PDF_FONT_FILE=resources/fonts/MyFont.ttf
+INVOICES_SELLER_NAME="SimplePark B.V."
+INVOICES_LOGO=resources/images/logo.png
 ```
 
-- `INVOICES_PDF_FONT_FILE` must point to a TrueType (`.ttf`) file. Relative paths are resolved from your application's base path.
-- The custom font file is used for all text, including bold and italic.
-- Without a font file, `INVOICES_PDF_FONT` must name a font dompdf already knows (e.g. `DejaVu Sans`), otherwise a sans-serif fallback is used.
+The config holds the seller details, the logo, the default language, the payment terms, the date formats and timezone, the currency symbol, and the paper and font of the PDFs. Settings that are not in your published config fall back to the package defaults, so new settings work without publishing again.
 
-### Publish Translations
+The PDFs are rendered with [barryvdh/laravel-dompdf](https://github.com/barryvdh/laravel-dompdf), and its config is kept. Make sure its font cache directory (`storage/fonts` by default) is writable; the package creates it when it is missing.
 
-```bash
-php artisan vendor:publish --provider="SimpleParkBv\Invoices\InvoiceServiceProvider" --tag="invoices-lang"
-```
-
-Modify labels, table headers, footer text, and filename prefixes in `lang/vendor/invoices/`. Available languages: `en`, `nl`.
-
-## Usage
-
-### Invoices
+## Invoices
 
 ```php
 use SimpleParkBv\Invoices\Models\Invoice;
-use SimpleParkBv\Invoices\Models\InvoiceItem;
-use SimpleParkBv\Invoices\Models\Buyer;
 
 $invoice = Invoice::make()
-    ->series('2024')
-    ->sequence(1)
-    ->date('2024-01-15')
     ->language('nl')
+    ->serial('2026.0001')
+    ->date('2026-10-11')
     ->buyer([
-        'name' => 'John Doe',
-        'email' => 'john@example.com',
-        'address' => '123 Main St',
+        'name' => 'Jan de Vries',
+        'address' => 'Keizersgracht 123',
+        'postal_code' => '1015 CJ',
         'city' => 'Amsterdam',
-        'postal_code' => '1000 AA',
+        'email' => 'jan@example.com',
     ])
     ->items([
-        InvoiceItem::make([
-            'title' => 'Product Name',
-            'description' => 'Product description',
-            'quantity' => 2,
-            'unit_price' => 50.00,
-            'tax_percentage' => 21.0,
-        ]),
+        ['title' => 'Parking', 'description' => 'Zone 1001', 'quantity' => 2, 'unit_price' => 12.10, 'tax_percentage' => 21],
+        ['title' => 'Discount', 'unit_price' => -2.00, 'tax_percentage' => 21],
     ]);
 
-return $invoice->download(); // or ->stream() for browser preview
+return $invoice->download(); // or ->stream() to show it in the browser
 ```
 
-**Invoice Numbers**: Combine `series()` and `sequence()` to generate formatted invoice numbers (e.g., "2024.00000123").
+**Amounts include tax.** The unit price is the price of one unit including tax, with at most 2 decimals; a negative unit price is a discount. Amounts may be floats, integers or numeric strings such as `'12.50'`. Quantities may be fractional, such as `1.5`. A tax percentage of `null` means no tax applies; `0` is a 0% rate.
 
-**Discounts**: Use negative `unit_price` values for discount items (quantities must be positive).
+**Totals add up.** All amounts are calculated in whole cents. The line totals add up to the total, and the tax is calculated once per rate over the amounts with that rate. The invoice shows the subtotal excluding tax, and per rate the tax and the amount it is calculated over.
 
-**Expected Totals**: Set an expected total with `expectedTotal(100.00)` for validation. When the invoice is rendered, if the expected total differs from the calculated total, an error will be logged.
+**Numbers.** Set the complete invoice number with `serial('2026.0001')`, or combine `series('2026')` and `sequence(1)` into `2026.00000001`.
 
-### Usage Receipts
+**Concepts.** An invoice without a date is a concept: it is titled "Factuur CONCEPT" when it has no number, shows no dates, and says it is not official yet.
+
+**Payment.** The footer of an issued invoice depends on its state:
+
+| State | Footer |
+|---|---|
+| Total above zero | Asks to pay the amount before the due date by bank transfer |
+| `->paymentMethod(PaymentMethod::DirectDebit)` | Says the amount is collected by direct debit around the due date |
+| `->paid()` | Says the amount has already been paid; the due date is not shown |
+| Total of zero | Says nothing has to be paid |
+| Total below zero | A credit invoice ("Creditfactuur"): says the amount is transferred to the buyer |
+
+Replace the footer with `->footerMessage('...')`, shown as plain text with `:amount`, `:date` (the due date) and `:number` replaced, and the footer of a concept with `->conceptFooterMessage('...')`. The footer sits in the bottom margin of every page, which fits about five lines; a longer footer runs into the content.
+
+**Due date.** The due date is the invoice date plus the payment terms (`invoices.default_payment_terms_days`, 30 days by default). Change the terms with `->paymentTermsDays(14)`, or set the date itself with `->dueDate('2026-11-01')`.
+
+**Expected total.** Pass the total you charged with `->expectedTotal(22.20)`. Validating or rendering the invoice throws an `ExpectedTotalMismatchException` when its total differs by even one cent, so a PDF never shows another amount than the one charged.
+
+## Usage receipts
+
+A usage receipt confirms the sessions a buyer used, such as parking sessions. It is not a payment request.
 
 ```php
 use SimpleParkBv\Invoices\Models\UsageReceipt;
-use SimpleParkBv\Invoices\Models\UsageReceiptItem;
-use SimpleParkBv\Invoices\Models\Buyer;
 
 $receipt = UsageReceipt::make()
-    ->date('2024-01-15')
     ->language('nl')
-    ->title('Custom Title') // optional, falls back to translation
-    ->documentId('DOC-12345')
-    ->userId('USER-001')
-    ->buyer([
-        'name' => 'John Doe',
-        'email' => 'john@example.com',
-    ])
+    ->date('2026-10-11 14:30')
+    ->documentId('PS-2026-000123')
+    ->userId('USR-000042')
+    ->buyer(['name' => 'Jan de Vries', 'email' => 'jan@example.com'])
     ->items([
-        UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Premium',
+        [
+            'user' => 'Jan de Vries',
+            'identifier' => 'AB-123-C',
+            'start_date' => '2026-10-02 10:00',
+            'end_date' => '2026-10-02 12:00',
+            'category' => 'Zone 1001',
             'price' => 12.50,
-        ]),
+        ],
     ])
-    ->note('Optional note for the receipt');
+    ->note('Thank you for parking.');
 
-return $receipt->download(); // filename is locale-aware
+return $receipt->download(); // gebruiksbevestiging-PS-2026-000123.pdf
 ```
 
-**Cost breakdown**: Add lines under the sessions with `->lines([...])` or `->addLine(UsageReceiptLine::make([...]))`, e.g. a fee and a discount (negative amount). When a receipt has lines, its total is the sum of the lines instead of the item prices.
+Without lines, the total is the sum of the session prices. Add a cost breakdown with `lines()`, such as fees and discounts including tax; the total is then the sum of the lines, and the receipt shows the tax they include per rate below the total:
 
 ```php
-use SimpleParkBv\Invoices\Models\UsageReceiptLine;
-
 $receipt->lines([
-    ['label' => 'Parking fee', 'amount' => 12.50],
-    ['label' => 'Service fee', 'amount' => 0.35],
-    UsageReceiptLine::make(['label' => 'Discount', 'amount' => -2.00]),
+    ['label' => 'Parking costs', 'amount' => 12.50],
+    ['label' => 'Service fee', 'amount' => 0.35, 'tax_percentage' => 21],
+    ['label' => 'Discount', 'amount' => -1.00, 'tax_percentage' => 21],
 ]);
 ```
 
-**Locale-Aware Filenames**: The package generates filenames based on the selected language (e.g., `gebruiksbevestiging-2026-01-19-14-30-00.pdf` for Dutch).
+The buyer of a receipt needs no name. Sessions may end at the moment they start, but not before.
 
-### Common Features
+## Building documents
 
-Both `Invoice` and `UsageReceipt` support:
-
-- **Fluent interface** and **array-based** creation
-- **Data arrays**: `Invoice::make($data)` or `UsageReceipt::make($data)`
-- **Serialization**: `->toArray()` for JSON/API responses
-- **Validation**: Automatic validation before rendering, or manual with `->validate()`
-- **Output**: `->download(?string $filename)` or `->stream(?string $filename)`
-- **Custom templates**: `->template('custom.template')`
-- **Custom logos**: `->logo('/path/to/logo.png')`
-- **Date parsing**: Accepts Carbon instances or strings (parsed with `Carbon::parse()`)
-
-### Creating from Arrays
+Every document, item, line and party can be built with fluent setters or from an array: `Invoice::make([...])`, `InvoiceItem::make([...])`, `Buyer::make([...])`. Array keys are the snake_case names of the setters (camelCase works too). Unknown keys throw, so a typo never silently leaves a field empty. `toArray()` returns the same keys, so `Invoice::make($invoice->toArray())` gives an identical invoice.
 
 ```php
 $invoice = Invoice::make([
-    'buyer' => ['name' => 'John Doe', 'email' => 'john@example.com'],
-    'date' => '2024-01-15',
-    'series' => '2024',
-    'sequence' => 1,
+    'buyer' => ['name' => 'Jan de Vries'],
+    'serial' => '2026.0001',
+    'date' => '2026-10-11',
     'items' => [
-        ['title' => 'Product', 'quantity' => 1, 'unit_price' => 100.00, 'tax_percentage' => 21.0],
-    ],
-]);
-
-$receipt = UsageReceipt::make([
-    'buyer' => ['name' => 'Jane Doe'],
-    'date' => '2024-01-15',
-    'document_id' => 'DOC-001',
-    'user_id' => 'USER-001',
-    'items' => [
-        ['user' => 'Jane Doe', 'identifier' => 'XYZ', 'start_date' => '2024-01-15 10:00', 'end_date' => '2024-01-15 12:00', 'category' => 'Basic', 'price' => 10.00],
+        ['title' => 'Parking', 'unit_price' => 12.10, 'tax_percentage' => 21],
     ],
 ]);
 ```
 
-## Validation Requirements
+Dates accept any `DateTimeInterface` (Carbon included) or a string, and are stored as `CarbonImmutable`. They are shown in the `invoices.timezone` (the app timezone by default), with month names in the document language; strings without a timezone are read in that timezone, so `'2026-10-11'` is always shown as 11-10-2026.
 
-**Invoices** must have:
-- A buyer with at least a name
-- At least one item with: non-empty title, quantity > 0, unit price, tax percentage (0-100 or null)
+Array values must have the type of their setter: strings for texts and ids, numbers or numeric strings for amounts, booleans for `paid`. `null` is accepted wherever `toArray()` can return it.
 
-**Usage Receipts** must have:
-- A buyer with at least a name
-- At least one item with: user, identifier, start date, end date, category, and price
+The seller comes from the config. Set another one per document with `->seller([...])`.
+
+## Output
+
+| Method | Returns |
+|---|---|
+| `toPdf()` | The contents of the PDF, e.g. to store or attach it |
+| `download(?string $filename = null)` | A response that downloads the PDF |
+| `stream(?string $filename = null)` | A response that shows the PDF in the browser |
+| `toHtml()` | The HTML the PDF is rendered from |
+| `getFilename()` | The default file name, e.g. `factuur-2026.0001.pdf` |
+| `getTotals()` | The totals, in cents and euros, with the tax per rate |
+
+Every call renders the current state of the document, so changes after an earlier download are never lost. To attach a document to a mail:
+
+```php
+use Illuminate\Mail\Attachment;
+
+Attachment::fromData(fn () => $invoice->toPdf(), $invoice->getFilename())->withMime('application/pdf');
+```
+
+## Validation and exceptions
+
+Rendering validates the document first. Call `validate()` to do so yourself.
+
+- An invoice needs a buyer with a name, and at least one item with a title, a quantity above zero and a unit price.
+- A usage receipt needs a buyer, and at least one session with a user, an identifier, a category, a start, an end and a price of zero or more.
+- Both need a seller with a name.
+
+Every exception implements `SimpleParkBv\Invoices\Exceptions\InvoicesException`:
+
+| Exception | When |
+|---|---|
+| `InvalidInvoiceException`, `InvalidUsageReceiptException` | Invalid or incomplete data. Both extend `InvalidDocumentException`, an `InvalidArgumentException`. |
+| `ExpectedTotalMismatchException` | The total differs from the expected total. |
+| `UnsupportedLanguageException` | The language has no translations. |
+| `RenderException` | The HTML or PDF could not be rendered, e.g. a missing template. |
+
+A logo that cannot be read is left out and logged as a warning, so it never stops a PDF.
+
+## Customizing
+
+**Languages.** Dutch (`nl`) and English (`en`) are included. Publish the translations to change texts; overriding only the keys you change is enough, the other keys fall back to the package:
+
+```bash
+php artisan vendor:publish --tag="invoices-lang"
+```
+
+Add a language by adding a directory to `lang/vendor/invoices`, e.g. `de` with `invoice.php`, `usage-receipt.php` and `format.php` (the decimal and thousands separators). A regional language such as `nl_BE` falls back to `nl`.
+
+**Templates.** Publish the views with `--tag="invoices-views"` to change them, or render a view of your app with `->template('pdf.invoice')`. Views receive the document (as `$invoice` or `$usageReceipt`, and as `$document`), its `$totals`, a `$format` formatter for amounts, percentages and dates, and the `$logo` data URI.
+
+**Fonts.** The PDFs use the bundled Poppins font. Use your own TrueType font for all text with `INVOICES_PDF_FONT="My Font"` and `INVOICES_PDF_FONT_FILE=resources/fonts/MyFont.ttf` (relative to the base path of the app), or only a font name dompdf knows, such as `INVOICES_PDF_FONT="DejaVu Sans"`. A font file that cannot be read falls back to Poppins, with a warning.
+
+**Logo.** Keep the logo small, about 600 pixels wide: large images make rendering slow and the PDFs big.
 
 ## Development
 
 ```bash
 composer install
-./vendor/bin/sail up -d
-./vendor/bin/sail phpunit
-./vendor/bin/phpstan analyse
-./vendor/bin/pint
+composer check   # validate, format check, static analysis and tests
+composer format  # fix the formatting
 ```
 
-## Troubleshooting
+Without PHP installed locally, run the same in Docker:
 
-**Validation fails**: Ensure buyer and items meet requirements above.
-
-**PDF generation fails**: Verify translations exist for the selected language and logo path is valid.
-
-**Language not supported**: Supported languages are detected from `resources/lang/`. Add custom translations by publishing the language files.
+```bash
+docker run --rm -v "$PWD":/app -w /app laravelsail/php84-composer:latest composer check
+```
 
 ## License
 

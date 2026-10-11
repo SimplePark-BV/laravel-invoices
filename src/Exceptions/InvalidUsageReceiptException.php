@@ -1,13 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleParkBv\Invoices\Exceptions;
 
-use RuntimeException;
-
 /**
- * Exception thrown when a usage receipt is invalid.
+ * Thrown when a usage receipt or one of its items or lines is invalid.
  */
-final class InvalidUsageReceiptException extends RuntimeException
+final class InvalidUsageReceiptException extends InvalidDocumentException
 {
     //
 }

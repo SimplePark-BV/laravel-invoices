@@ -2,12 +2,16 @@
 
 namespace Tests\Unit\Models;
 
-use Illuminate\Support\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
-use Mockery;
+use Illuminate\Support\Facades\Lang;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use SimpleParkBv\Invoices\Enums\PaymentMethod;
+use SimpleParkBv\Invoices\Exceptions\ExpectedTotalMismatchException;
+use SimpleParkBv\Invoices\Exceptions\InvalidDocumentException;
+use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
+use SimpleParkBv\Invoices\Exceptions\UnsupportedLanguageException;
 use SimpleParkBv\Invoices\Models\Buyer;
 use SimpleParkBv\Invoices\Models\Invoice;
 use SimpleParkBv\Invoices\Models\InvoiceItem;
@@ -20,1022 +24,615 @@ final class InvoiceTest extends TestCase
     use CreatesTestInvoices;
 
     #[Test]
-    public function make_creates_instance(): void
+    public function a_new_invoice_has_the_defaults_from_the_config(): void
     {
-        // arrange & act
+        // act
         $invoice = Invoice::make();
 
         // assert
-        $this->assertInstanceOf(Invoice::class, $invoice);
-        $this->assertInstanceOf(Seller::class, $invoice->getSeller());
+        $this->assertSame('nl', $invoice->getLanguage());
+        $this->assertSame('d-m-Y', $invoice->getDateFormat());
+        $this->assertSame(30, $invoice->getPaymentTermsDays());
+        $this->assertSame(PaymentMethod::BankTransfer, $invoice->getPaymentMethod());
+        $this->assertFalse($invoice->isPaid());
+        $this->assertSame('Test Seller B.V.', $invoice->getSeller()->getName());
+        $this->assertNull($invoice->getBuyer());
+        $this->assertNull($invoice->getLogo());
+        $this->assertSame('invoices::invoice.index', $invoice->getTemplate());
         $this->assertTrue($invoice->getItems()->isEmpty());
-        $this->assertNull($invoice->pdf);
     }
 
     #[Test]
-    public function from_array_creates_invoice(): void
+    public function the_config_can_change_the_defaults(): void
     {
         // arrange
-        $data = [
-            'buyer' => [
-                'name' => 'Test Buyer',
-                'address' => '123 Test St',
-                'city' => 'Test City',
-                'postal_code' => '12345',
-                'country' => 'Test Country',
-                'email' => 'buyer@test.com',
-            ],
-            'date' => '2024-01-15',
-            'items' => [
-                [
-                    'title' => 'Test Item',
-                    'quantity' => 2,
-                    'unit_price' => 10.50,
-                    'tax_percentage' => 21,
-                ],
-            ],
-            'series' => 'INV',
-            'sequence' => 1,
+        Config::set('invoices.default_language', 'en');
+        Config::set('invoices.default_payment_terms_days', '14');
+        Config::set('invoices.date_format', 'Y-m-d');
+        Config::set('invoices.logo', 'logo.png');
+
+        // act
+        $invoice = Invoice::make();
+
+        // assert
+        $this->assertSame('en', $invoice->getLanguage());
+        $this->assertSame(14, $invoice->getPaymentTermsDays());
+        $this->assertSame('Y-m-d', $invoice->getDateFormat());
+        $this->assertSame('logo.png', $invoice->getLogo());
+    }
+
+    #[Test]
+    public function an_unsupported_default_language_throws(): void
+    {
+        // arrange
+        Config::set('invoices.default_language', 'xx');
+
+        // assert
+        $this->expectException(UnsupportedLanguageException::class);
+
+        // act
+        Invoice::make();
+    }
+
+    #[Test]
+    public function make_and_fluent_setters_build_the_same_invoice(): void
+    {
+        // act
+        $fromArray = Invoice::make([
+            'buyer' => ['name' => 'Jan'],
             'language' => 'en',
-            'footer_message' => 'Please pay :amount by :date.',
-            'concept_footer_message' => 'This is a custom concept message.',
-            'expected_total' => 25.41,
-        ];
+            'date' => '2026-10-11',
+            'serial' => '2026.0001',
+            'items' => [['title' => 'Parking', 'unit_price' => 12.10, 'tax_percentage' => 21]],
+            'payment_method' => 'direct_debit',
+            'expected_total' => 12.10,
+        ]);
 
-        // act
-        $invoice = Invoice::make($data);
+        $fluent = Invoice::make()
+            ->buyer(Buyer::make(['name' => 'Jan']))
+            ->language('en')
+            ->date('2026-10-11')
+            ->serial('2026.0001')
+            ->addItem(InvoiceItem::make()->title('Parking')->unitPrice(12.10)->taxPercentage(21))
+            ->paymentMethod(PaymentMethod::DirectDebit)
+            ->expectedTotal(12.10);
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
-        $this->assertEquals('Test Buyer', $invoice->getBuyer()->getName());
-        $this->assertNotNull($invoice->getDate());
-        $this->assertEquals('2024-01-15', $invoice->getDate()->format('Y-m-d'));
+        $this->assertEquals($fluent, $fromArray);
+    }
+
+    #[Test]
+    public function make_rejects_unknown_keys(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+        $this->expectExceptionMessage("Unknown key 'download' for Invoice");
+
+        // act
+        Invoice::make(['download' => 'invoice.pdf']);
+    }
+
+    #[Test]
+    public function items_accept_items_and_arrays_and_replace_the_current_items(): void
+    {
+        // arrange
+        $invoice = $this->createInvoice();
+
+        // act
+        $invoice->items([$this->createInvoiceItem(['title' => 'First']), ['title' => 'Second', 'unit_price' => 1]]);
+        $invoice->addItem(['title' => 'Third', 'unit_price' => 2]);
+
+        // assert
+        $this->assertSame(['First', 'Second', 'Third'], $invoice->getItems()->map->getTitle()->all());
+    }
+
+    #[Test]
+    public function get_items_returns_a_copy(): void
+    {
+        // arrange
+        $invoice = $this->createInvoice();
+
+        // act
+        $invoice->getItems()->push($this->createInvoiceItem());
+
+        // assert
         $this->assertCount(1, $invoice->getItems());
-        $this->assertEquals('INV', $invoice->getSeries());
-        $this->assertEquals(1, $invoice->getSequence());
-        $this->assertEquals('en', $invoice->getLanguage());
-        $this->assertEquals('Please pay :amount by :date.', $invoice->getCustomFooterMessage());
-        $this->assertEquals('This is a custom concept message.', $invoice->getCustomConceptFooterMessage());
-        $this->assertEquals(25.41, $invoice->getExpectedTotal());
     }
 
     #[Test]
-    public function from_array_handles_partial_data(): void
+    #[DataProvider('numbers')]
+    public function get_number_combines_serial_series_and_sequence(?string $serial, ?string $series, int|string|null $sequence, ?string $expected): void
     {
         // arrange
-        $data = [
-            'buyer' => [
-                'name' => 'Test Buyer',
-            ],
-            'items' => [
-                [
-                    'title' => 'Test Item',
-                    'quantity' => 1,
-                    'unit_price' => 10.00,
-                ],
-            ],
+        $invoice = Invoice::make()->serial($serial)->series($series)->sequence($sequence);
+
+        // act & assert
+        $this->assertSame($expected, $invoice->getNumber());
+    }
+
+    /**
+     * @return array<string, array{string|null, string|null, int|string|null, string|null}>
+     */
+    public static function numbers(): array
+    {
+        return [
+            'nothing' => [null, null, null, null],
+            'serial' => ['2026.0001', null, null, '2026.0001'],
+            'serial wins over series and sequence' => ['2026.0001', '2026', 5, '2026.0001'],
+            'blank serial is ignored' => ['  ', '2026', 5, '2026.00000005'],
+            'series and sequence' => [null, '2026', 1, '2026.00000001'],
+            'series and numeric string sequence' => [null, '2026', '42', '2026.00000042'],
+            'series and text sequence' => [null, 'INV', 'A-1', 'INV.A-1'],
+            'only series' => [null, '2026', null, '2026'],
+            'only sequence' => [null, null, 7, '00000007'],
         ];
-
-        // act
-        $invoice = Invoice::make($data);
-
-        // assert
-        $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
-        $this->assertEquals('Test Buyer', $invoice->getBuyer()->getName());
-        $this->assertCount(1, $invoice->getItems());
-
-        // optional fields should use defaults or be null
-        $this->assertNull($invoice->getSeries());
-        $this->assertNull($invoice->getSequence());
     }
 
     #[Test]
-    public function from_array_handles_empty_items_array(): void
+    public function the_due_date_is_the_date_plus_the_payment_terms(): void
     {
         // arrange
-        $data = [
-            'buyer' => [
-                'name' => 'Test Buyer',
-            ],
-            'items' => [],
-        ];
+        $invoice = $this->createInvoice(['date' => '2026-01-31'])->paymentTermsDays(14);
 
-        // act
-        $invoice = Invoice::make($data);
-
-        // assert
-        $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
-        $this->assertCount(0, $invoice->getItems());
+        // act & assert
+        $this->assertSame('2026-02-14', $invoice->getDueDate()?->toDateString());
+        $this->assertSame('14-02-2026', $invoice->getFormattedDueDate());
     }
 
     #[Test]
-    public function from_array_handles_missing_optional_fields(): void
+    public function an_explicit_due_date_wins_over_the_payment_terms(): void
     {
         // arrange
-        $data = [
-            'buyer' => [
-                'name' => 'Test Buyer',
-            ],
-            'items' => [
-                [
-                    'title' => 'Test Item',
-                    'quantity' => 1,
-                    'unit_price' => 10.00,
-                ],
-            ],
-        ];
+        $invoice = $this->createInvoice(['date' => '2026-01-31', 'due_date' => '2026-03-01']);
+
+        // act & assert
+        $this->assertSame('2026-03-01', $invoice->getDueDate()?->toDateString());
+    }
+
+    #[Test]
+    public function a_concept_has_no_due_date(): void
+    {
+        // act & assert
+        $this->assertNull($this->createInvoice()->getDueDate());
+        $this->assertNull($this->createInvoice()->getFormattedDueDate());
+    }
+
+    #[Test]
+    public function negative_payment_terms_throw(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
 
         // act
-        $invoice = Invoice::make($data);
+        Invoice::make()->paymentTermsDays(-1);
+    }
+
+    #[Test]
+    public function the_date_is_stored_as_an_immutable_copy(): void
+    {
+        // arrange
+        $date = \Illuminate\Support\Carbon::parse('2026-10-11');
+        $invoice = $this->createInvoice()->date($date);
+
+        // act
+        $date->addMonth();
+        $invoice->getDate()?->addMonth();
 
         // assert
-        $this->assertInstanceOf(Buyer::class, $invoice->getBuyer());
-        $this->assertNull($invoice->getSeries());
-        $this->assertNull($invoice->getSequence());
+        $this->assertSame('2026-10-11', $invoice->getDate()?->toDateString());
+        $this->assertInstanceOf(CarbonImmutable::class, $invoice->getDate());
+    }
+
+    #[Test]
+    public function an_empty_date_throws_instead_of_issuing_the_invoice_today(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+
+        // act
+        $this->createInvoice(['date' => '']);
+    }
+
+    #[Test]
+    public function the_formatted_date_is_in_the_display_timezone(): void
+    {
+        // arrange
+        $invoice = $this->createInvoice(['date' => CarbonImmutable::parse('2026-01-31 23:30', 'UTC')]);
+
+        // act & assert
+        $this->assertSame('01-02-2026', $invoice->getFormattedDate());
+    }
+
+    #[Test]
+    public function totals_match_the_printed_breakdown(): void
+    {
+        // arrange
+        $invoice = $this->createInvoice(['items' => [
+            ['title' => 'A', 'unit_price' => 70.00, 'tax_percentage' => 21],
+            ['title' => 'B', 'unit_price' => 10.00, 'tax_percentage' => 9],
+        ]]);
+
+        // act
+        $totals = $invoice->getTotals();
+
+        // assert
+        $this->assertSame(80.0, $invoice->getTotal());
+        $this->assertSame(12.98, $invoice->getTaxAmount());
+        $this->assertSame(67.02, $invoice->getSubtotal());
+        $this->assertSame([1215, 83], [$totals->getTaxGroups()[0]->getTaxCents(), $totals->getTaxGroups()[1]->getTaxCents()]);
+    }
+
+    #[Test]
+    public function line_totals_add_up_to_the_total(): void
+    {
+        // arrange: 3 x 0.33 at a quantity of 1.5 used to print 0,50 per line but 1,48 as total
+        $invoice = $this->createInvoice(['items' => array_fill(0, 3, ['title' => 'A', 'unit_price' => 0.33, 'quantity' => 1.5])]);
+
+        // act & assert
+        $this->assertSame(150, $invoice->getTotals()->getTotalCents());
+    }
+
+    #[Test]
+    public function the_status_follows_the_date_total_and_payment(): void
+    {
+        // arrange
+        $concept = $this->createInvoice();
+        $issued = $this->createInvoice(['date' => '2026-10-11']);
+        $paid = $this->createInvoice(['date' => '2026-10-11', 'paid' => true]);
+        $credit = $this->createInvoice(['date' => '2026-10-11', 'items' => [['title' => 'Refund', 'unit_price' => -5]]]);
+        $zero = $this->createInvoice(['date' => '2026-10-11', 'items' => [['title' => 'A', 'unit_price' => 5], ['title' => 'B', 'unit_price' => -5]]]);
+
+        // act & assert
+        $this->assertSame([false, false, false], [$concept->isIssued(), $concept->isCredit(), $concept->isPaymentDue()]);
+        $this->assertSame([true, false, true], [$issued->isIssued(), $issued->isCredit(), $issued->isPaymentDue()]);
+        $this->assertSame([true, false, false], [$paid->isIssued(), $paid->isCredit(), $paid->isPaymentDue()]);
+        $this->assertSame([true, true, false], [$credit->isIssued(), $credit->isCredit(), $credit->isPaymentDue()]);
+        $this->assertSame([true, false, false], [$zero->isIssued(), $zero->isCredit(), $zero->isPaymentDue()]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    #[Test]
+    #[DataProvider('footers')]
+    public function the_footer_depends_on_the_state_of_the_invoice(array $data, string $expected): void
+    {
+        // arrange
+        $invoice = $this->createInvoice(['serial' => '2026.0001', ...$data]);
+
+        // act
+        $footer = strip_tags($invoice->getFooterMessage());
+
+        // assert
+        $this->assertSame($expected, $footer);
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function footers(): array
+    {
+        $date = ['date' => '2026-10-11'];
+
+        return [
+            'concept' => [[], 'Dit is een CONCEPT. Dit betekent dat deze factuur nog niet officieel is en er nog geen betaling vereist is. Je ontvangt de officiële factuur op een later moment.'],
+            'custom concept' => [['concept_footer_message' => 'Nog niet definitief <b>'], 'Nog niet definitief &lt;b&gt;'],
+            'payment request' => [$date, "We verzoeken je vriendelijk het bovenstaande bedrag van €\u{00A0}10,00 voor 10-11-2026 te voldoen op onze bankrekening. Voor vragen kan je contact opnemen per e-mail."],
+            'direct debit' => [[...$date, 'payment_method' => 'direct_debit'], "Het bovenstaande bedrag van €\u{00A0}10,00 wordt rond 10-11-2026 automatisch van je rekening afgeschreven. Voor vragen kan je contact opnemen per e-mail."],
+            'paid' => [[...$date, 'paid' => true, 'payment_method' => 'direct_debit'], "Het bovenstaande bedrag van €\u{00A0}10,00 is al voldaan, je hoeft dus niets meer te betalen. Voor vragen kan je contact opnemen per e-mail."],
+            'credit' => [[...$date, 'paid' => true, 'items' => [['title' => 'Refund', 'unit_price' => -10]]], "We zullen het bovenstaande bedrag van €\u{00A0}10,00 voor 10-11-2026 overmaken op je bankrekening. Voor vragen kan je contact opnemen per e-mail."],
+            'nothing due' => [[...$date, 'items' => [['title' => 'A', 'unit_price' => 0.30], ['title' => 'B', 'unit_price' => -0.10], ['title' => 'C', 'unit_price' => -0.20]]], 'Je hoeft voor deze factuur niets te betalen. Voor vragen kan je contact opnemen per e-mail.'],
+            'custom' => [[...$date, 'footer_message' => 'Pay :amount before :date for :number & <thanks>'], "Pay €\u{00A0}10,00 before 10-11-2026 for 2026.0001 &amp; &lt;thanks&gt;"],
+            'custom with a negative total keeps the sign' => [[...$date, 'footer_message' => 'Total :amount', 'items' => [['title' => 'Refund', 'unit_price' => -10]]], "Total €\u{00A0}-10,00"],
+        ];
+    }
+
+    #[Test]
+    public function the_footer_uses_the_document_language_outside_rendering(): void
+    {
+        // arrange
+        app()->setLocale('nl');
+        $invoice = $this->createInvoice(['language' => 'en', 'date' => '2026-10-11', 'items' => [['title' => 'A', 'unit_price' => 1234.50]]]);
+
+        // act
+        $footer = strip_tags($invoice->getFooterMessage());
+
+        // assert
+        $this->assertStringStartsWith("We kindly request you to pay the above amount of €\u{00A0}1,234.50 by 10-11-2026", $footer);
+    }
+
+    #[Test]
+    public function the_footer_marks_the_amount_date_and_number(): void
+    {
+        // arrange
+        $invoice = $this->createInvoice(['date' => '2026-10-11', 'serial' => '2026.0001', 'footer_message' => ':amount :date :number']);
+
+        // act & assert
+        $this->assertSame(
+            "<span class=\"invoice__footer-amount\">€\u{00A0}10,00</span> <span class=\"invoice__footer-date\">10-11-2026</span> <span class=\"invoice__footer-number\">2026.0001</span>",
+            $invoice->getFooterMessage(),
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    #[Test]
+    #[DataProvider('titles')]
+    public function the_title_shows_the_type_and_number(array $data, string $expected): void
+    {
+        // act & assert
+        $this->assertSame($expected, $this->createInvoice($data)->getTitle());
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function titles(): array
+    {
+        return [
+            'concept' => [[], 'Factuur CONCEPT'],
+            'numbered' => [['serial' => '2026.0001'], 'Factuur 2026.0001'],
+            'english concept' => [['language' => 'en'], 'Invoice DRAFT'],
+            'credit invoice' => [['serial' => '2026.0002', 'items' => [['title' => 'Refund', 'unit_price' => -5]]], 'Creditfactuur 2026.0002'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    #[Test]
+    #[DataProvider('filenames')]
+    public function the_filename_is_built_from_the_number(array $data, string $expected): void
+    {
+        // act & assert
+        $this->assertSame($expected, $this->createInvoice($data)->getFilename());
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function filenames(): array
+    {
+        return [
+            'serial' => [['serial' => '2026.0001'], 'factuur-2026.0001.pdf'],
+            'series and sequence' => [['series' => '2024', 'sequence' => 1, 'date' => '2024-01-15'], 'factuur-2024.00000001.pdf'],
+            'concept' => [[], 'factuur-CONCEPT.pdf'],
+            'english' => [['language' => 'en', 'serial' => '2026.0001'], 'invoice-2026.0001.pdf'],
+            'unsafe characters' => [['serial' => 'INV/2026\\0001:"x"'], 'factuur-INV-2026-0001-x-.pdf'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('languages')]
+    public function language_normalises_the_code(string $language, string $expected): void
+    {
+        // act & assert
+        $this->assertSame($expected, Invoice::make()->language($language)->getLanguage());
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function languages(): array
+    {
+        return [
+            'dutch' => ['nl', 'nl'],
+            'english' => ['en', 'en'],
+            'upper case' => ['NL', 'nl'],
+            'region falls back to the language' => ['nl_BE', 'nl'],
+            'region with a dash' => ['en-GB', 'en'],
+            'spaces' => [' en ', 'en'],
+        ];
+    }
+
+    #[Test]
+    public function language_rejects_languages_without_translations(): void
+    {
+        // assert
+        $this->expectException(UnsupportedLanguageException::class);
+        $this->expectExceptionMessage("Language 'de' is not supported");
+
+        // act
+        Invoice::make()->language('de');
+    }
+
+    #[Test]
+    public function language_accepts_languages_added_by_the_app(): void
+    {
+        // arrange
+        Lang::addLines(['invoice.invoice' => 'Rechnung', 'invoice.concept' => 'ENTWURF'], 'de', 'invoices');
+
+        // act
+        $invoice = $this->createInvoice()->language('de');
+
+        // assert
+        $this->assertSame('de', $invoice->getLanguage());
+        $this->assertSame('Rechnung ENTWURF', $invoice->getTitle());
+    }
+
+    #[Test]
+    public function payment_method_accepts_the_enum_and_its_value(): void
+    {
+        // act & assert
+        $this->assertSame(PaymentMethod::DirectDebit, Invoice::make()->paymentMethod('direct_debit')->getPaymentMethod());
+        $this->assertSame(PaymentMethod::BankTransfer, Invoice::make()->paymentMethod(PaymentMethod::BankTransfer)->getPaymentMethod());
+    }
+
+    #[Test]
+    public function payment_method_rejects_unknown_methods(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+
+        // act
+        Invoice::make()->paymentMethod('cash');
+    }
+
+    #[Test]
+    public function an_expected_total_that_matches_passes_validation(): void
+    {
+        // arrange
+        $invoice = $this->createInvoice(['expected_total' => '10.00']);
+
+        // act
+        $invoice->validate();
+
+        // assert
+        $this->assertSame(10.0, $invoice->getExpectedTotal());
+    }
+
+    #[Test]
+    #[DataProvider('mismatchingTotals')]
+    public function an_expected_total_that_differs_by_a_cent_throws(float $unitPrice, float $expectedTotal): void
+    {
+        // arrange
+        $invoice = $this->createInvoice(['serial' => '2026.0001', 'items' => [['title' => 'A', 'unit_price' => $unitPrice]]])->expectedTotal($expectedTotal);
+
+        // assert
+        $this->expectException(ExpectedTotalMismatchException::class);
+        $this->expectExceptionMessage('The total of invoice 2026.0001 is');
+
+        // act
+        $invoice->validate();
+    }
+
+    /**
+     * @return array<string, array{float, float}>
+     */
+    public static function mismatchingTotals(): array
+    {
+        return [
+            'one cent more' => [10.00, 10.01],
+            'one cent less' => [12.85, 12.84],
+            'float noise used to hide this one' => [10.10, 10.11],
+            'negative' => [-10.00, -10.01],
+        ];
+    }
+
+    #[Test]
+    public function the_expected_total_mismatch_exception_has_the_amounts(): void
+    {
+        // arrange
+        $invoice = $this->createInvoice(['expected_total' => 12.34]);
+
+        // act
+        try {
+            $invoice->validate();
+            $this->fail('The mismatch was not detected');
+        } catch (ExpectedTotalMismatchException $e) {
+            // assert
+            $this->assertSame(1234, $e->expectedCents);
+            $this->assertSame(1000, $e->actualCents);
+            $this->assertSame('The total of invoice (concept) is 10.00, but 12.34 was expected (difference: -2.34)', $e->getMessage());
+        }
+    }
+
+    #[Test]
+    public function an_expected_total_of_null_removes_the_check(): void
+    {
+        // arrange
+        $invoice = $this->createInvoice(['expected_total' => 12.34])->expectedTotal(null);
+
+        // act
+        $invoice->validate();
+
+        // assert
         $this->assertNull($invoice->getExpectedTotal());
     }
 
-    #[Test]
-    public function to_array_handles_null_values(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem();
-        $invoice->addItem($item);
-
-        // act
-        $array = $invoice->toArray();
-
-        // assert
-        $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
-        $this->assertNull($array['series']);
-        $this->assertNull($array['sequence']);
-        $this->assertNull($array['expected_total']);
-    }
-
-    #[Test]
-    public function to_array_returns_structure(): void
-    {
-        // arrange
-        $buyer = Buyer::make([
-            'name' => 'Test Buyer',
-            'email' => 'buyer@test.com',
-        ]);
-
-        $item = $this->createInvoiceItem(['title' => 'Test Item', 'quantity' => 2, 'unit_price' => 10.50, 'tax_percentage' => 21]);
-
-        $invoice = Invoice::make();
-        $invoice->buyer($buyer);
-        $invoice->date('2024-01-15');
-        $invoice->addItem($item);
-        $invoice->series('INV');
-        $invoice->sequence(1);
-        $invoice->language('en');
-
-        // act
-        $array = $invoice->toArray();
-
-        // assert
-        $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
-        $this->assertArrayHasKey('buyer', $array);
-        $this->assertArrayHasKey('date', $array);
-        $this->assertArrayHasKey('items', $array);
-        $this->assertArrayHasKey('series', $array);
-        $this->assertArrayHasKey('sequence', $array);
-        $this->assertArrayHasKey('language', $array);
-        $this->assertArrayHasKey('footer_message', $array);
-        $this->assertArrayHasKey('concept_footer_message', $array);
-        $this->assertEquals('Test Buyer', $array['buyer']['name']);
-        $this->assertCount(1, $array['items']);
-    }
-
-    #[Test]
-    public function buyer_assignment(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-
-        // act
-        $result = $invoice->buyer($buyer);
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertSame($buyer, $invoice->getBuyer());
-    }
-
-    #[Test]
-    #[DataProvider('date_handling_data_provider')]
-    public function date_handling(mixed $dateInput, string $expectedFormat): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $result = $invoice->date($dateInput);
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertNotNull($invoice->getDate());
-        $this->assertEquals($expectedFormat, $invoice->getDate()->format('Y-m-d'));
-    }
-
     /**
-     * @return array<string, array{0: mixed, 1: string}>
-     */
-    public static function date_handling_data_provider(): array
-    {
-        return [
-            'carbon instance' => [Carbon::parse('2024-01-15'), '2024-01-15'],
-            'string' => ['2024-01-15', '2024-01-15'],
-        ];
-    }
-
-    #[Test]
-    public function add_item(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item = $this->createInvoiceItem();
-
-        // act
-        $result = $invoice->items([$item]);
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertCount(1, $invoice->getItems());
-        $this->assertSame($item, $invoice->getItems()->first());
-    }
-
-    #[Test]
-    public function add_items(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem(['title' => 'Item 1']);
-        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 2, 'unit_price' => 20.00]);
-
-        // act
-        $result = $invoice->items([$item1, $item2]);
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertCount(2, $invoice->getItems());
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $items
+     * @param  array<string, mixed>  $data
      */
     #[Test]
-    #[DataProvider('items_total_data_provider')]
-    public function items_total(array $items, float $expected): void
+    #[DataProvider('invalidInvoices')]
+    public function validate_rejects_invalid_invoices(array $data, string $message): void
     {
         // arrange
-        $invoice = Invoice::make();
-        $invoiceItems = [];
-        foreach ($items as $itemData) {
-            $invoiceItems[] = InvoiceItem::make($itemData);
-        }
-        $invoice->items($invoiceItems);
-
-        // act
-        $total = $invoice->getItemsTotal();
-
-        // assert
-        $this->assertEquals($expected, $total);
-    }
-
-    /**
-     * @return array<string, array{0: array<int, array<string, mixed>>, 1: float}>
-     */
-    public static function items_total_data_provider(): array
-    {
-        return [
-            'single item' => [
-                [['title' => 'Item', 'quantity' => 2, 'unit_price' => 10.00]],
-                20.00,
-            ],
-            'multiple items' => [
-                [
-                    ['title' => 'Item 1', 'quantity' => 2, 'unit_price' => 10.00],
-                    ['title' => 'Item 2', 'quantity' => 3, 'unit_price' => 20.00],
-                ],
-                80.00, // (2 * 10) + (3 * 20) = 80
-            ],
-        ];
-    }
-
-    #[Test]
-    public function subtotal(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2, 'unit_price' => 121.00, 'tax_percentage' => 21]); // 100 + 21% tax
-        $invoice->addItem($item);
-
-        // act
-        $subTotal = $invoice->getSubTotal();
-
-        // assert
-        // itemsTotal = 242, taxAmount = 242 * 0.21 / 1.21 = 42, subtotal = 242 - 42 = 200
-        $this->assertEquals(242.00, $invoice->getItemsTotal());
-        $this->assertEquals(200.00, round($subTotal, 2));
-    }
-
-    #[Test]
-    public function total(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2]);
-        $invoice->addItem($item);
-
-        // act
-        $total = $invoice->getTotal();
-
-        // assert
-        $this->assertEquals(20.00, $total);
-    }
-
-    #[Test]
-    public function tax_amount(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]); // 100 + 21% tax
-        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 110.00, 'tax_percentage' => 10]); // 100 + 10% tax
-
-        $invoice->items([$item1, $item2]);
-
-        // act
-        $taxAmount = $invoice->getTaxAmount();
-
-        // assert
-        // tax1 = 121 * 0.21 / 1.21 = 21
-        // tax2 = 110 * 0.10 / 1.10 = 10
-        // total tax = 31
-        $this->assertEquals(31.00, round($taxAmount, 2));
-    }
-
-    #[Test]
-    public function tax_groups(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 21]);
-        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 9]);
-        $item3 = $this->createInvoiceItem(['title' => 'Item 3', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => 21]);
-        $item4 = $this->createInvoiceItem(['title' => 'Item 4', 'quantity' => 1, 'unit_price' => 10.00, 'tax_percentage' => null]);
-
-        $invoice->items([$item1, $item2, $item3, $item4]);
-
-        // act
-        $taxGroups = $invoice->getTaxGroups();
-
-        // assert
-        $this->assertCount(2, $taxGroups);
-        $this->assertEquals(21.0, $taxGroups->first());
-        $this->assertEquals(9.0, $taxGroups->last());
-    }
-
-    #[Test]
-    #[DataProvider('tax_amount_for_group_data_provider')]
-    public function tax_amount_for_group(float $taxPercentage, float $expected): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item1 = $this->createInvoiceItem(['title' => 'Item 1', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
-        $item2 = $this->createInvoiceItem(['title' => 'Item 2', 'quantity' => 1, 'unit_price' => 110.00, 'tax_percentage' => 10]);
-
-        $invoice->items([$item1, $item2]);
-
-        // act
-        $tax = $invoice->getTaxAmountForTaxGroup($taxPercentage);
-
-        // assert
-        $this->assertEquals($expected, round($tax, 2));
-    }
-
-    /**
-     * @return array<string, array{0: float, 1: float}>
-     */
-    public static function tax_amount_for_group_data_provider(): array
-    {
-        return [
-            'tax 21' => [21, 21.00],
-            'tax 10' => [10, 10.00],
-        ];
-    }
-
-    #[Test]
-    public function subtotal_for_tax_group(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
-        $invoice->addItem($item);
-
-        // act
-        $subTotal = $invoice->getSubTotalForTaxGroup(21);
-
-        // assert
-        // itemsTotal = 121, taxAmount = 21, subtotal = 100
-        $this->assertEquals(100.00, round($subTotal, 2));
-    }
-
-    #[Test]
-    public function expected_total(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $result = $invoice->expectedTotal(100.50);
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertEquals(100.50, $invoice->getExpectedTotal());
-        // expected total should not override getTotal()
-        $this->assertEquals(0.00, $invoice->getTotal());
-    }
-
-    #[Test]
-    public function expected_total_can_be_set_via_make(): void
-    {
-        // arrange & act
-        $invoice = Invoice::make(['expected_total' => 150.75]);
-
-        // assert
-        $this->assertEquals(150.75, $invoice->getExpectedTotal());
-        $this->assertFalse($invoice->shouldThrowOnExpectedTotalMismatch());
-    }
-
-    #[Test]
-    public function expected_total_logs_error_when_differing_from_calculated_total(): void
-    {
-        // arrange
-        Log::shouldReceive('error')
-            ->once()
-            ->with(
-                'Expected total differs from calculated total',
-                Mockery::on(function ($context) {
-                    return isset($context['expected_total'])
-                        && isset($context['actual_total'])
-                        && isset($context['difference'])
-                        && abs($context['expected_total'] - 100.50) < 0.01
-                        && abs($context['actual_total'] - 20.00) < 0.01;
-                })
-            );
-
-        $invoice = Invoice::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 2]);
-        $invoice->addItem($item);
-        $invoice->expectedTotal(100.50); // differs from calculated total of 20.00
-
-        // act
-        $invoice->render();
-    }
-
-    #[Test]
-    public function is_rendered_returns_false(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $isRendered = $invoice->isRendered();
-
-        // assert
-        $this->assertFalse($isRendered);
-    }
-
-    #[Test]
-    public function clear_pdf(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        /** @var \Barryvdh\DomPDF\PDF&\Mockery\MockInterface $mockPdf */
-        $mockPdf = Mockery::mock(\Barryvdh\DomPDF\PDF::class);
-        $invoice->pdf = $mockPdf; // mock pdf object
-
-        // act
-        $result = $invoice->clearPdf();
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertNull($invoice->pdf);
-    }
-
-    #[Test]
-    public function seller_initialized_from_config(): void
-    {
-        // arrange
-        Config::set('invoices.seller.name', 'Test Seller');
-        Config::set('invoices.seller.address', 'Test Address');
-
-        // act
-        $invoice = Invoice::make();
-
-        // assert
-        $this->assertInstanceOf(Seller::class, $invoice->getSeller());
-        $this->assertEquals('Test Seller', $invoice->getSeller()->getName());
-        $this->assertEquals('Test Address', $invoice->getSeller()->getAddress());
-    }
-
-    #[Test]
-    public function formatted_total(): void
-    {
-        // arrange
-        Config::set('invoices.currency_symbol', '€');
-        Config::set('invoices.decimal_separator', ',');
-        Config::set('invoices.thousands_separator', '.');
-
-        $invoice = Invoice::make();
-        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 10.50]);
-        $invoice->addItem($item);
-
-        // act
-        $formatted = $invoice->getFormattedTotal();
-
-        // assert
-        $this->assertEquals('€ 10,50', $formatted);
-    }
-
-    #[Test]
-    public function formatted_subtotal(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $item = $this->createInvoiceItem(['title' => 'Item', 'quantity' => 1, 'unit_price' => 121.00, 'tax_percentage' => 21]);
-        $invoice->addItem($item);
-
-        // act
-        $formattedSubTotal = $invoice->getFormattedSubTotal();
-
-        // assert
-        // formattedSubTotal returns a float, should be exactly 100.00 (121 - 21 tax)
-        $this->assertIsFloat($formattedSubTotal); // @phpstan-ignore-line method.alreadyNarrowedType
-        $this->assertEquals(100.00, $formattedSubTotal);
-    }
-
-    #[Test]
-    #[DataProvider('get_number_data_provider')]
-    public function get_number(?string $series, int|string|null $sequence, ?string $expected): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        if ($series !== null) {
-            $invoice->series($series);
-        }
-        if ($sequence !== null) {
-            $invoice->sequence($sequence);
-        }
-
-        // act
-        $number = $invoice->getNumber();
-
-        // assert
-        $this->assertEquals($expected, $number);
-    }
-
-    /**
-     * @return array<string, array{0: string|null, 1: int|string|null, 2: string|null}>
-     */
-    public static function get_number_data_provider(): array
-    {
-        return [
-            'both series and sequence' => ['INV', 123, 'INV.00000123'],
-            'only series' => ['INV', null, 'INV'],
-            'only sequence' => [null, 123, '00000123'],
-            'neither set' => [null, null, null],
-            'sequence with single digit' => ['INV', 1, 'INV.00000001'],
-            'sequence with large number' => ['INV', 99999999, 'INV.99999999'],
-            'sequence as numeric string' => ['INV', '123', 'INV.00000123'],
-            'sequence as non-numeric string' => ['INV', 'ABC', 'INV.ABC'],
-            'only sequence as string' => [null, 'ABC', 'ABC'],
-        ];
-    }
-
-    #[Test]
-    public function series_setter(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $result = $invoice->series('INV');
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertEquals('INV', $invoice->getSeries());
-    }
-
-    #[Test]
-    public function sequence_setter(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $result = $invoice->sequence(123);
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertEquals(123, $invoice->getSequence());
-    }
-
-    #[Test]
-    public function sequence_setter_with_string(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $result = $invoice->sequence('ABC');
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertEquals('ABC', $invoice->getSequence());
-    }
-
-    #[Test]
-    public function serial_setter(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $result = $invoice->serial('INV.00000123');
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertEquals('INV.00000123', $invoice->getSerial());
-    }
-
-    #[Test]
-    public function get_number_with_serial(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $invoice->serial('INV.00000123');
-
-        // act
-        $number = $invoice->getNumber();
-
-        // assert
-        $this->assertEquals('INV.00000123', $number);
-    }
-
-    #[Test]
-    public function serial_overrides_series_sequence(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $invoice->series('INV');
-        $invoice->sequence(456);
-        $invoice->serial('CUSTOM.999');
-
-        // act
-        $number = $invoice->getNumber();
-
-        // assert
-        $this->assertEquals('CUSTOM.999', $number);
-        // verify series and sequence are still set but ignored
-        $this->assertEquals('INV', $invoice->getSeries());
-        $this->assertEquals(456, $invoice->getSequence());
-    }
-
-    #[Test]
-    public function serial_in_from_array(): void
-    {
-        // arrange
-        $data = [
-            'serial' => 'INV.00000123',
-        ];
-
-        // act
         $invoice = Invoice::make($data);
 
         // assert
-        $this->assertEquals('INV.00000123', $invoice->getSerial());
-        $this->assertEquals('INV.00000123', $invoice->getNumber());
+        $this->expectException(InvalidInvoiceException::class);
+        $this->expectExceptionMessage($message);
+
+        // act
+        $invoice->validate();
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function invalidInvoices(): array
+    {
+        $item = ['title' => 'A', 'unit_price' => 1];
+
+        return [
+            'no buyer' => [['items' => [$item]], 'An invoice must have a buyer'],
+            'buyer without a name' => [['buyer' => ['email' => 'jan@example.test'], 'items' => [$item]], 'The buyer of an invoice must have a name'],
+            'seller without a name' => [['buyer' => ['name' => 'Jan'], 'seller' => ['email' => 'info@seller.test'], 'items' => [$item]], 'The seller must have a name'],
+            'no items' => [['buyer' => ['name' => 'Jan']], 'An invoice must have at least one item'],
+            'invalid item' => [['buyer' => ['name' => 'Jan'], 'items' => [$item, ['unit_price' => 1]]], 'Item at index 1 must have a title'],
+        ];
     }
 
     #[Test]
-    public function serial_in_to_array(): void
+    public function validation_errors_share_one_base_exception(): void
+    {
+        // assert
+        $this->expectException(InvalidDocumentException::class);
+
+        // act
+        Invoice::make()->validate();
+    }
+
+    #[Test]
+    public function an_invalid_buyer_array_throws_the_invoice_exception(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+        $this->expectExceptionMessage("Unknown key 'nam' for Buyer");
+
+        // act
+        Invoice::make(['buyer' => ['nam' => 'Jan']]);
+    }
+
+    #[Test]
+    public function seller_accepts_a_seller_and_an_array(): void
+    {
+        // act & assert
+        $this->assertSame('Other B.V.', Invoice::make()->seller(['name' => 'Other B.V.'])->getSeller()->getName());
+        $this->assertSame('Third B.V.', Invoice::make()->seller(Seller::make(['name' => 'Third B.V.']))->getSeller()->getName());
+    }
+
+    #[Test]
+    public function to_array_returns_every_field(): void
     {
         // arrange
-        $invoice = Invoice::make();
-        $invoice->serial('INV.00000123');
+        $invoice = $this->createInvoice([
+            'date' => '2026-10-11',
+            'serial' => '2026.0001',
+            'due_date' => '2026-10-25',
+            'paid' => true,
+            'footer_message' => 'Thanks',
+        ]);
 
         // act
         $array = $invoice->toArray();
 
         // assert
-        $this->assertArrayHasKey('serial', $array);
-        $this->assertEquals('INV.00000123', $array['serial']);
-    }
-
-    #[Test]
-    public function serial_null_in_to_array(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $array = $invoice->toArray();
-
-        // assert
-        $this->assertArrayHasKey('serial', $array);
-        $this->assertNull($array['serial']);
-    }
-
-    #[Test]
-    public function get_number_without_serial_falls_back_to_series_sequence(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $invoice->series('INV');
-        $invoice->sequence(123);
-
-        // act
-        $number = $invoice->getNumber();
-
-        // assert
-        $this->assertEquals('INV.00000123', $number);
-    }
-
-    #[Test]
-    #[DataProvider('formatted_date_data_provider')]
-    public function formatted_date(string $dateFormat, string $expected): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $invoice->date('2024-01-15');
-        $invoice->dateFormat($dateFormat);
-
-        // act
-        $formatted = $invoice->getFormattedDate();
-
-        // assert
-        $this->assertEquals($expected, $formatted);
-    }
-
-    /**
-     * @return array<string, array{0: string, 1: string}>
-     */
-    public static function formatted_date_data_provider(): array
-    {
-        return [
-            'default format' => ['d-m-Y', '15-01-2024'],
-            'custom format' => ['Y/m/d', '2024/01/15'],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('formatted_due_date_data_provider')]
-    public function formatted_due_date(int $payUntilDays, string $expected): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $invoice->date('2024-01-15');
-        $invoice->dateFormat('d-m-Y');
-        $invoice->payUntilDays($payUntilDays);
-
-        // act
-        $formatted = $invoice->getFormattedDueDate();
-
-        // assert
-        $this->assertEquals($expected, $formatted);
-    }
-
-    /**
-     * @return array<string, array{0: int, 1: string}>
-     */
-    public static function formatted_due_date_data_provider(): array
-    {
-        return [
-            'default 30 days' => [30, '14-02-2024'],
-            'custom 14 days' => [14, '29-01-2024'],
-        ];
-    }
-
-    #[Test]
-    public function template_setter(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $result = $invoice->template('custom-template');
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertEquals('custom-template', $invoice->getTemplate());
-    }
-
-    #[Test]
-    public function set_language_validates_language(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // assert
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("Language 'invalid' is not supported");
-
-        // act
-        $invoice->language('invalid');
-    }
-
-    #[Test]
-    public function set_language_with_valid_language(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $result = $invoice->language('en');
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertEquals('en', $invoice->getLanguage());
-    }
-
-    #[Test]
-    public function get_available_languages(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-
-        // act
-        $languages = $invoice->getAvailableLanguages();
-
-        // assert
-        $this->assertIsArray($languages); // @phpstan-ignore-line method.alreadyNarrowedType
-
-        // should at least contain 'en' and 'nl' based on the project structure
-        $this->assertContains('en', $languages);
-        $this->assertContains('nl', $languages);
-    }
-
-    #[Test]
-    public function footer_message(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem(['title' => 'Item']);
-        $invoice->addItem($item);
-        $invoice->date('2024-01-15');
-        $invoice->payUntilDays(30);
-
-        // act
-        $message = $invoice->getFooterMessage();
-
-        // assert
-        $this->assertIsString($message); // @phpstan-ignore-line method.alreadyNarrowedType
-        $this->assertStringContainsString('10,00', $message);
-        $this->assertStringContainsString('14-02-2024', $message);
-    }
-
-    #[Test]
-    public function custom_footer_message_for_issued_invoice_supports_placeholders(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem(['title' => 'Item']);
-        $invoice->addItem($item);
-        $invoice->date('2024-01-15');
-        $invoice->payUntilDays(30);
-        $invoice->series('INV');
-        $invoice->sequence(42);
-        $invoice->footerMessage('Please pay :amount before :date for invoice :number.');
-
-        // act
-        $message = $invoice->getFooterMessage();
-
-        // assert
-        $this->assertStringContainsString('Please pay', $message);
-        $this->assertStringContainsString('10,00', $message);
-        $this->assertStringContainsString('14-02-2024', $message);
-        $this->assertStringContainsString('INV.00000042', $message);
-    }
-
-    #[Test]
-    public function custom_concept_footer_message_is_used_for_unissued_invoice(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $invoice->conceptFooterMessage('Custom draft message.');
-
-        // act
-        $message = $invoice->getFooterMessage();
-
-        // assert
-        $this->assertEquals('Custom draft message.', $message);
-    }
-
-    #[Test]
-    public function footer_message_for_negative_total_shows_credit_transfer_message(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem(['title' => 'Credit', 'unit_price' => -10.00]);
-        $invoice->addItem($item);
-        $invoice->date('2024-01-15');
-        $invoice->payUntilDays(30);
-
-        // act
-        $message = $invoice->getFooterMessage();
-
-        // assert
-        $this->assertStringContainsString('transfer', $message);
-        $this->assertStringContainsString('10,00', $message);
-        $this->assertStringNotContainsString('-10,00', $message);
-    }
-
-    #[Test]
-    public function custom_footer_message_overrides_credit_transfer_for_negative_total(): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $invoice->buyer($buyer);
-        $item = $this->createInvoiceItem(['title' => 'Credit', 'unit_price' => -10.00]);
-        $invoice->addItem($item);
-        $invoice->date('2024-01-15');
-        $invoice->payUntilDays(30);
-        $invoice->footerMessage('Custom message with :amount.');
-
-        // act
-        $message = $invoice->getFooterMessage();
-
-        // assert
-        $this->assertStringContainsString('Custom message with', $message);
-    }
-
-    #[Test]
-    #[DataProvider('set_logo_data_provider')]
-    public function set_logo(?string $logoPath, ?string $initialLogo, ?string $expected): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        if ($initialLogo !== null) {
-            $invoice->logo($initialLogo);
-        }
-
-        // act
-        $result = $invoice->logo($logoPath);
-
-        // assert
-        $this->assertSame($invoice, $result);
-        $this->assertEquals($expected, $invoice->getLogo());
-    }
-
-    /**
-     * @return array<string, array{0: string|null, 1: string|null, 2: string|null}>
-     */
-    public static function set_logo_data_provider(): array
-    {
-        return [
-            'set logo path' => ['/path/to/logo.png', null, '/path/to/logo.png'],
-            'set logo to null' => [null, '/path/to/logo.png', null],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('get_logo_data_uri_null_cases_data_provider')]
-    public function get_logo_data_uri_returns_null(?string $logoPath): void
-    {
-        // arrange
-        $invoice = Invoice::make();
-        $invoice->logo($logoPath);
-
-        // act
-        $dataUri = $invoice->getLogoDataUri();
-
-        // assert
-        $this->assertNull($dataUri);
-    }
-
-    /**
-     * @return array<string, array{0: string|null}>
-     */
-    public static function get_logo_data_uri_null_cases_data_provider(): array
-    {
-        return [
-            'no logo' => [null],
-            'file not exists' => ['/nonexistent/path/to/logo.png'],
-        ];
+        $this->assertSame(['name' => 'Test Buyer', 'address' => null, 'postal_code' => null, 'city' => null, 'country' => null, 'email' => null, 'phone' => null, 'website' => null], $array['buyer']);
+        $this->assertSame('Test Seller B.V.', data_get($array, 'seller.name'));
+        $this->assertSame('nl', $array['language']);
+        $this->assertSame('2026-10-11T00:00:00+02:00', $array['date']);
+        $this->assertSame('2026-10-25T00:00:00+02:00', $array['due_date']);
+        $this->assertSame('2026.0001', $array['serial']);
+        $this->assertSame(30, $array['payment_terms_days']);
+        $this->assertSame('bank_transfer', $array['payment_method']);
+        $this->assertTrue($array['paid']);
+        $this->assertSame('Thanks', $array['footer_message']);
+        $this->assertNull($array['concept_footer_message']);
+        $this->assertNull($array['expected_total']);
+        $this->assertIsArray($array['items']);
+        $this->assertCount(1, $array['items']);
     }
 }

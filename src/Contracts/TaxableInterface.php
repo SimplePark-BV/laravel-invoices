@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleParkBv\Invoices\Contracts;
 
 /**
- * Interface for anything taxes can be calculated on, such as invoice items and usage receipt lines.
+ * Anything that adds an amount including tax to a document, such as invoice items and usage receipt lines.
  */
 interface TaxableInterface
 {
@@ -13,7 +15,7 @@ interface TaxableInterface
     public function getTaxPercentage(): ?float;
 
     /**
-     * Get the total including tax.
+     * Get the total including tax, in cents.
      */
-    public function getTotal(): float;
+    public function getTotalCents(): int;
 }

@@ -1,10 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleParkBv\Invoices;
 
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use SimpleParkBv\Invoices\Services\FontResolver;
 
 class InvoiceServiceProvider extends ServiceProvider
 {
@@ -13,11 +13,8 @@ class InvoiceServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // merge config
-        $this->mergeConfigFrom(
-            path: __DIR__.'/../config/invoices.php',
-            key: 'invoices',
-        );
+        // merge recursively, so a published config still gets the nested keys added in later versions
+        $this->replaceConfigRecursivelyFrom(__DIR__.'/../config/invoices.php', 'invoices');
     }
 
     /**
@@ -25,58 +22,23 @@ class InvoiceServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // share css path and font config with views using view composer
-        // using view composer for better isolation and testability
-        View::composer('invoices::*', function ($view): void {
-            // invoice css and fonts
-            $view->with('invoiceCssPath', realpath(__DIR__.'/../resources/css/invoice.css'));
-            $view->with('invoiceFont', config('invoices.pdf.font', 'Poppins'));
-            $view->with('invoiceFontPath', realpath(__DIR__.'/../resources/fonts'));
-            $view->with('invoiceFontFile', FontResolver::getFontFile());
-
-            // usage receipt css and fonts
-            $view->with('usageReceiptCssPath', realpath(__DIR__.'/../resources/css/usage-receipt.css'));
-            $view->with('usageReceiptFont', config('invoices.pdf.font', 'Poppins'));
-            $view->with('usageReceiptFontPath', realpath(__DIR__.'/../resources/fonts'));
-            $view->with('usageReceiptFontFile', FontResolver::getFontFile());
-        });
-
-        // publish config
-        $this->publishes(
-            paths: [
-                __DIR__.'/../config/invoices.php' => config_path('invoices.php'),
-            ],
-            groups: 'invoices-config',
-        );
-
-        // load views
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'invoices');
-
-        // publish views
-        $this->publishes(
-            paths: [
-                __DIR__.'/../resources/views' => resource_path('views/vendor/invoices'),
-            ],
-            groups: 'invoices-views',
-        );
-
-        // publish css
-        $this->publishes(
-            paths: [
-                __DIR__.'/../resources/css' => resource_path('css/vendor/invoices'),
-            ],
-            groups: 'invoices-assets',
-        );
-
-        // load translations
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'invoices');
 
-        // publish translations
-        $this->publishes(
-            paths: [
-                __DIR__.'/../resources/lang' => lang_path('vendor/invoices'),
-            ],
-            groups: 'invoices-lang',
-        );
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
+        $this->publishes([
+            __DIR__.'/../config/invoices.php' => config_path('invoices.php'),
+        ], 'invoices-config');
+
+        $this->publishes([
+            __DIR__.'/../resources/views' => resource_path('views/vendor/invoices'),
+        ], 'invoices-views');
+
+        $this->publishes([
+            __DIR__.'/../resources/lang' => lang_path('vendor/invoices'),
+        ], 'invoices-lang');
     }
 }

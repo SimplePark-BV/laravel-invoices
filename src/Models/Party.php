@@ -1,30 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SimpleParkBv\Invoices\Models;
 
-use SimpleParkBv\Invoices\Contracts\PartyInterface;
+use SimpleParkBv\Invoices\Exceptions\InvalidDocumentException;
+use SimpleParkBv\Invoices\Models\Traits\CanFillFromArray;
+use SimpleParkBv\Invoices\Support\Text;
 
 /**
- * Class Party
+ * A party on a document: the buyer or the seller.
  *
- * @property string $name
- * @property string|null $address
- * @property string|null $city
- * @property string|null $postalCode
- * @property string|null $country
- * @property string|null $email
- * @property string|null $phone
- * @property string|null $website
+ * Every field is optional here; the documents validate what they need. Texts are trimmed, and empty texts become null.
+ *
+ * @phpstan-consistent-constructor
  */
-abstract class Party implements PartyInterface
+abstract class Party
 {
-    protected string $name;
+    use CanFillFromArray;
+
+    protected ?string $name = null;
 
     protected ?string $address = null;
 
-    protected ?string $city = null;
-
     protected ?string $postalCode = null;
+
+    protected ?string $city = null;
 
     protected ?string $country = null;
 
@@ -35,163 +36,139 @@ abstract class Party implements PartyInterface
     protected ?string $website = null;
 
     /**
-     * Get the party's address.
+     * Set the name.
+     *
+     * @return $this
      */
-    public function getAddress(): ?string
+    public function name(?string $name): static
     {
-        return $this->address ?? null;
+        $this->name = Text::clean($name);
+
+        return $this;
     }
 
     /**
-     * Get the party's city.
+     * Set the street address.
+     *
+     * @return $this
      */
-    public function getCity(): ?string
+    public function address(?string $address): static
     {
-        return $this->city ?? null;
+        $this->address = Text::clean($address);
+
+        return $this;
     }
 
     /**
-     * Get the party's country.
+     * Set the postal code.
+     *
+     * @return $this
      */
-    public function getCountry(): ?string
+    public function postalCode(?string $postalCode): static
     {
-        return $this->country ?? null;
+        $this->postalCode = Text::clean($postalCode);
+
+        return $this;
     }
 
     /**
-     * Get the party's email address.
+     * Set the city.
+     *
+     * @return $this
      */
-    public function getEmail(): ?string
+    public function city(?string $city): static
     {
-        return $this->email ?? null;
+        $this->city = Text::clean($city);
+
+        return $this;
     }
 
     /**
-     * Get the party's name.
+     * Set the country.
+     *
+     * @return $this
      */
-    public function getName(): string
+    public function country(?string $country): static
+    {
+        $this->country = Text::clean($country);
+
+        return $this;
+    }
+
+    /**
+     * Set the email address.
+     *
+     * @return $this
+     */
+    public function email(?string $email): static
+    {
+        $this->email = Text::clean($email);
+
+        return $this;
+    }
+
+    /**
+     * Set the phone number.
+     *
+     * @return $this
+     */
+    public function phone(?string $phone): static
+    {
+        $this->phone = Text::clean($phone);
+
+        return $this;
+    }
+
+    /**
+     * Set the website.
+     *
+     * @return $this
+     */
+    public function website(?string $website): static
+    {
+        $this->website = Text::clean($website);
+
+        return $this;
+    }
+
+    public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * Get the party's phone number.
-     */
-    public function getPhone(): ?string
+    public function getAddress(): ?string
     {
-        return $this->phone ?? null;
+        return $this->address;
     }
 
-    /**
-     * Get the party's postal code.
-     */
     public function getPostalCode(): ?string
     {
-        return $this->postalCode ?? null;
+        return $this->postalCode;
     }
 
-    /**
-     * Get the party's website URL.
-     */
+    public function getCity(): ?string
+    {
+        return $this->city;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->country;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
     public function getWebsite(): ?string
     {
-        return $this->website ?? null;
-    }
-
-    /**
-     * Set the party's address.
-     *
-     * @return $this
-     */
-    public function address(?string $address): self
-    {
-        $this->address = $address;
-
-        return $this;
-    }
-
-    /**
-     * Set the party's city.
-     *
-     * @return $this
-     */
-    public function city(?string $city): self
-    {
-        $this->city = $city;
-
-        return $this;
-    }
-
-    /**
-     * Set the party's country.
-     *
-     * @return $this
-     */
-    public function country(?string $country): self
-    {
-        $this->country = $country;
-
-        return $this;
-    }
-
-    /**
-     * Set the party's email address.
-     *
-     * @return $this
-     */
-    public function email(?string $email): self
-    {
-        $this->email = $email;
-
-        return $this;
-    }
-
-    /**
-     * Set the party's name.
-     *
-     * @return $this
-     */
-    public function name(string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * Set the party's phone number.
-     *
-     * @return $this
-     */
-    public function phone(?string $phone): self
-    {
-        $this->phone = $phone;
-
-        return $this;
-    }
-
-    /**
-     * Set the party's postal code.
-     *
-     * @return $this
-     */
-    public function postalCode(?string $postalCode): self
-    {
-        $this->postalCode = $postalCode;
-
-        return $this;
-    }
-
-    /**
-     * Set the party's website URL.
-     *
-     * @return $this
-     */
-    public function website(?string $website): self
-    {
-        $this->website = $website;
-
-        return $this;
+        return $this->website;
     }
 
     /**
@@ -199,25 +176,50 @@ abstract class Party implements PartyInterface
      */
     public function hasAddress(): bool
     {
-        return ! empty($this->address) || ! empty($this->postalCode) || ! empty($this->city) || ! empty($this->country);
+        return $this->address !== null || $this->postalCode !== null || $this->city !== null || $this->country !== null;
     }
 
     /**
-     * Convert the party to an array representation.
+     * Convert the party to an array that make() accepts.
      *
-     * @return array<string, mixed>
+     * @return array<string, string|null>
      */
     public function toArray(): array
     {
         return [
             'name' => $this->name,
-            'address' => $this->address ?? null,
-            'city' => $this->city ?? null,
-            'postal_code' => $this->postalCode ?? null,
-            'country' => $this->country ?? null,
-            'email' => $this->email ?? null,
-            'phone' => $this->phone ?? null,
-            'website' => $this->website ?? null,
+            'address' => $this->address,
+            'postal_code' => $this->postalCode,
+            'city' => $this->city,
+            'country' => $this->country,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'website' => $this->website,
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected static function fillable(): array
+    {
+        return [
+            'name' => 'name',
+            'address' => 'address',
+            'postal_code' => 'postalCode',
+            'city' => 'city',
+            'country' => 'country',
+            'email' => 'email',
+            'phone' => 'phone',
+            'website' => 'website',
+        ];
+    }
+
+    /**
+     * @return class-string<\SimpleParkBv\Invoices\Exceptions\InvalidDocumentException>
+     */
+    protected static function invalidDataException(): string
+    {
+        return InvalidDocumentException::class;
     }
 }

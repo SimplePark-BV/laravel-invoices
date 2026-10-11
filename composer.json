@@ -1,12 +1,13 @@
 {
     "name": "simplepark-bv/laravel-invoices",
-    "description": "Generate professional PDF invoices for Laravel applications",
+    "description": "Generate invoice and usage receipt PDFs in Laravel applications",
     "type": "library",
     "license": "MIT",
     "minimum-stability": "stable",
     "keywords": [
         "laravel",
         "invoice",
+        "receipt",
         "pdf",
         "dompdf",
         "invoice-generator"
@@ -27,15 +28,26 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^11.0|^12.0",
-        "barryvdh/laravel-dompdf": "^3.1"
+        "php": "^8.3",
+        "barryvdh/laravel-dompdf": "^3.1.1",
+        "dompdf/dompdf": "^3.1.6",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/http": "^12.0|^13.0",
+        "illuminate/log": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0",
+        "illuminate/translation": "^12.0|^13.0",
+        "illuminate/view": "^12.0|^13.0",
+        "nesbot/carbon": "^3.8"
     },
     "require-dev": {
-        "laravel/pint": "^1.13",
         "larastan/larastan": "^3.3",
-        "orchestra/testbench": "^10.0",
-        "phpunit/phpunit": "^11.0"
+        "laravel/pint": "^1.13",
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^10.0|^11.0",
+        "phpunit/phpunit": "^11.5|^12.0"
+    },
+    "suggest": {
+        "ext-gd": "Needed by dompdf to show PNG, JPG and GIF logos"
     },
     "autoload": {
         "psr-4": {
@@ -47,11 +59,20 @@
             "Tests\\": "tests/"
         }
     },
+    "config": {
+        "sort-packages": true
+    },
     "scripts": {
-        "test": "./vendor/bin/phpunit -c ./phpunit.xml",
-        "pint": "./vendor/bin/pint",
-        "pint:test": "./vendor/bin/pint --test",
-        "phpstan": "./vendor/bin/phpstan analyse"
+        "test": "phpunit",
+        "analyse": "phpstan analyse --memory-limit=2G",
+        "format": "pint",
+        "format:check": "pint --test",
+        "check": [
+            "@composer validate --strict",
+            "@format:check",
+            "@analyse",
+            "@test"
+        ]
     },
     "extra": {
         "laravel": {

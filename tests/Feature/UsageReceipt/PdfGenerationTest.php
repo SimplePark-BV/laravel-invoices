@@ -2,476 +2,176 @@
 
 namespace Tests\Feature\UsageReceipt;
 
-use Barryvdh\DomPDF\Facade\Pdf;
-use Exception;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
-use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
-use SimpleParkBv\Invoices\Models\Buyer;
-use SimpleParkBv\Invoices\Models\UsageReceipt;
-use SimpleParkBv\Invoices\Models\UsageReceiptItem;
+use SimpleParkBv\Invoices\Exceptions\RenderException;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestReceipts;
-use Tests\Traits\MocksPdfGeneration;
 
 final class PdfGenerationTest extends TestCase
 {
     use CreatesTestReceipts;
-    use MocksPdfGeneration;
 
-    protected function tearDown(): void
+    #[Test]
+    public function the_html_shows_every_section_of_a_receipt(): void
     {
-        Mockery::close();
-        parent::tearDown();
+        // arrange
+        $receipt = $this->createFullReceipt();
+
+        // act
+        $html = $receipt->toHtml();
+
+        // assert: header, title and date
+        $this->assertStringContainsString('<img class="document__logo" src="data:image/png;base64,', $html);
+        $this->assertStringContainsString('Gebruiksbevestiging', $html);
+        $this->assertStringContainsString('11-10-2026', $html);
+
+        // assert: buyer and ids
+        $this->assertStringContainsString('Keizersgracht 123<br>1015 CJ Amsterdam', $html);
+        $this->assertStringContainsString('Document-ID', $html);
+        $this->assertStringContainsString('PS-2026-000123', $html);
+        $this->assertStringContainsString('Gebruikers-ID', $html);
+        $this->assertStringContainsString('USR-000042', $html);
+
+        // assert: sessions
+        $this->assertStringContainsString('02-10-2026 10:00', $html);
+        $this->assertStringContainsString('03-10-2026 13:30', $html);
+        $this->assertStringContainsString("€\u{00A0}5,50", $html);
+        $this->assertStringContainsString("€\u{00A0}7,00", $html);
+
+        // assert: lines, the total, and the tax the total includes
+        $this->assertStringContainsString('Parking costs', $html);
+        $this->assertStringContainsString("€\u{00A0}-0,10", $html);
+        $this->assertStringContainsString("€\u{00A0}12,75", $html);
+        $this->assertStringContainsString('Waarvan 21% btw', $html);
+        $this->assertStringContainsString("€\u{00A0}0,04", $html);
+
+        // assert: note with its line break, and the footer
+        $this->assertStringContainsString('Thank you for parking.<br />', $html);
+        $this->assertStringContainsString('LET OP! Dit is geen betaalverzoek', $html);
+        $this->assertStringContainsString('KvK-nummer', $html);
+        $this->assertStringContainsString('Btw-nummer', $html);
+        $this->assertStringContainsString('www.seller.test', $html);
+
+        // assert: every translation was found
+        $this->assertStringNotContainsString('invoices::', $html);
     }
 
     #[Test]
-    public function render_creates_pdf(): void
+    public function the_tax_rows_come_after_the_total(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->with('invoices::usage-receipt.index', ['usageReceipt' => $receipt])
-            ->andReturn($mockPdf);
+        $receipt = $this->createFullReceipt();
 
         // act
-        $result = $receipt->render();
+        $html = $receipt->toHtml();
 
         // assert
-        $this->assertSame($receipt, $result);
-        $this->assertTrue($receipt->isRendered());
+        $this->assertGreaterThan(strpos($html, 'class="usage-receipt__totals-label usage-receipt__totals-label--total"'), strpos($html, 'Waarvan 21% btw'));
     }
 
     #[Test]
-    public function render_sets_locale_during_rendering(): void
+    #[DataProvider('languages')]
+    public function every_language_renders_without_missing_translations(string $language, string $title, string $amount): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->language('en');
-        App::setLocale('nl'); // set different locale
-
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturnUsing(function ($view, $data) use ($mockPdf) {
-                // verify locale is set to receipt language during rendering
-                $this->assertEquals('en', App::getLocale());
-
-                return $mockPdf;
-            });
+        $receipt = $this->createFullReceipt(['language' => $language]);
 
         // act
-        $receipt->render();
+        $html = $receipt->toHtml();
 
         // assert
-        // verify original locale is restored
-        $this->assertEquals('nl', App::getLocale());
-    }
-
-    #[Test]
-    #[DataProvider('template_data_provider')]
-    public function render_uses_template(string $template, string $expectedTemplate): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->template($template);
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->with($expectedTemplate, ['usageReceipt' => $receipt])
-            ->andReturn($mockPdf);
-
-        // act
-        $receipt->render();
-
-        // assert
-        // verified in mock expectation - ensure receipt was rendered
-        $this->assertTrue($receipt->isRendered());
+        $this->assertStringContainsString($title, $html);
+        $this->assertStringContainsString($amount, $html);
+        $this->assertStringNotContainsString('invoices::', $html);
     }
 
     /**
-     * @return array<string, array{0: string, 1: string}>
+     * @return array<string, array{string, string, string}>
      */
-    public static function template_data_provider(): array
+    public static function languages(): array
     {
         return [
-            'default template' => ['usage-receipt.index', 'invoices::usage-receipt.index'],
-            'custom template' => ['custom-template', 'invoices::custom-template'],
+            'dutch' => ['nl', 'Gebruiksbevestiging', "€\u{00A0}12,75"],
+            'english' => ['en', 'Usage Confirmation', "€\u{00A0}12.75"],
         ];
     }
 
     #[Test]
-    #[DataProvider('paper_config_data_provider')]
-    public function render_sets_paper_from_config(string $paperSize, string $orientation): void
+    public function session_times_are_shown_in_the_display_timezone(): void
     {
         // arrange
-        Config::set('invoices.pdf.paper_size', $paperSize);
-        Config::set('invoices.pdf.orientation', $orientation);
-
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-
-        $item = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-        $receipt->addItem($item);
-
-        $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
+        $receipt = $this->createReceipt(['items' => [$this->receiptItemData([
+            'start_date' => '2026-07-01T08:00:00Z',
+            'end_date' => '2026-07-01T09:30:00Z',
+        ])]]);
 
         // act
-        $receipt->render();
+        $html = $receipt->toHtml();
 
         // assert
-        // verified in mock expectation - ensure receipt was rendered
-        $this->assertTrue($receipt->isRendered());
-    }
-
-    /**
-     * @return array<string, array{0: string, 1: string}>
-     */
-    public static function paper_config_data_provider(): array
-    {
-        return [
-            'letter landscape' => ['letter', 'landscape'],
-            'a4 portrait' => ['a4', 'portrait'],
-        ];
+        $this->assertStringContainsString('01-07-2026 10:00', $html);
+        $this->assertStringContainsString('01-07-2026 11:30', $html);
     }
 
     #[Test]
-    #[DataProvider('download_filename_data_provider')]
-    public function download_generates_response(?string $customFilename, string $expectedFilename): void
+    public function caller_data_is_escaped(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->language('nl'); // explicitly set dutch for deterministic filename
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-
-        $this->mockPdfDownload($mockPdf, $expectedFilename);
-
-        // act
-        $response = $receipt->download($customFilename);
-
-        // assert
-        $this->assertInstanceOf(Response::class, $response);
-    }
-
-    /**
-     * @return array<string, array{0: string|null, 1: string}>
-     */
-    public static function download_filename_data_provider(): array
-    {
-        return [
-            'default filename' => [null, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf'],
-            'custom filename' => ['custom-receipt.pdf', 'custom-receipt.pdf'],
-        ];
-    }
-
-    #[Test]
-    public function download_auto_renders(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->language('nl'); // explicitly set dutch for deterministic filename
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf');
-
-        // assert
-        // pdf not rendered yet
-        $this->assertFalse($receipt->isRendered());
-
-        // act
-        $receipt->download();
-
-        // assert
-        // pdf should be rendered now
-        $this->assertTrue($receipt->isRendered());
-    }
-
-    #[Test]
-    public function download_throws_when_render_fails(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andThrow(new Exception('PDF generation failed')); // simulate render failure
-
-        // assert
-        $this->expectException(InvalidInvoiceException::class);
-        $this->expectExceptionMessage('Failed to render PDF');
-
-        // act
-        $receipt->download();
-    }
-
-    #[Test]
-    public function download_uses_correct_filename_format(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->language('nl'); // explicitly set dutch for deterministic filename
-        $receipt->date('2025-09-25'); // specific date for filename pattern verification
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'gebruiksbevestiging-2025-09-25-00-00-00.pdf');
-
-        // act
-        $response = $receipt->download();
-
-        // assert
-        $this->assertInstanceOf(Response::class, $response);
-    }
-
-    #[Test]
-    #[DataProvider('stream_filename_data_provider')]
-    public function stream_generates_response(?string $customFilename, string $expectedFilename): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->language('nl'); // explicitly set dutch for deterministic filename
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-
-        $this->mockPdfStream($mockPdf, $expectedFilename);
-
-        // act
-        $response = $receipt->stream($customFilename);
-
-        // assert
-        $this->assertInstanceOf(Response::class, $response);
-    }
-
-    /**
-     * @return array<string, array{0: string|null, 1: string}>
-     */
-    public static function stream_filename_data_provider(): array
-    {
-        return [
-            'default filename' => [null, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf'],
-            'custom filename' => ['custom-receipt.pdf', 'custom-receipt.pdf'],
-        ];
-    }
-
-    #[Test]
-    public function stream_includes_cache_headers(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->language('nl'); // explicitly set dutch for deterministic filename
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-
-        $this->mockPdfStream($mockPdf, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf');
-
-        // act
-        $response = $receipt->stream();
-
-        // assert
-        $this->assertTrue($receipt->isRendered());
-        $this->assertInstanceOf(Response::class, $response);
-        $this->assertEquals('no-cache, no-store, must-revalidate', $response->headers->get('Cache-Control'));
-        $this->assertEquals('no-cache', $response->headers->get('Pragma'));
-        $this->assertEquals('0', $response->headers->get('Expires'));
-    }
-
-    #[Test]
-    public function stream_auto_renders(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->language('nl'); // explicitly set dutch for deterministic filename
-        $receipt->date('2024-01-15'); // fixed date for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-
-        $this->mockPdfStream($mockPdf, 'gebruiksbevestiging-2024-01-15-00-00-00.pdf');
-
-        // assert
-        // pdf not rendered yet
-        $this->assertFalse($receipt->isRendered());
-
-        // act
-        $receipt->stream();
-
-        // assert
-        // pdf should be rendered now
-        $this->assertTrue($receipt->isRendered());
-    }
-
-    #[Test]
-    public function stream_throws_when_render_fails(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $this->mockPdfFacadeChain();
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andThrow(new Exception('PDF generation failed')); // simulate render failure
-
-        // assert
-        $this->expectException(InvalidInvoiceException::class);
-        $this->expectExceptionMessage('Failed to render PDF');
-
-        // act
-        $receipt->stream();
-    }
-
-    #[Test]
-    public function stream_uses_correct_filename_format(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->language('nl'); // explicitly set dutch for deterministic filename
-        $receipt->date('2025-09-25'); // specific date for filename pattern verification
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-
-        $this->mockPdfStream($mockPdf, 'gebruiksbevestiging-2025-09-25-00-00-00.pdf');
-
-        // act
-        $response = $receipt->stream();
-
-        // assert
-        $this->assertInstanceOf(Response::class, $response);
-    }
-
-    #[Test]
-    public function template_shows_lines_and_their_total(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt(['language' => 'en']);
-        $receipt->lines([
-            ['label' => 'Parking fee', 'amount' => 5.15],
-            ['label' => 'Discount', 'amount' => -1.00],
+        $receipt = $this->createReceipt([
+            'title' => '<script>alert(1)</script>',
+            'note' => '<img src="file:///etc/passwd">',
+            'lines' => [['label' => '<b>Fee</b>', 'amount' => 1]],
         ]);
 
-        /** @var view-string $view */
-        $view = 'invoices::usage-receipt.index';
-
         // act
-        $html = view($view, ['usageReceipt' => $receipt])->render();
+        $html = $receipt->toHtml();
 
         // assert
-        $this->assertStringContainsString('Parking fee', $html);
-        $this->assertStringContainsString('€ 5,15', $html);
-        $this->assertStringContainsString('Discount', $html);
-        $this->assertStringContainsString('€ -1,00', $html);
-        $this->assertStringContainsString('€ 4,15', $html);
-        $this->assertStringNotContainsString('VAT (', $html);
+        $this->assertStringNotContainsString('<script>', $html);
+        $this->assertStringNotContainsString('<img src="file:', $html);
+        $this->assertStringNotContainsString('<b>Fee</b>', $html);
     }
 
     #[Test]
-    public function template_shows_tax_of_lines_as_one_line(): void
+    #[RequiresPhpExtension('gd')]
+    public function to_pdf_renders_a_pdf(): void
     {
-        // arrange
-        $receipt = $this->createValidReceipt(['language' => 'en']);
-        $receipt->lines([
-            ['label' => 'Parking fee', 'amount' => 12.50],
-            ['label' => 'Transaction fee', 'amount' => 0.35, 'tax_percentage' => 21.0],
-        ]);
-
-        /** @var view-string $view */
-        $view = 'invoices::usage-receipt.index';
-
         // act
-        $html = view($view, ['usageReceipt' => $receipt])->render();
+        $pdf = $this->createFullReceipt()->toPdf();
 
         // assert
-        $this->assertStringContainsString('VAT (21%)', $html);
-        $this->assertStringContainsString('€ 0,06', $html);
-        $this->assertStringContainsString('€ 12,85', $html);
+        $this->assertStringStartsWith('%PDF-', $pdf);
     }
 
     #[Test]
-    public function template_shows_one_tax_line_per_rate(): void
+    #[RequiresPhpExtension('gd')]
+    public function download_and_stream_use_the_document_id_as_filename(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt(['language' => 'en']);
-        $receipt->lines([
-            ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
-            ['label' => 'Snack', 'amount' => 1.09, 'tax_percentage' => 9.0],
-        ]);
-
-        /** @var view-string $view */
-        $view = 'invoices::usage-receipt.index';
+        $receipt = $this->createFullReceipt();
 
         // act
-        $html = view($view, ['usageReceipt' => $receipt])->render();
+        $download = $receipt->download();
+        $stream = $receipt->stream();
 
         // assert
-        $this->assertStringContainsString('VAT (21%)', $html);
-        $this->assertStringContainsString('€ 2,10', $html);
-        $this->assertStringContainsString('VAT (9%)', $html);
-        $this->assertStringContainsString('€ 0,09', $html);
+        $this->assertSame('attachment; filename=gebruiksbevestiging-PS-2026-000123.pdf', $download->headers->get('Content-Disposition'));
+        $this->assertSame('inline; filename=gebruiksbevestiging-PS-2026-000123.pdf', $stream->headers->get('Content-Disposition'));
+    }
+
+    #[Test]
+    public function a_render_failure_throws_a_render_exception_for_the_receipt(): void
+    {
+        // arrange
+        $receipt = $this->createFullReceipt(['template' => 'invoices::missing']);
+
+        // assert
+        $this->expectException(RenderException::class);
+        $this->expectExceptionMessage('Failed to render usage receipt PS-2026-000123');
+
+        // act
+        $receipt->toPdf();
     }
 }

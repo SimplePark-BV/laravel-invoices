@@ -10,11 +10,36 @@ on:
     branches:
       - main
       - 'release/**'
+  push:
+    branches:
+      - main
+  schedule:
+    # catch breaking dependency releases between changes
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  test:
-    name: Test
+  matrix:
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} (${{ matrix.dependencies }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+        laravel: ['12', '13']
+        dependencies: [highest]
+        include:
+          - php: '8.3'
+            laravel: '12'
+            dependencies: lowest
+          - php: '8.4'
+            laravel: '12'
+            dependencies: locked
 
     steps:
       - name: Check out code
@@ -23,15 +48,31 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@2.37.1
         with:
-          php-version: '8.4'
-          extensions: mbstring, gd, dom, xml
+          php-version: ${{ matrix.php }}
+          extensions: dom, gd, mbstring
           tools: composer
           coverage: none
+
+      - name: Select Laravel ${{ matrix.laravel }}
+        if: matrix.dependencies != 'locked'
+        run: composer require --dev --no-update --no-interaction "orchestra/testbench:${{ matrix.laravel == '12' && '^10.0' || '^11.0' }}"
 
       - name: Install Composer dependencies
         uses: ramsey/composer-install@v3
         with:
-          composer-options: "--prefer-dist --no-progress"
+          dependency-versions: ${{ matrix.dependencies }}
+          composer-options: --prefer-dist --no-progress
 
-      - name: Run Tests
+      - name: Run tests
         run: vendor/bin/phpunit
+
+  test:
+    # the required status check, which passes when every combination of the matrix passes
+    name: Test
+    if: always()
+    needs: matrix
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check the test matrix
+        run: test "${{ needs.matrix.result }}" = "success"

@@ -2,350 +2,356 @@
 
 namespace Tests\Feature\Invoice;
 
-use Barryvdh\DomPDF\Facade\Pdf;
-use Exception;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
-use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException;
-use SimpleParkBv\Invoices\Models\Buyer;
-use SimpleParkBv\Invoices\Models\Invoice;
+use SimpleParkBv\Invoices\Exceptions\RenderException;
+use SimpleParkBv\Invoices\Services\PdfRenderer;
 use Tests\TestCase;
 use Tests\Traits\CreatesTestInvoices;
-use Tests\Traits\MocksPdfGeneration;
 
 final class PdfGenerationTest extends TestCase
 {
     use CreatesTestInvoices;
-    use MocksPdfGeneration;
 
-    protected function tearDown(): void
+    #[Test]
+    public function the_html_shows_every_section_of_an_issued_invoice(): void
     {
-        Mockery::close();
-        parent::tearDown();
+        // arrange
+        $invoice = $this->createFullInvoice();
+
+        // act
+        $html = $invoice->toHtml();
+
+        // assert: header with logo and seller
+        $this->assertStringContainsString('<img class="document__logo" src="data:image/png;base64,', $html);
+        $this->assertStringContainsString('Test Seller B.V.', $html);
+        $this->assertStringContainsString('Teststraat 1<br>1234 AB Teststad<br>Nederland', $html);
+        $this->assertStringContainsString('KvK: 12345678', $html);
+        $this->assertStringContainsString('Btw: NL123456789B01', $html);
+        $this->assertStringContainsString('Bank: NL00 TEST 0123 4567 89', $html);
+
+        // assert: buyer
+        $this->assertStringContainsString('Jan de Vries', $html);
+        $this->assertStringContainsString('Keizersgracht 123<br>1015 CJ Amsterdam<br>Nederland', $html);
+        $this->assertStringContainsString('jan@example.test<br>+31 6 12345678', $html);
+
+        // assert: title and dates
+        $this->assertStringContainsString('Factuur 2026.0001', $html);
+        $this->assertStringContainsString('Factuurdatum:', $html);
+        $this->assertStringContainsString('Vervaldatum:', $html);
+        $this->assertStringContainsString('10-11-2026', $html);
+
+        // assert: items, with localized quantities and percentages
+        $this->assertStringContainsString('Zone 1001, AB-123-C', $html);
+        $this->assertStringContainsString('1,5x', $html);
+        $this->assertStringContainsString("€\u{00A0}24,20", $html);
+        $this->assertStringContainsString("€\u{00A0}22,19", $html);
+        $this->assertStringContainsString("€\u{00A0}-1,00", $html);
+
+        // assert: totals with the taxable amount per rate
+        $this->assertStringContainsString('Subtotaal excl. btw', $html);
+        $this->assertStringContainsString("21% btw over €\u{00A0}19,17", $html);
+        $this->assertStringContainsString("9% btw over €\u{00A0}20,36", $html);
+        $this->assertStringContainsString("€\u{00A0}49,89", $html);
+
+        // assert: footer
+        $this->assertStringContainsString('te voldoen op onze bankrekening', $html);
+
+        // assert: every translation was found
+        $this->assertStringNotContainsString('invoices::', $html);
     }
 
     #[Test]
-    public function render_creates_pdf(): void
+    #[DataProvider('variants')]
+    public function every_variant_renders_without_missing_translations(string $language, bool $issued, string $title): void
     {
         // arrange
-        $invoice = $this->createValidInvoice();
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->with('invoices::invoice.index', ['invoice' => $invoice])
-            ->andReturn($mockPdf);
+        $invoice = $this->createFullInvoice(['language' => $language, 'date' => $issued ? '2026-10-11' : null]);
 
         // act
-        $result = $invoice->render();
+        $html = $invoice->toHtml();
 
         // assert
-        $this->assertSame($invoice, $result);
-        $this->assertTrue($invoice->isRendered());
-    }
-
-    #[Test]
-    public function render_sets_locale_during_rendering(): void
-    {
-        // arrange
-        $invoice = $this->createValidInvoice();
-        $invoice->language('en');
-        App::setLocale('nl'); // set different locale
-
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturnUsing(function ($view, $data) use ($mockPdf) {
-                // verify locale is set to invoice language during rendering
-                $this->assertEquals('en', App::getLocale());
-
-                return $mockPdf;
-            });
-
-        // act
-        $invoice->render();
-
-        // assert
-        // verify original locale is restored
-        $this->assertEquals('nl', App::getLocale());
-    }
-
-    #[Test]
-    #[DataProvider('template_data_provider')]
-    public function render_uses_template(string $template, string $expectedTemplate): void
-    {
-        // arrange
-        $invoice = $this->createValidInvoice();
-        $invoice->template($template);
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->with($expectedTemplate, ['invoice' => $invoice])
-            ->andReturn($mockPdf);
-
-        // act
-        $invoice->render();
-
-        // assert
-        // verified in mock expectation - ensure invoice was rendered
-        $this->assertTrue($invoice->isRendered());
+        $this->assertStringContainsString($title, $html);
+        $this->assertStringContainsString('<html lang="'.$language.'">', $html);
+        $this->assertStringNotContainsString('invoices::', $html);
     }
 
     /**
-     * @return array<string, array{0: string, 1: string}>
+     * @return array<string, array{string, bool, string}>
      */
-    public static function template_data_provider(): array
+    public static function variants(): array
     {
         return [
-            'default template' => ['invoice.index', 'invoices::invoice.index'],
-            'custom template' => ['custom-template', 'invoices::custom-template'],
+            'dutch concept' => ['nl', false, 'Factuur 2026.0001'],
+            'dutch issued' => ['nl', true, 'Factuur 2026.0001'],
+            'english concept' => ['en', false, 'Invoice 2026.0001'],
+            'english issued' => ['en', true, 'Invoice 2026.0001'],
         ];
     }
 
     #[Test]
-    #[DataProvider('paper_config_data_provider')]
-    public function render_sets_paper_from_config(string $paperSize, string $orientation): void
+    public function a_concept_has_no_dates_and_says_it_is_a_concept(): void
     {
         // arrange
-        Config::set('invoices.pdf.paper_size', $paperSize);
-        Config::set('invoices.pdf.orientation', $orientation);
-
-        $invoice = Invoice::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $invoice->buyer($buyer);
-
-        $item = $this->createInvoiceItem(['title' => 'Test Item']);
-        $invoice->addItem($item);
-
-        $mockPdf = $this->mockPdfInstance($paperSize, $orientation);
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
+        $invoice = $this->createInvoice();
 
         // act
-        $invoice->render();
+        $html = $invoice->toHtml();
 
         // assert
-        // verified in mock expectation - ensure invoice was rendered
-        $this->assertTrue($invoice->isRendered());
-    }
-
-    /**
-     * @return array<string, array{0: string, 1: string}>
-     */
-    public static function paper_config_data_provider(): array
-    {
-        return [
-            'letter landscape' => ['letter', 'landscape'],
-            'a4 portrait' => ['a4', 'portrait'],
-        ];
+        $this->assertStringContainsString('Factuur CONCEPT', $html);
+        $this->assertStringNotContainsString('Factuurdatum:', $html);
+        $this->assertStringContainsString('Dit is een <strong>CONCEPT</strong>', $html);
     }
 
     #[Test]
-    #[DataProvider('download_filename_data_provider')]
-    public function download_generates_response(?string $customFilename, string $expectedFilename): void
+    public function a_paid_invoice_has_no_due_date(): void
     {
         // arrange
-        $invoice = $this->createValidInvoice();
-        $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, $expectedFilename);
+        $invoice = $this->createFullInvoice(['paid' => true]);
 
         // act
-        $response = $invoice->download($customFilename);
+        $html = $invoice->toHtml();
 
         // assert
-        $this->assertInstanceOf(Response::class, $response);
-    }
-
-    /**
-     * @return array<string, array{0: string|null, 1: string}>
-     */
-    public static function download_filename_data_provider(): array
-    {
-        return [
-            'default filename' => [null, 'invoice-INV.00000123.pdf'],
-            'custom filename' => ['custom-invoice.pdf', 'custom-invoice.pdf'],
-        ];
+        $this->assertStringContainsString('Factuurdatum:', $html);
+        $this->assertStringNotContainsString('Vervaldatum:', $html);
+        $this->assertStringContainsString('is al voldaan', $html);
     }
 
     #[Test]
-    public function download_auto_renders(): void
+    public function a_credit_invoice_is_titled_as_one(): void
     {
         // arrange
-        $invoice = $this->createValidInvoice();
-        $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-        $this->mockPdfDownload($mockPdf, 'invoice-INV.00000123.pdf');
-
-        // assert
-        // pdf not rendered yet
-        $this->assertFalse($invoice->isRendered());
+        $invoice = $this->createInvoice(['serial' => '2026.0002', 'date' => '2026-10-11', 'items' => [['title' => 'Refund', 'unit_price' => -12.10, 'tax_percentage' => 21]]]);
 
         // act
-        $invoice->download();
+        $html = $invoice->toHtml();
 
         // assert
-        // pdf should be rendered now
-        $this->assertTrue($invoice->isRendered());
+        $this->assertStringContainsString('Creditfactuur 2026.0002', $html);
+        $this->assertStringNotContainsString('Vervaldatum:', $html);
+        $this->assertStringContainsString('overmaken op je bankrekening', $html);
     }
 
     #[Test]
-    public function download_throws_when_render_fails(): void
+    public function caller_data_is_escaped(): void
     {
         // arrange
-        $invoice = $this->createValidInvoice();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andThrow(new Exception('PDF generation failed')); // simulate render failure
-
-        // assert
-        $this->expectException(InvalidInvoiceException::class);
-        $this->expectExceptionMessage('Failed to render PDF');
+        $invoice = $this->createInvoice([
+            'buyer' => ['name' => '<script>alert(1)</script>'],
+            'items' => [['title' => '<img src="file:///etc/passwd">', 'description' => "Line 1\n<b>Line 2</b>", 'unit_price' => 1]],
+            'date' => '2026-10-11',
+            'footer_message' => '<a href="https://example.test">Pay</a> :amount',
+        ]);
 
         // act
-        $invoice->download();
+        $html = $invoice->toHtml();
+
+        // assert
+        $this->assertStringNotContainsString('<script>', $html);
+        $this->assertStringNotContainsString('<img src="file:', $html);
+        $this->assertStringNotContainsString('<a href', $html);
+        $this->assertStringContainsString('Line 1<br />'."\n".'&lt;b&gt;Line 2&lt;/b&gt;', $html);
     }
 
     #[Test]
-    #[DataProvider('stream_filename_data_provider')]
-    public function stream_generates_response(?string $customFilename, string $expectedFilename): void
+    public function without_a_logo_nothing_is_drawn_in_its_place(): void
     {
         // arrange
-        $invoice = $this->createValidInvoice();
-        $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-
-        $this->mockPdfStream($mockPdf, $expectedFilename);
+        $invoice = $this->createFullInvoice(['logo' => null]);
 
         // act
-        $response = $invoice->stream($customFilename);
+        $html = $invoice->toHtml();
 
         // assert
-        $this->assertInstanceOf(Response::class, $response);
-    }
-
-    /**
-     * @return array<string, array{0: string|null, 1: string}>
-     */
-    public static function stream_filename_data_provider(): array
-    {
-        return [
-            'default filename' => [null, 'invoice-INV.00000123.pdf'],
-            'custom filename' => ['custom-invoice.pdf', 'custom-invoice.pdf'],
-        ];
+        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringNotContainsString('placeholder', $html);
     }
 
     #[Test]
-    public function stream_includes_cache_headers(): void
+    #[RequiresPhpExtension('gd')]
+    public function to_pdf_renders_a_pdf_with_the_bundled_fonts(): void
     {
         // arrange
-        $invoice = $this->createValidInvoice();
-        $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
-        $mockPdf = $this->mockPdfInstance();
+        $invoice = $this->createFullInvoice();
 
-        $this->mockPdfFacadeChain();
+        // act
+        $pdf = $invoice->toPdf();
 
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
+        // assert
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertStringContainsString('/MediaBox [0.000 0.000 595.280 841.890]', $pdf);
+        $this->assertStringContainsString('Poppins', $pdf);
+    }
 
-        $this->mockPdfStream($mockPdf, 'invoice-INV.00000123.pdf');
+    #[Test]
+    #[RequiresPhpExtension('gd')]
+    public function every_output_renders_a_fresh_pdf(): void
+    {
+        // arrange
+        $invoice = $this->createFullInvoice();
+
+        // act
+        $first = $invoice->toPdf();
+        $second = $invoice->toPdf();
+
+        // assert: outputting a rendered dompdf instance twice used to embed the fonts twice and corrupt the text
+        $this->assertEqualsWithDelta(strlen($first), strlen($second), strlen($first) * 0.01);
+        $this->assertSame(substr_count($first, '/FontFile2'), substr_count($second, '/FontFile2'));
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('gd')]
+    public function changes_after_an_output_are_rendered(): void
+    {
+        // arrange
+        $invoice = $this->createFullInvoice();
+        $invoice->toPdf();
+
+        // act
+        $html = $invoice->language('en')->toHtml();
+
+        // assert
+        $this->assertStringContainsString('Invoice 2026.0001', $html);
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('gd')]
+    public function download_returns_an_attachment_response(): void
+    {
+        // arrange
+        $invoice = $this->createFullInvoice();
+
+        // act
+        $response = $invoice->download();
+
+        // assert
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('application/pdf', $response->headers->get('Content-Type'));
+        $this->assertSame('attachment; filename=factuur-2026.0001.pdf', $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF-', (string) $response->getContent());
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('gd')]
+    public function stream_returns_an_inline_response(): void
+    {
+        // arrange
+        $invoice = $this->createFullInvoice();
 
         // act
         $response = $invoice->stream();
 
         // assert
-        $this->assertTrue($invoice->isRendered());
-        $this->assertInstanceOf(Response::class, $response);
-        $this->assertEquals('no-cache, no-store, must-revalidate', $response->headers->get('Cache-Control'));
-        $this->assertEquals('no-cache', $response->headers->get('Pragma'));
-        $this->assertEquals('0', $response->headers->get('Expires'));
+        $this->assertSame('inline; filename=factuur-2026.0001.pdf', $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF-', (string) $response->getContent());
     }
 
     #[Test]
-    public function stream_auto_renders(): void
+    #[RequiresPhpExtension('gd')]
+    public function a_custom_filename_is_made_safe(): void
     {
         // arrange
-        $invoice = $this->createValidInvoice();
-        $invoice->language('en'); // explicitly set english for deterministic filename
-        $invoice->serial('INV.00000123'); // fixed serial for consistent testing
-        $mockPdf = $this->mockPdfInstance();
-
-        $this->mockPdfFacadeChain();
-
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andReturn($mockPdf);
-
-        $this->mockPdfStream($mockPdf, 'invoice-INV.00000123.pdf');
-
-        // assert
-        // pdf not rendered yet
-        $this->assertFalse($invoice->isRendered());
+        $invoice = $this->createFullInvoice(['serial' => '2026/0001']);
 
         // act
-        $invoice->stream();
+        $default = $invoice->download();
+        $custom = $invoice->download('my/invoice.pdf');
 
         // assert
-        // pdf should be rendered now
-        $this->assertTrue($invoice->isRendered());
+        $this->assertSame('attachment; filename=factuur-2026-0001.pdf', $default->headers->get('Content-Disposition'));
+        $this->assertSame('attachment; filename=my-invoice.pdf', $custom->headers->get('Content-Disposition'));
     }
 
     #[Test]
-    public function stream_throws_when_render_fails(): void
+    public function a_missing_template_throws_a_render_exception(): void
     {
         // arrange
-        $invoice = $this->createValidInvoice();
-        $this->mockPdfFacadeChain();
-        Pdf::shouldReceive('loadView')
-            ->once()
-            ->andThrow(new Exception('PDF generation failed')); // simulate render failure
+        $invoice = $this->createInvoice(['template' => 'invoices::missing']);
 
         // assert
-        $this->expectException(InvalidInvoiceException::class);
-        $this->expectExceptionMessage('Failed to render PDF');
+        $this->expectException(RenderException::class);
+        $this->expectExceptionMessage('Failed to render invoice (concept): View [missing] not found.');
 
         // act
-        $invoice->stream();
+        $invoice->toPdf();
+    }
+
+    #[Test]
+    public function a_template_of_the_app_can_be_used(): void
+    {
+        // arrange
+        $directory = sys_get_temp_dir().'/laravel-invoices-tests/views';
+        @mkdir($directory, 0777, true);
+        file_put_contents($directory.'/custom-invoice.blade.php', 'Custom {{ $invoice->getTitle() }} {{ $format->money($totals->getTotalCents()) }}');
+        $this->app?->make('view')->addLocation($directory);
+
+        // act
+        $html = $this->createInvoice(['template' => 'custom-invoice'])->toHtml();
+
+        // assert
+        $this->assertSame("Custom Factuur CONCEPT €\u{00A0}10,00", $html);
+    }
+
+    #[Test]
+    public function rendering_keeps_the_dompdf_config_of_the_app(): void
+    {
+        // arrange
+        config()->set('dompdf.options.dpi', 150);
+        config()->set('dompdf.options.enable_remote', true);
+        config()->set('dompdf.options.enable_javascript', true);
+
+        // act
+        $options = app(PdfRenderer::class)->pdf($this->createInvoice())->getDomPDF()->getOptions();
+
+        // assert: the config of the app is kept, the package turns off what it never needs
+        $this->assertSame(150, $options->getDpi());
+        $this->assertSame(sys_get_temp_dir().'/laravel-invoices-tests/fonts', $options->getFontDir());
+        $this->assertFalse($options->getIsRemoteEnabled());
+        $this->assertFalse($options->getIsJavascriptEnabled());
+        $this->assertFalse($options->getIsPhpEnabled());
+        $this->assertContains((string) realpath(__DIR__.'/../../../resources'), $options->getChroot());
+        $this->assertContains((string) realpath(base_path()), $options->getChroot());
+    }
+
+    #[Test]
+    public function rendering_does_not_change_the_locale_of_the_app(): void
+    {
+        // arrange
+        app()->setLocale('en');
+        app('translator')->setLocale('fr');
+        $events = [];
+        app('events')->listen(\Illuminate\Foundation\Events\LocaleUpdated::class, function ($event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        // act
+        $html = $this->createInvoice(['language' => 'nl'])->toHtml();
+
+        // assert
+        $this->assertStringContainsString('Factuur CONCEPT', $html);
+        $this->assertSame('en', app()->getLocale());
+        $this->assertSame('fr', app('translator')->getLocale());
+        $this->assertSame([], $events);
+    }
+
+    #[Test]
+    public function the_locale_is_restored_when_rendering_fails(): void
+    {
+        // arrange
+        app('translator')->setLocale('en');
+
+        // act
+        try {
+            $this->createInvoice(['template' => 'invoices::missing', 'language' => 'nl'])->toHtml();
+        } catch (RenderException) {
+            // expected
+        }
+
+        // assert
+        $this->assertSame('en', app('translator')->getLocale());
     }
 }

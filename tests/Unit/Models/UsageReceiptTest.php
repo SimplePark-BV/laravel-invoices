@@ -2,14 +2,12 @@
 
 namespace Tests\Unit\Models;
 
-use Illuminate\Support\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
-use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use SimpleParkBv\Invoices\Models\Buyer;
-use SimpleParkBv\Invoices\Models\Seller;
+use SimpleParkBv\Invoices\Exceptions\ExpectedTotalMismatchException;
+use SimpleParkBv\Invoices\Exceptions\InvalidUsageReceiptException;
 use SimpleParkBv\Invoices\Models\UsageReceipt;
 use SimpleParkBv\Invoices\Models\UsageReceiptItem;
 use SimpleParkBv\Invoices\Models\UsageReceiptLine;
@@ -21,798 +19,260 @@ final class UsageReceiptTest extends TestCase
     use CreatesTestReceipts;
 
     #[Test]
-    public function make_creates_instance(): void
+    public function a_new_receipt_has_the_defaults_from_the_config(): void
     {
-        // arrange & act
+        // act
         $receipt = UsageReceipt::make();
 
         // assert
-        $this->assertInstanceOf(UsageReceipt::class, $receipt);
-        $this->assertInstanceOf(Seller::class, $receipt->getSeller());
+        $this->assertSame('nl', $receipt->getLanguage());
+        $this->assertSame('d-m-Y H:i', $receipt->getDateTimeFormat());
+        $this->assertSame('invoices::usage-receipt.index', $receipt->getTemplate());
+        $this->assertSame('Test Seller B.V.', $receipt->getSeller()->getName());
         $this->assertTrue($receipt->getItems()->isEmpty());
-        $this->assertNull($receipt->pdf);
-        $this->assertEquals('usage-receipt.index', $receipt->getTemplate());
+        $this->assertTrue($receipt->getLines()->isEmpty());
     }
 
     #[Test]
-    public function from_array_creates_receipt(): void
+    public function make_and_fluent_setters_build_the_same_receipt(): void
     {
-        // arrange
-        $data = [
-            'buyer' => [
-                'name' => 'Test Buyer',
-                'address' => '123 Test St',
-                'city' => 'Test City',
-                'postal_code' => '12345',
-                'country' => 'Test Country',
-                'email' => 'buyer@test.com',
-            ],
-            'date' => '2024-01-15',
-            'items' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => 5.50,
-                ],
-            ],
-            'document_id' => 'DOC-12345',
-            'user_id' => 'USER-67890',
-            'language' => 'en',
-            'note' => 'Test note',
-            'expected_total' => 25.50,
-        ];
-
         // act
-        $receipt = UsageReceipt::make($data);
-
-        // assert
-        $this->assertInstanceOf(Buyer::class, $receipt->getBuyer());
-        $this->assertEquals('Test Buyer', $receipt->getBuyer()->getName());
-        $this->assertNotNull($receipt->getDate());
-        $this->assertEquals('2024-01-15', $receipt->getDate()->format('Y-m-d'));
-        $this->assertCount(1, $receipt->getItems());
-        $this->assertEquals('DOC-12345', $receipt->getDocumentId());
-        $this->assertEquals('USER-67890', $receipt->getUserId());
-        $this->assertEquals('en', $receipt->getLanguage());
-        $this->assertEquals('Test note', $receipt->getNote());
-        $this->assertEquals(25.50, $receipt->getExpectedTotal());
-    }
-
-    #[Test]
-    public function from_array_handles_partial_data(): void
-    {
-        // arrange
-        $data = [
-            'buyer' => [
-                'name' => 'Test Buyer',
-            ],
-            'items' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => 5.50,
-                ],
-            ],
-        ];
-
-        // act
-        $receipt = UsageReceipt::make($data);
-
-        // assert
-        $this->assertInstanceOf(Buyer::class, $receipt->getBuyer());
-        $this->assertEquals('Test Buyer', $receipt->getBuyer()->getName());
-        $this->assertCount(1, $receipt->getItems());
-
-        // optional fields should use defaults or be null
-        $this->assertNull($receipt->getDocumentId());
-        $this->assertNull($receipt->getUserId());
-    }
-
-    #[Test]
-    public function from_array_handles_empty_items_array(): void
-    {
-        // arrange
-        $data = [
-            'buyer' => [
-                'name' => 'Test Buyer',
-            ],
-            'items' => [],
-        ];
-
-        // act
-        $receipt = UsageReceipt::make($data);
-
-        // assert
-        $this->assertInstanceOf(Buyer::class, $receipt->getBuyer());
-        $this->assertCount(0, $receipt->getItems());
-    }
-
-    #[Test]
-    public function from_array_handles_missing_optional_fields(): void
-    {
-        // arrange
-        $data = [
-            'buyer' => [
-                'name' => 'Test Buyer',
-            ],
-            'items' => [
-                [
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => 5.50,
-                ],
-            ],
-        ];
-
-        // act
-        $receipt = UsageReceipt::make($data);
-
-        // assert
-        $this->assertInstanceOf(Buyer::class, $receipt->getBuyer());
-        $this->assertNull($receipt->getDocumentId());
-        $this->assertNull($receipt->getUserId());
-        $this->assertNull($receipt->getNote());
-    }
-
-    #[Test]
-    public function to_array_handles_null_values(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-        $item = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
+        $fromArray = UsageReceipt::make([
+            'buyer' => ['name' => 'Jan'],
+            'date' => '2026-10-11',
+            'document_id' => 'PS-1',
+            'user_id' => 'U-1',
+            'title' => 'Parking receipt',
+            'note' => 'Thanks',
+            'items' => [$this->receiptItemData()],
+            'lines' => [['label' => 'Fee', 'amount' => 0.35, 'tax_percentage' => 21]],
         ]);
-        $receipt->addItem($item);
+
+        $fluent = UsageReceipt::make()
+            ->buyer(['name' => 'Jan'])
+            ->date('2026-10-11')
+            ->documentId('PS-1')
+            ->userId('U-1')
+            ->title('Parking receipt')
+            ->note('Thanks')
+            ->addItem(UsageReceiptItem::make($this->receiptItemData()))
+            ->addLine(UsageReceiptLine::make()->label('Fee')->amount(0.35)->taxPercentage(21));
+
+        // assert
+        $this->assertEquals($fluent, $fromArray);
+    }
+
+    #[Test]
+    public function make_rejects_unknown_keys(): void
+    {
+        // assert
+        $this->expectException(InvalidUsageReceiptException::class);
+        $this->expectExceptionMessage("Unknown key 'notes' for UsageReceipt");
+
+        // act
+        UsageReceipt::make(['notes' => 'Thanks']);
+    }
+
+    #[Test]
+    public function items_and_lines_accept_objects_and_arrays(): void
+    {
+        // act
+        $receipt = UsageReceipt::make()
+            ->items([$this->createReceiptItem(), $this->receiptItemData(['identifier' => 'XY-1'])])
+            ->lines([$this->createReceiptLine(), ['label' => 'Discount', 'amount' => -1]]);
+
+        // assert
+        $this->assertSame(['AB-123-C', 'XY-1'], $receipt->getItems()->map->getIdentifier()->all());
+        $this->assertSame(['Service fee', 'Discount'], $receipt->getLines()->map->getLabel()->all());
+    }
+
+    #[Test]
+    public function the_title_falls_back_to_the_translation_in_the_document_language(): void
+    {
+        // act & assert
+        $this->assertSame('Gebruiksbevestiging', UsageReceipt::make()->getTitle());
+        $this->assertSame('Usage Confirmation', UsageReceipt::make()->language('en')->getTitle());
+        $this->assertSame('Parking receipt', UsageReceipt::make()->title('Parking receipt')->getTitle());
+        $this->assertSame('Gebruiksbevestiging', UsageReceipt::make()->title('  ')->getTitle());
+    }
+
+    #[Test]
+    public function without_lines_the_total_is_the_sum_of_the_session_prices(): void
+    {
+        // arrange: 0.1 + 0.2 used to be 0.30000000000000004
+        $receipt = $this->createReceipt(['items' => [$this->receiptItemData(['price' => 0.10]), $this->receiptItemData(['price' => 0.20])]]);
+
+        // act & assert
+        $this->assertSame(30, $receipt->getTotals()->getTotalCents());
+        $this->assertSame(0.3, $receipt->getTotal());
+        $this->assertSame([], $receipt->getTotals()->getTaxGroups());
+    }
+
+    #[Test]
+    public function with_lines_the_total_is_the_sum_of_the_lines_and_includes_their_tax(): void
+    {
+        // arrange
+        $receipt = $this->createFullReceipt();
+
+        // act
+        $totals = $receipt->getTotals();
+
+        // assert: 12.50 + 0.35 - 0.10, of which 21% tax over 0.25
+        $this->assertSame(1275, $totals->getTotalCents());
+        $this->assertCount(1, $totals->getTaxGroups());
+        $this->assertSame(4, $totals->getTaxCents());
+        $this->assertSame(0.04, $receipt->getTaxAmount());
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    #[Test]
+    #[DataProvider('filenames')]
+    public function the_filename_uses_the_document_id_or_else_the_date(array $data, string $expected): void
+    {
+        // act & assert
+        $this->assertSame($expected, $this->createReceipt($data)->getFilename());
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function filenames(): array
+    {
+        return [
+            'document id' => [['document_id' => 'PS-123', 'date' => '2026-10-11 14:30'], 'gebruiksbevestiging-PS-123.pdf'],
+            'date' => [['date' => '2026-10-11 14:30:15'], 'gebruiksbevestiging-2026-10-11-14-30-15.pdf'],
+            'date in the display timezone' => [['date' => CarbonImmutable::parse('2026-10-11 12:30', 'UTC')], 'gebruiksbevestiging-2026-10-11-14-30-00.pdf'],
+            'nothing' => [[], 'gebruiksbevestiging.pdf'],
+            'english' => [['language' => 'en', 'document_id' => 'PS-123'], 'usage-confirmation-PS-123.pdf'],
+            'unsafe characters' => [['document_id' => 'PS/1'], 'gebruiksbevestiging-PS-1.pdf'],
+        ];
+    }
+
+    #[Test]
+    public function the_filename_without_a_date_does_not_change_over_time(): void
+    {
+        // arrange
+        $receipt = $this->createReceipt();
+        $filename = $receipt->getFilename();
+
+        // act
+        $this->travel(5)->seconds();
+
+        // assert
+        $this->assertSame($filename, $receipt->getFilename());
+    }
+
+    #[Test]
+    public function a_buyer_without_a_name_is_valid_on_a_receipt(): void
+    {
+        // arrange
+        $receipt = $this->createReceipt(['buyer' => ['name' => null, 'email' => 'anonymous@example.test']]);
+
+        // act
+        $receipt->validate();
+
+        // assert
+        $this->assertNull($receipt->getBuyer()?->getName());
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    #[Test]
+    #[DataProvider('invalidReceipts')]
+    public function validate_rejects_invalid_receipts(array $data, string $message): void
+    {
+        // arrange
+        $receipt = UsageReceipt::make($data);
+
+        // assert
+        $this->expectException(InvalidUsageReceiptException::class);
+        $this->expectExceptionMessage($message);
+
+        // act
+        $receipt->validate();
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function invalidReceipts(): array
+    {
+        $item = [
+            'user' => 'Jan',
+            'identifier' => 'AB-1',
+            'start_date' => '2026-10-02 10:00',
+            'end_date' => '2026-10-02 11:00',
+            'category' => 'Zone 1',
+            'price' => 1,
+        ];
+
+        return [
+            'no buyer' => [['items' => [$item]], 'A usage receipt must have a buyer'],
+            'seller without a name' => [['buyer' => ['name' => 'Jan'], 'seller' => ['email' => 'info@seller.test'], 'items' => [$item]], 'The seller must have a name'],
+            'no items' => [['buyer' => ['name' => 'Jan']], 'A usage receipt must have at least one item'],
+            'invalid item' => [['buyer' => ['name' => 'Jan'], 'items' => [$item, [...$item, 'end_date' => '2026-10-02 09:00']]], 'Item at index 1 must not end before it starts'],
+            'invalid line' => [['buyer' => ['name' => 'Jan'], 'items' => [$item], 'lines' => [['amount' => 1]]], 'Line at index 0 must have a label'],
+        ];
+    }
+
+    #[Test]
+    public function an_expected_total_is_checked_against_the_lines(): void
+    {
+        // arrange
+        $receipt = $this->createFullReceipt(['expected_total' => 12.74]);
+
+        // assert
+        $this->expectException(ExpectedTotalMismatchException::class);
+        $this->expectExceptionMessage('The total of usage receipt PS-2026-000123 is 12.75, but 12.74 was expected');
+
+        // act
+        $receipt->validate();
+    }
+
+    #[Test]
+    public function to_array_returns_every_field(): void
+    {
+        // arrange
+        $receipt = $this->createFullReceipt();
 
         // act
         $array = $receipt->toArray();
 
         // assert
-        $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
-        $this->assertNull($array['document_id']);
-        $this->assertNull($array['user_id']);
-        $this->assertNull($array['expected_total']);
-        $this->assertNull($array['note']);
+        $this->assertSame('PS-2026-000123', $array['document_id']);
+        $this->assertSame('USR-000042', $array['user_id']);
+        $this->assertNull($array['title']);
+        $this->assertSame("Thank you for parking.\nSee you next time!", $array['note']);
+        $this->assertSame('d-m-Y H:i', $array['date_time_format']);
+        $this->assertSame('2026-10-11T14:30:00+02:00', $array['date']);
+        $this->assertIsArray($array['items']);
+        $this->assertCount(2, $array['items']);
+        $this->assertSame(['label' => 'Service fee', 'amount' => 0.35, 'tax_percentage' => 21.0], data_get($array, 'lines.1'));
     }
 
     #[Test]
-    public function to_array_returns_structure(): void
+    public function the_receipt_has_no_invoice_only_methods(): void
     {
         // arrange
-        $buyer = Buyer::make([
-            'name' => 'Test Buyer',
-            'email' => 'buyer@test.com',
-        ]);
-
-        $item = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-
-        $receipt = UsageReceipt::make();
-        $receipt->buyer($buyer);
-        $receipt->date('2024-01-15');
-        $receipt->addItem($item);
-        $receipt->documentId('DOC-12345');
-        $receipt->userId('USER-67890');
-        $receipt->language('en');
-        $receipt->note('Test note');
-
-        // act
-        $array = $receipt->toArray();
-
-        // assert
-        $this->assertIsArray($array); // @phpstan-ignore-line method.alreadyNarrowedType
-        $this->assertArrayHasKey('buyer', $array);
-        $this->assertArrayHasKey('date', $array);
-        $this->assertArrayHasKey('items', $array);
-        $this->assertArrayHasKey('document_id', $array);
-        $this->assertArrayHasKey('user_id', $array);
-        $this->assertArrayHasKey('language', $array);
-        $this->assertArrayHasKey('note', $array);
-        $this->assertEquals('Test Buyer', $array['buyer']['name']);
-        $this->assertCount(1, $array['items']);
-        $this->assertEquals('DOC-12345', $array['document_id']);
-        $this->assertEquals('USER-67890', $array['user_id']);
-        $this->assertEquals('Test note', $array['note']);
-    }
-
-    #[Test]
-    public function buyer_assignment(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-
-        // act
-        $result = $receipt->buyer($buyer);
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertSame($buyer, $receipt->getBuyer());
-    }
-
-    #[Test]
-    #[DataProvider('date_handling_data_provider')]
-    public function date_handling(mixed $dateInput, string $expectedFormat): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $result = $receipt->date($dateInput);
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertNotNull($receipt->getDate());
-        $this->assertEquals($expectedFormat, $receipt->getDate()->format('Y-m-d'));
-    }
-
-    /**
-     * @return array<string, array{0: mixed, 1: string}>
-     */
-    public static function date_handling_data_provider(): array
-    {
-        return [
-            'carbon instance' => [Carbon::parse('2024-01-15'), '2024-01-15'],
-            'string' => ['2024-01-15', '2024-01-15'],
-        ];
-    }
-
-    #[Test]
-    public function add_item(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $item = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-
-        // act
-        $result = $receipt->addItem($item);
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertCount(1, $receipt->getItems());
-        $this->assertSame($item, $receipt->getItems()->first());
-    }
-
-    #[Test]
-    public function add_items(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $item1 = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-
-        $item2 = UsageReceiptItem::make([
-            'user' => 'Jane Doe',
-            'identifier' => 'XYZ-789',
-            'start_date' => '2024-01-15 14:00:00',
-            'end_date' => '2024-01-15 16:00:00',
-            'category' => 'Premium Parking',
-            'price' => 10.00,
-        ]);
-
-        // act
-        $result = $receipt->items([$item1, $item2]);
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertCount(2, $receipt->getItems());
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $items
-     */
-    #[Test]
-    #[DataProvider('items_total_data_provider')]
-    public function items_total(array $items, float $expected): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $receiptItems = [];
-        foreach ($items as $itemData) {
-            $receiptItems[] = UsageReceiptItem::make($itemData);
-        }
-        $receipt->items($receiptItems);
-
-        // act
-        $total = $receipt->getItemsTotal();
-
-        // assert
-        $this->assertEquals($expected, $total);
-    }
-
-    /**
-     * @return array<string, array{0: array<int, array<string, mixed>>, 1: float}>
-     */
-    public static function items_total_data_provider(): array
-    {
-        return [
-            'single item' => [
-                [[
-                    'user' => 'John Doe',
-                    'identifier' => 'ABC-123',
-                    'start_date' => '2024-01-15 10:00:00',
-                    'end_date' => '2024-01-15 12:00:00',
-                    'category' => 'Standard Parking',
-                    'price' => 5.50,
-                ]],
-                5.50,
-            ],
-            'multiple items' => [
-                [
-                    [
-                        'user' => 'John Doe',
-                        'identifier' => 'ABC-123',
-                        'start_date' => '2024-01-15 10:00:00',
-                        'end_date' => '2024-01-15 12:00:00',
-                        'category' => 'Standard Parking',
-                        'price' => 5.50,
-                    ],
-                    [
-                        'user' => 'Jane Doe',
-                        'identifier' => 'XYZ-789',
-                        'start_date' => '2024-01-15 14:00:00',
-                        'end_date' => '2024-01-15 16:00:00',
-                        'category' => 'Premium Parking',
-                        'price' => 10.00,
-                    ],
-                ],
-                15.50,
-            ],
-        ];
-    }
-
-    #[Test]
-    public function total(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $item = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-        $receipt->addItem($item);
-
-        // act
-        $total = $receipt->getTotal();
-
-        // assert
-        $this->assertEquals(5.50, $total);
-    }
-
-    #[Test]
-    public function total_is_sum_of_lines_when_receipt_has_lines(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->lines([
-            ['label' => 'Parking fee', 'amount' => 5.15],
-            ['label' => 'Service fee', 'amount' => 0.35],
-            UsageReceiptLine::make(['label' => 'Discount', 'amount' => -2.00]),
-        ]);
-
-        // act
-        $total = $receipt->getTotal();
-
-        // assert
-        $this->assertEquals(3.50, $total);
-        $this->assertEquals('€ 3,50', $receipt->getFormattedTotal());
-    }
-
-    #[Test]
-    public function from_array_creates_lines(): void
-    {
-        // act
-        $receipt = UsageReceipt::make([
-            'lines' => [
-                ['label' => 'Parking fee', 'amount' => 5.15],
-                ['label' => 'Discount', 'amount' => -1.00],
-            ],
-        ]);
-
-        // assert
-        $this->assertSame([
-            ['label' => 'Parking fee', 'amount' => 5.15, 'tax_percentage' => null],
-            ['label' => 'Discount', 'amount' => -1.00, 'tax_percentage' => null],
-        ], $receipt->toArray()['lines']);
-    }
-
-    #[Test]
-    public function from_array_creates_lines_with_tax_percentage(): void
-    {
-        // act
-        $receipt = UsageReceipt::make([
-            'lines' => [
-                ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
-            ],
-        ]);
-
-        // assert
-        $this->assertSame([
-            ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
-        ], $receipt->toArray()['lines']);
-    }
-
-    #[Test]
-    public function lines_tax_is_calculated_from_amounts_including_tax(): void
-    {
-        // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->lines([
-            ['label' => 'Parking fee', 'amount' => 12.50, 'tax_percentage' => 21.0],
-            ['label' => 'Service fee', 'amount' => 0.35, 'tax_percentage' => 21.0],
-            ['label' => 'Discount', 'amount' => -2.00, 'tax_percentage' => 21.0],
-        ]);
+        $class = new \ReflectionClass(UsageReceipt::class);
 
         // act & assert
-        $this->assertEquals(10.85, $receipt->getTotal());
-        $this->assertEquals([21.0], $receipt->getLinesTaxGroups()->all());
-        $this->assertEquals(1.88, $receipt->getLinesTaxAmountForTaxGroup(21.0));
-        $this->assertEquals(1.88, $receipt->getLinesTaxAmount());
+        $this->assertFalse($class->hasMethod('getDueDate'));
+        $this->assertFalse($class->hasMethod('isIssued'));
+        $this->assertFalse($class->hasMethod('paymentTermsDays'));
     }
 
     #[Test]
-    public function lines_tax_is_grouped_per_percentage(): void
+    public function the_date_time_format_can_be_changed(): void
     {
         // arrange
-        $receipt = $this->createValidReceipt();
-        $receipt->lines([
-            ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
-            ['label' => 'Snack', 'amount' => 1.09, 'tax_percentage' => 9.0],
-            ['label' => 'Untaxed fee', 'amount' => 1.00],
-        ]);
+        Config::set('invoices.datetime_format', 'Y-m-d H:i');
 
         // act & assert
-        $this->assertEquals([21.0, 9.0], $receipt->getLinesTaxGroups()->all());
-        $this->assertEquals(2.10, $receipt->getLinesTaxAmountForTaxGroup(21.0));
-        $this->assertEquals(0.09, $receipt->getLinesTaxAmountForTaxGroup(9.0));
-        $this->assertEquals(2.19, $receipt->getLinesTaxAmount());
-        $this->assertEquals(14.19, $receipt->getTotal());
-    }
-
-    #[Test]
-    public function expected_total(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $result = $receipt->expectedTotal(100.50);
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertEquals(100.50, $receipt->getExpectedTotal());
-        // expected total should not override getTotal()
-        $this->assertEquals(0.00, $receipt->getTotal());
-    }
-
-    #[Test]
-    public function expected_total_logs_error_when_differing_from_calculated_total(): void
-    {
-        // arrange
-        Log::shouldReceive('error')
-            ->once()
-            ->with(
-                'Expected total differs from calculated total',
-                Mockery::on(function ($context) {
-                    return isset($context['expected_total'])
-                        && isset($context['actual_total'])
-                        && isset($context['difference'])
-                        && isset($context['document_id'])
-                        && abs($context['expected_total'] - 100.50) < 0.01
-                        && abs($context['actual_total'] - 5.50) < 0.01;
-                })
-            );
-
-        $receipt = UsageReceipt::make();
-        $buyer = Buyer::make(['name' => 'Test Buyer']);
-        $receipt->buyer($buyer);
-        $item = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 5.50,
-        ]);
-        $receipt->addItem($item);
-        $receipt->documentId('DOC-12345');
-        $receipt->expectedTotal(100.50); // differs from calculated total of 5.50
-
-        // act
-        $receipt->render();
-    }
-
-    #[Test]
-    public function is_rendered_returns_false(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $isRendered = $receipt->isRendered();
-
-        // assert
-        $this->assertFalse($isRendered);
-    }
-
-    #[Test]
-    public function clear_pdf(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        /** @var \Barryvdh\DomPDF\PDF&\Mockery\MockInterface $mockPdf */
-        $mockPdf = Mockery::mock(\Barryvdh\DomPDF\PDF::class);
-        $receipt->pdf = $mockPdf; // mock pdf object
-
-        // act
-        $result = $receipt->clearPdf();
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertNull($receipt->pdf);
-    }
-
-    #[Test]
-    public function seller_initialized_from_config(): void
-    {
-        // arrange
-        Config::set('invoices.seller.name', 'Test Seller');
-        Config::set('invoices.seller.address', 'Test Address');
-
-        // act
-        $receipt = UsageReceipt::make();
-
-        // assert
-        $this->assertInstanceOf(Seller::class, $receipt->getSeller());
-        $this->assertEquals('Test Seller', $receipt->getSeller()->getName());
-        $this->assertEquals('Test Address', $receipt->getSeller()->getAddress());
-    }
-
-    #[Test]
-    public function formatted_total(): void
-    {
-        // arrange
-        Config::set('invoices.currency_symbol', '€');
-        Config::set('invoices.decimal_separator', ',');
-        Config::set('invoices.thousands_separator', '.');
-
-        $receipt = UsageReceipt::make();
-        $item = UsageReceiptItem::make([
-            'user' => 'John Doe',
-            'identifier' => 'ABC-123',
-            'start_date' => '2024-01-15 10:00:00',
-            'end_date' => '2024-01-15 12:00:00',
-            'category' => 'Standard Parking',
-            'price' => 10.50,
-        ]);
-        $receipt->addItem($item);
-
-        // act
-        $formatted = $receipt->getFormattedTotal();
-
-        // assert
-        $this->assertEquals('€ 10,50', $formatted);
-    }
-
-    #[Test]
-    public function document_id_setter(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $result = $receipt->documentId('DOC-12345');
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertEquals('DOC-12345', $receipt->getDocumentId());
-    }
-
-    #[Test]
-    public function user_id_setter(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $result = $receipt->userId('USER-67890');
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertEquals('USER-67890', $receipt->getUserId());
-    }
-
-    #[Test]
-    public function template_setter(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $result = $receipt->template('custom-template');
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertEquals('custom-template', $receipt->getTemplate());
-    }
-
-    #[Test]
-    public function note_setter(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $result = $receipt->note('Test note content');
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertEquals('Test note content', $receipt->getNote());
-    }
-
-    #[Test]
-    public function set_language_validates_language(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // assert
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("Language 'invalid' is not supported");
-
-        // act
-        $receipt->language('invalid');
-    }
-
-    #[Test]
-    public function set_language_with_valid_language(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $result = $receipt->language('en');
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertEquals('en', $receipt->getLanguage());
-    }
-
-    #[Test]
-    public function get_available_languages(): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-
-        // act
-        $languages = $receipt->getAvailableLanguages();
-
-        // assert
-        $this->assertIsArray($languages); // @phpstan-ignore-line method.alreadyNarrowedType
-
-        // should at least contain 'en' and 'nl' based on the project structure
-        $this->assertContains('en', $languages);
-        $this->assertContains('nl', $languages);
-    }
-
-    #[Test]
-    #[DataProvider('formatted_date_data_provider')]
-    public function formatted_date(string $dateFormat, string $expected): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $receipt->date('2024-01-15');
-        $receipt->dateFormat($dateFormat);
-
-        // act
-        $formatted = $receipt->getFormattedDate();
-
-        // assert
-        $this->assertEquals($expected, $formatted);
-    }
-
-    /**
-     * @return array<string, array{0: string, 1: string}>
-     */
-    public static function formatted_date_data_provider(): array
-    {
-        return [
-            'default format' => ['d-m-Y', '15-01-2024'],
-            'custom format' => ['Y/m/d', '2024/01/15'],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('set_logo_data_provider')]
-    public function set_logo(?string $logoPath, ?string $initialLogo, ?string $expected): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        if ($initialLogo !== null) {
-            $receipt->logo($initialLogo);
-        }
-
-        // act
-        $result = $receipt->logo($logoPath);
-
-        // assert
-        $this->assertSame($receipt, $result);
-        $this->assertEquals($expected, $receipt->getLogo());
-    }
-
-    /**
-     * @return array<string, array{0: string|null, 1: string|null, 2: string|null}>
-     */
-    public static function set_logo_data_provider(): array
-    {
-        return [
-            'set logo path' => ['/path/to/logo.png', null, '/path/to/logo.png'],
-            'set logo to null' => [null, '/path/to/logo.png', null],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('get_logo_data_uri_null_cases_data_provider')]
-    public function get_logo_data_uri_returns_null(?string $logoPath): void
-    {
-        // arrange
-        $receipt = UsageReceipt::make();
-        $receipt->logo($logoPath);
-
-        // act
-        $dataUri = $receipt->getLogoDataUri();
-
-        // assert
-        $this->assertNull($dataUri);
-    }
-
-    /**
-     * @return array<string, array{0: string|null}>
-     */
-    public static function get_logo_data_uri_null_cases_data_provider(): array
-    {
-        return [
-            'no logo' => [null],
-            'file not exists' => ['/nonexistent/path/to/logo.png'],
-        ];
+        $this->assertSame('Y-m-d H:i', UsageReceipt::make()->getDateTimeFormat());
+        $this->assertSame('H:i', UsageReceipt::make()->dateTimeFormat('H:i')->getDateTimeFormat());
     }
 }
