@@ -23,6 +23,19 @@ php artisan vendor:publish --provider="SimpleParkBv\Invoices\InvoiceServiceProvi
 
 Customize currency, tax rates, payment terms, PDF settings, and seller information in `config/invoices.php`.
 
+### Fonts
+
+PDFs are rendered with the bundled [Poppins](https://fonts.google.com/specimen/Poppins) font (Regular, Italic, and Medium for bold text). To use a different font, set:
+
+```env
+INVOICES_PDF_FONT="My Font"
+INVOICES_PDF_FONT_FILE=resources/fonts/MyFont.ttf
+```
+
+- `INVOICES_PDF_FONT_FILE` must point to a TrueType (`.ttf`) file. Relative paths are resolved from your application's base path.
+- The custom font file is used for all text, including bold and italic.
+- Without a font file, `INVOICES_PDF_FONT` must name a font dompdf already knows (e.g. `DejaVu Sans`), otherwise a sans-serif fallback is used.
+
 ### Publish Translations
 
 ```bash
@@ -101,6 +114,18 @@ $receipt = UsageReceipt::make()
     ->note('Optional note for the receipt');
 
 return $receipt->download(); // filename is locale-aware
+```
+
+**Cost breakdown**: Add lines under the sessions with `->lines([...])` or `->addLine(UsageReceiptLine::make([...]))`, e.g. a fee and a discount (negative amount). When a receipt has lines, its total is the sum of the lines instead of the item prices.
+
+```php
+use SimpleParkBv\Invoices\Models\UsageReceiptLine;
+
+$receipt->lines([
+    ['label' => 'Parking fee', 'amount' => 12.50],
+    ['label' => 'Service fee', 'amount' => 0.35],
+    UsageReceiptLine::make(['label' => 'Discount', 'amount' => -2.00]),
+]);
 ```
 
 **Locale-Aware Filenames**: The package generates filenames based on the selected language (e.g., `gebruiksbevestiging-2026-01-19-14-30-00.pdf` for Dutch).

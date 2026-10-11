@@ -32,12 +32,15 @@
             font-style: italic;
         }
         @if($usageReceiptFontFile && is_readable($usageReceiptFontFile))
+        {{-- register the custom font for every weight/style, dompdf only matches exact faces --}}
+        @foreach([[400, 'normal'], [400, 'italic'], [700, 'normal'], [700, 'italic']] as [$fontWeight, $fontStyle])
         @font-face {
             font-family: '{{ $usageReceiptFont }}';
             src: url('file://{{ str_replace('\\', '/', $usageReceiptFontFile) }}') format('truetype');
-            font-weight: 400;
-            font-style: normal;
+            font-weight: {{ $fontWeight }};
+            font-style: {{ $fontStyle }};
         }
+        @endforeach
         @endif
         @if(is_readable($usageReceiptCssPath))
             {!! file_get_contents($usageReceiptCssPath) !!}

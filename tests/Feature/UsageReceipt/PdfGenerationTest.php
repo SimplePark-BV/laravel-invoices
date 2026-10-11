@@ -404,4 +404,74 @@ final class PdfGenerationTest extends TestCase
         // assert
         $this->assertInstanceOf(Response::class, $response);
     }
+
+    #[Test]
+    public function template_shows_lines_and_their_total(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt(['language' => 'en']);
+        $receipt->lines([
+            ['label' => 'Parking fee', 'amount' => 5.15],
+            ['label' => 'Discount', 'amount' => -1.00],
+        ]);
+
+        /** @var view-string $view */
+        $view = 'invoices::usage-receipt.index';
+
+        // act
+        $html = view($view, ['usageReceipt' => $receipt])->render();
+
+        // assert
+        $this->assertStringContainsString('Parking fee', $html);
+        $this->assertStringContainsString('€ 5,15', $html);
+        $this->assertStringContainsString('Discount', $html);
+        $this->assertStringContainsString('€ -1,00', $html);
+        $this->assertStringContainsString('€ 4,15', $html);
+        $this->assertStringNotContainsString('VAT (', $html);
+    }
+
+    #[Test]
+    public function template_shows_tax_of_lines_as_one_line(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt(['language' => 'en']);
+        $receipt->lines([
+            ['label' => 'Parking fee', 'amount' => 12.50],
+            ['label' => 'Transaction fee', 'amount' => 0.35, 'tax_percentage' => 21.0],
+        ]);
+
+        /** @var view-string $view */
+        $view = 'invoices::usage-receipt.index';
+
+        // act
+        $html = view($view, ['usageReceipt' => $receipt])->render();
+
+        // assert
+        $this->assertStringContainsString('VAT (21%)', $html);
+        $this->assertStringContainsString('€ 0,06', $html);
+        $this->assertStringContainsString('€ 12,85', $html);
+    }
+
+    #[Test]
+    public function template_shows_one_tax_line_per_rate(): void
+    {
+        // arrange
+        $receipt = $this->createValidReceipt(['language' => 'en']);
+        $receipt->lines([
+            ['label' => 'Parking fee', 'amount' => 12.10, 'tax_percentage' => 21.0],
+            ['label' => 'Snack', 'amount' => 1.09, 'tax_percentage' => 9.0],
+        ]);
+
+        /** @var view-string $view */
+        $view = 'invoices::usage-receipt.index';
+
+        // act
+        $html = view($view, ['usageReceipt' => $receipt])->render();
+
+        // assert
+        $this->assertStringContainsString('VAT (21%)', $html);
+        $this->assertStringContainsString('€ 2,10', $html);
+        $this->assertStringContainsString('VAT (9%)', $html);
+        $this->assertStringContainsString('€ 0,09', $html);
+    }
 }

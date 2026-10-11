@@ -16,6 +16,7 @@ use SimpleParkBv\Invoices\Models\Traits\HasPdfRendering;
 use SimpleParkBv\Invoices\Models\Traits\HasReceiptIds;
 use SimpleParkBv\Invoices\Models\Traits\HasTemplate;
 use SimpleParkBv\Invoices\Models\Traits\HasUsageReceiptItems;
+use SimpleParkBv\Invoices\Models\Traits\HasUsageReceiptLines;
 
 /**
  * Class UsageReceipt
@@ -34,6 +35,7 @@ final class UsageReceipt implements UsageReceiptInterface
     use HasReceiptIds;
     use HasTemplate;
     use HasUsageReceiptItems;
+    use HasUsageReceiptLines;
 
     public Seller $seller;
 
@@ -42,6 +44,7 @@ final class UsageReceipt implements UsageReceiptInterface
     public function __construct()
     {
         $this->initializeHasUsageReceiptItems();
+        $this->initializeHasUsageReceiptLines();
         $this->initializeHasLogo();
         $this->initializeHasLanguage();
         $this->initializeHasDates();
@@ -86,6 +89,11 @@ final class UsageReceipt implements UsageReceiptInterface
             $usageReceipt->items($items);
         }
 
+        // set lines if provided
+        if (isset($data['lines']) && is_array($data['lines'])) {
+            $usageReceipt->lines($data['lines']);
+        }
+
         // fill remaining properties (date, document_id, user_id, title, language, note, expected_total)
         $usageReceipt->fill($data);
 
@@ -110,6 +118,18 @@ final class UsageReceipt implements UsageReceiptInterface
     public function getTitle(): string
     {
         return $this->title ?? __('invoices::usage-receipt.title', [], $this->getLanguage());
+    }
+
+    /**
+     * Calculate the grand total.
+     *
+     * The sum of the lines when the receipt has a cost breakdown, the sum of the item prices otherwise.
+     */
+    public function getTotal(): float
+    {
+        return $this->getLines()->isNotEmpty()
+            ? $this->getLinesTotal()
+            : $this->getItemsTotal();
     }
 
     /**
@@ -148,6 +168,7 @@ final class UsageReceipt implements UsageReceiptInterface
             'buyer' => $this->getBuyer()?->toArray() ?? null,
             'date' => $this->getDate()?->toIso8601String(),
             'items' => $this->getItems()->map(static fn (UsageReceiptItemInterface $item) => $item->toArray())->toArray(),
+            'lines' => $this->getLines()->map(static fn (UsageReceiptLine $line) => $line->toArray())->toArray(),
             'document_id' => $this->documentId,
             'user_id' => $this->userId,
             'title' => $this->title,
@@ -189,6 +210,11 @@ final class UsageReceipt implements UsageReceiptInterface
             } catch (InvalidUsageReceiptItemException $e) {
                 throw new InvalidUsageReceiptException($e->getMessage(), 0, $e);
             }
+        }
+
+        // validate all lines
+        foreach ($this->getLines() as $index => $line) {
+            $line->validate($index);
         }
     }
 }
