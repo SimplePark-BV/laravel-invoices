@@ -130,10 +130,10 @@ final class FormatterTest extends TestCase
     #[Test]
     public function separators_of_a_language_without_format_translations_fall_back(): void
     {
-        // act: "de" has no format translations, so the translator falls back to the fallback locale (en)
+        // act: "de" has no format translations, so the defaults are used, not the separators of the fallback locale (en)
         $formatted = (new Formatter('de'))->money(123450);
 
         // assert
-        $this->assertSame("€\u{00A0}1,234.50", $formatted);
+        $this->assertSame("€\u{00A0}1.234,50", $formatted);
     }
 }

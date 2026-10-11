@@ -6,6 +6,7 @@ namespace SimpleParkBv\Invoices\Services;
 
 use Barryvdh\DomPDF\PDF;
 use Closure;
+use Dompdf\Dompdf;
 use SimpleParkBv\Invoices\Exceptions\RenderException;
 use SimpleParkBv\Invoices\Models\Document;
 use SimpleParkBv\Invoices\Support\Settings;
@@ -54,6 +55,7 @@ final class PdfRenderer
             $pdf = app('dompdf.wrapper');
 
             $this->configure($pdf, $fontFile);
+            $this->registerFonts($pdf->getDomPDF(), $fontFile);
 
             $pdf->setPaper(
                 Settings::string('invoices.pdf.paper_size', 'a4'),
@@ -74,19 +76,22 @@ final class PdfRenderer
      */
     private function renderHtml(Document $document, ?string $fontFile): string
     {
-        $document->validate();
+        // the views ask for the totals many times, so calculate them once
+        return $document->withFixedTotals(function () use ($document, $fontFile): string {
+            $document->validate();
 
-        /** @var view-string $template */
-        $template = $document->getTemplate();
+            /** @var view-string $template */
+            $template = $document->getTemplate();
 
-        try {
-            return $this->withLocale(
-                $document->getLanguage(),
-                fn (): string => view($template, $this->viewData($document, $fontFile))->render(),
-            );
-        } catch (Throwable $e) {
-            throw RenderException::fromThrowable($document->describe(), $e);
-        }
+            try {
+                return $this->withLocale(
+                    $document->getLanguage(),
+                    fn (): string => view($template, $this->viewData($document, $fontFile))->render(),
+                );
+            } catch (Throwable $e) {
+                throw RenderException::fromThrowable($document->describe(), $e);
+            }
+        });
     }
 
     /**
@@ -135,6 +140,46 @@ final class PdfRenderer
         $options->setIsRemoteEnabled(false);
         $options->setIsPhpEnabled(false);
         $options->setIsJavascriptEnabled(false);
+    }
+
+    /**
+     * Register the fonts of the documents in the font cache of dompdf, one process at a time.
+     *
+     * dompdf writes a font into its cache the first time it meets it, without a lock, so renders that start at
+     * the same time on a cold cache (after a deploy) could read each other's half-written font files. With the
+     * fonts registered here under a lock, rendering finds them in the cache and only reads it.
+     */
+    private function registerFonts(Dompdf $dompdf, ?string $fontFile): void
+    {
+        $faces = FontResolver::faces($fontFile);
+        $lock = $faces === [] ? false : @fopen($dompdf->getOptions()->getFontDir().'/invoices-fonts.lock', 'c');
+
+        // without a lock file, dompdf registers the fonts while rendering, as before
+        if ($lock === false) {
+            return;
+        }
+
+        try {
+            flock($lock, LOCK_EX);
+
+            // read the cache again, another process may have registered the fonts since dompdf read it
+            $fontMetrics = $dompdf->getFontMetrics();
+            $fontMetrics->loadFontFamilies();
+            $fontMetrics->setFontFamilies();
+
+            $family = FontResolver::family($fontFile);
+
+            foreach ($faces as [$weight, $style, $path]) {
+                // the same style and url dompdf takes from the @font-face rules, so it finds the cache entries
+                $fontMetrics->registerFont(
+                    ['family' => $family, 'weight' => $weight, 'style' => $style],
+                    'file://'.(realpath($path) ?: $path),
+                );
+            }
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
     }
 
     /**

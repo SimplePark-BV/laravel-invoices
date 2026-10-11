@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SimpleParkBv\Invoices\Models;
 
 use Carbon\CarbonImmutable;
+use Closure;
 use DateTimeInterface;
 use Illuminate\Http\Response;
 use SimpleParkBv\Invoices\Exceptions\ExpectedTotalMismatchException;
@@ -47,6 +48,13 @@ abstract class Document
     protected ?int $expectedTotalCents = null;
 
     /**
+     * The totals while the document renders, so they are calculated once per render.
+     */
+    private ?Totals $renderTotals = null;
+
+    private ?Formatter $formatter = null;
+
+    /**
      * @throws \SimpleParkBv\Invoices\Exceptions\UnsupportedLanguageException when the default language has no translations
      */
     public function __construct()
@@ -59,9 +67,9 @@ abstract class Document
     }
 
     /**
-     * Get the totals of the document.
+     * Calculate the totals of the document.
      */
-    abstract public function getTotals(): Totals;
+    abstract protected function calculateTotals(): Totals;
 
     /**
      * Get the default file name of the PDF.
@@ -169,6 +177,7 @@ abstract class Document
         foreach ($candidates as $candidate) {
             if ($candidate !== '' && app('translator')->hasForLocale($this->requiredTranslation(), $candidate)) {
                 $this->language = $candidate;
+                $this->formatter = null;
 
                 return $this;
             }
@@ -284,6 +293,39 @@ abstract class Document
     }
 
     /**
+     * Get the totals of the document.
+     */
+    public function getTotals(): Totals
+    {
+        return $this->renderTotals ?? $this->calculateTotals();
+    }
+
+    /**
+     * Run a callback with the totals calculated once, for rendering. The document must not change meanwhile.
+     *
+     * @internal
+     *
+     * @template TReturn
+     *
+     * @param  \Closure(): TReturn  $callback
+     * @return TReturn
+     */
+    public function withFixedTotals(Closure $callback): mixed
+    {
+        if ($this->renderTotals !== null) {
+            return $callback();
+        }
+
+        $this->renderTotals = $this->calculateTotals();
+
+        try {
+            return $callback();
+        } finally {
+            $this->renderTotals = null;
+        }
+    }
+
+    /**
      * Get the total including tax.
      */
     public function getTotal(): float
@@ -304,7 +346,7 @@ abstract class Document
      */
     public function getFormatter(): Formatter
     {
-        return new Formatter($this->language);
+        return $this->formatter ??= new Formatter($this->language);
     }
 
     /**

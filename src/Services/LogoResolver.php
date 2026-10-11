@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SimpleParkBv\Invoices\Services;
 
 use Illuminate\Support\Facades\Log;
+use SimpleParkBv\Invoices\Support\Paths;
 
 /**
  * Turns the logo of a document into a data URI, so dompdf never has to read files outside its chroot.
@@ -43,7 +44,7 @@ final class LogoResolver
             return self::skip('the data URI is not a base64 encoded PNG, JPG, GIF or SVG image');
         }
 
-        $path = self::isAbsolutePath($logo) ? $logo : base_path($logo);
+        $path = Paths::resolve($logo);
         $mimeType = self::MIME_TYPES[strtolower(pathinfo($path, PATHINFO_EXTENSION))] ?? null;
 
         if ($mimeType === null) {
@@ -83,13 +84,5 @@ final class LogoResolver
         Log::warning("Invoices: the logo is left out, because {$reason}");
 
         return null;
-    }
-
-    /**
-     * Check if the path is absolute on unix or windows.
-     */
-    private static function isAbsolutePath(string $path): bool
-    {
-        return preg_match('#^(?:/|\\\\|[A-Za-z]:[\\\\/])#', $path) === 1;
     }
 }

@@ -96,6 +96,17 @@ final class MoneyTest extends TestCase
         $this->assertSame($expected, Money::multiply($cents, $quantity));
     }
 
+    #[Test]
+    public function multiply_throws_when_the_result_is_too_large(): void
+    {
+        // assert
+        $this->expectException(InvalidInvoiceException::class);
+        $this->expectExceptionMessage('The line total is too large');
+
+        // act: 1e8 cents times 1e11 is more than an integer holds
+        Money::multiply(100_000_000, 1e11, 'line total', InvalidInvoiceException::class);
+    }
+
     /**
      * @return array<string, array{int, float|int, int}>
      */

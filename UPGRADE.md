@@ -89,7 +89,7 @@ v4 is a rewrite of the internals: money is calculated in whole cents, documents 
 **Views, styles and translations.**
 - The views share one layout, and the `invoices-assets` publish tag is removed. Published views from v3 must be published again.
 - Translation changes:
-  - New keys: `invoice.credit_invoice`, `invoice.price`, `invoice.direct_debit`, `invoice.paid`, `invoice.nothing_due` and the `format` file.
+  - New keys: `invoice.credit_invoice`, `invoice.price`, `invoice.direct_debit`, `invoice.paid`, `invoice.credit_paid`, `invoice.nothing_due` and the `format` file.
   - Removed keys: `invoice.amount` (now `price`, "Prijs") and `invoice.unknown`.
   - Changed texts: "Subtotaal excl. btw", ":percentage% btw over :amount", "KvK:", "Document-ID", "Gebruikers-ID", "KvK-nummer" and "Btw-nummer".
   - Published translations keep overriding the texts they contain, so delete the overrides you did not change.

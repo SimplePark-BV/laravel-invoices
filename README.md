@@ -78,7 +78,7 @@ return $invoice->download(); // or ->stream() to show it in the browser
 | `->paymentMethod(PaymentMethod::DirectDebit)` | Says the amount is collected by direct debit around the due date |
 | `->paid()` | Says the amount has already been paid; the due date is not shown |
 | Total of zero | Says nothing has to be paid |
-| Total below zero | A credit invoice ("Creditfactuur"): says the amount is transferred to the buyer |
+| Total below zero | A credit invoice ("Creditfactuur"): says the amount is transferred to the buyer, or with `->paid()` that it already was |
 
 Replace the footer with `->footerMessage('...')`, shown as plain text with `:amount`, `:date` (the due date) and `:number` replaced, and the footer of a concept with `->conceptFooterMessage('...')`. The footer sits in the bottom margin of every page, which fits about five lines; a longer footer runs into the content.
 

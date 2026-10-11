@@ -21,5 +21,6 @@ return [
     'paid' => 'The above amount of :amount has already been paid, so no further payment is required. For questions, please contact us by email.',
     'nothing_due' => 'No payment is required for this invoice. For questions, please contact us by email.',
     'credit_transfer_request' => 'We will transfer the above amount of :amount to your bank account by :date. For questions, please contact us by email.',
+    'credit_paid' => 'The above amount of :amount has already been transferred to your bank account, so you will not receive another payment. For questions, please contact us by email.',
     'concept_message' => 'This is a <strong>DRAFT</strong>. This means this invoice is not yet official and no payment is required. You will receive the official invoice at a later date.',
 ];

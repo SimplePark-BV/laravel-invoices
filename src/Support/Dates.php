@@ -39,9 +39,12 @@ final class Dates
             throw new $exception("The {$field} must be a date, an empty string given");
         }
 
+        // created outside the try, so an invalid timezone config is reported as such and not as an invalid date
+        $timezone = new DateTimeZone(self::displayTimezone());
+
         try {
             // strings without a timezone are read in the display timezone, so the date given is the date shown
-            $date = new DateTimeImmutable($value, new DateTimeZone(self::displayTimezone()));
+            $date = new DateTimeImmutable($value, $timezone);
         } catch (Throwable $e) {
             throw new $exception("The {$field} must be a valid date, '{$value}' given", 0, $e);
         }

@@ -57,11 +57,14 @@ final class UsageReceipt extends Document
      */
     public function items(iterable $items): static
     {
-        $this->items = [];
+        // convert every session before replacing, so an invalid session leaves the current ones as they are
+        $converted = [];
 
         foreach ($items as $item) {
-            $this->addItem($item);
+            $converted[] = self::toItem($item);
         }
+
+        $this->items = $converted;
 
         return $this;
     }
@@ -74,7 +77,7 @@ final class UsageReceipt extends Document
      */
     public function addItem(UsageReceiptItem|array $item): static
     {
-        $this->items[] = is_array($item) ? UsageReceiptItem::make($item) : $item;
+        $this->items[] = self::toItem($item);
 
         return $this;
     }
@@ -95,11 +98,14 @@ final class UsageReceipt extends Document
      */
     public function lines(iterable $lines): static
     {
-        $this->lines = [];
+        // convert every line before replacing, so an invalid line leaves the current ones as they are
+        $converted = [];
 
         foreach ($lines as $line) {
-            $this->addLine($line);
+            $converted[] = self::toLine($line);
         }
+
+        $this->lines = $converted;
 
         return $this;
     }
@@ -112,7 +118,7 @@ final class UsageReceipt extends Document
      */
     public function addLine(UsageReceiptLine|array $line): static
     {
-        $this->lines[] = is_array($line) ? UsageReceiptLine::make($line) : $line;
+        $this->lines[] = self::toLine($line);
 
         return $this;
     }
@@ -214,14 +220,6 @@ final class UsageReceipt extends Document
     }
 
     /**
-     * Get the totals: of the lines when the receipt has a cost breakdown, of the session prices otherwise.
-     */
-    public function getTotals(): Totals
-    {
-        return TaxCalculator::calculate($this->lines !== [] ? $this->lines : $this->items);
-    }
-
-    /**
      * Get the default file name, e.g. "gebruiksbevestiging-PS-123.pdf", or with the date when it has no document id.
      */
     public function getFilename(): string
@@ -269,6 +267,14 @@ final class UsageReceipt extends Document
             'note' => $this->note,
             'date_time_format' => $this->dateTimeFormat,
         ];
+    }
+
+    /**
+     * Calculate the totals: of the lines when the receipt has a cost breakdown, of the session prices otherwise.
+     */
+    protected function calculateTotals(): Totals
+    {
+        return TaxCalculator::calculate($this->lines !== [] ? $this->lines : $this->items);
     }
 
     protected function defaultTemplate(): string
@@ -322,6 +328,8 @@ final class UsageReceipt extends Document
             'title' => 'title',
             'note' => 'note',
             'date_time_format' => 'dateTimeFormat',
+            // the name of the config key, invoices.datetime_format
+            'datetime_format' => 'dateTimeFormat',
         ];
     }
 
@@ -331,5 +339,21 @@ final class UsageReceipt extends Document
     protected static function invalidDataException(): string
     {
         return InvalidUsageReceiptException::class;
+    }
+
+    /**
+     * @param  \SimpleParkBv\Invoices\Models\UsageReceiptItem|array<string, mixed>  $item
+     */
+    private static function toItem(UsageReceiptItem|array $item): UsageReceiptItem
+    {
+        return is_array($item) ? UsageReceiptItem::make($item) : $item;
+    }
+
+    /**
+     * @param  \SimpleParkBv\Invoices\Models\UsageReceiptLine|array<string, mixed>  $line
+     */
+    private static function toLine(UsageReceiptLine|array $line): UsageReceiptLine
+    {
+        return is_array($line) ? UsageReceiptLine::make($line) : $line;
     }
 }

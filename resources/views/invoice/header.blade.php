@@ -14,7 +14,7 @@
             @endif
             @if($seller->getEmail() !== null || $seller->getPhone() !== null)
                 <div class="invoice__seller-detail">
-                    {!! collect([$seller->getEmail(), $seller->getPhone()])->filter(fn (?string $line): bool => $line !== null && $line !== '')->map(fn (string $line): string => e($line))->implode('<br>') !!}
+                    @include('invoices::partials.lines', ['lines' => [$seller->getEmail(), $seller->getPhone()]])
                 </div>
             @endif
             @if($seller->getRegistrationNumber() !== null || $seller->getTaxId() !== null || $seller->getBankAccount() !== null)

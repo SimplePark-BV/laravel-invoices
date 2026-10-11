@@ -77,11 +77,22 @@ final class Money
 
     /**
      * Multiply an amount in cents by a quantity, rounding half away from zero to whole cents.
+     *
+     * @param  class-string<\SimpleParkBv\Invoices\Exceptions\InvalidDocumentException>  $exception
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidDocumentException when the result is too large
      */
-    public static function multiply(int $cents, float|int $quantity): int
+    public static function multiply(int $cents, float|int $quantity, string $field = 'line total', string $exception = InvalidDocumentException::class): int
     {
         // round to 6 decimals first, so float noise (100 * 1.005 = 100.4999...) does not flip the rounding
-        return (int) round(round($cents * $quantity, 6));
+        $result = round(round($cents * $quantity, 6));
+
+        // the same limit as for amounts, so the cast below never overflows
+        if (! is_finite($result) || abs($result) >= self::MAX_AMOUNT * 100) {
+            throw new $exception("The {$field} is too large");
+        }
+
+        return (int) $result;
     }
 
     /**

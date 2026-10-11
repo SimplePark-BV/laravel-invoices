@@ -129,10 +129,12 @@ final class InvoiceItem implements TaxableInterface
 
     /**
      * Get the line total (quantity times unit price) including tax, rounded to whole cents.
+     *
+     * @throws \SimpleParkBv\Invoices\Exceptions\InvalidInvoiceException when the line total is too large
      */
     public function getTotalCents(): int
     {
-        return Money::multiply($this->unitPriceCents ?? 0, $this->quantity);
+        return Money::multiply($this->unitPriceCents ?? 0, $this->quantity, 'line total', InvalidInvoiceException::class);
     }
 
     /**

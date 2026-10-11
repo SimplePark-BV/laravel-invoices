@@ -10,7 +10,7 @@
     @endif
     @if($buyer->getEmail() !== null || $buyer->getPhone() !== null)
         <div class="document__buyer-detail document__text">
-            {!! collect([$buyer->getEmail(), $buyer->getPhone()])->filter(fn (?string $line): bool => $line !== null && $line !== '')->map(fn (string $line): string => e($line))->implode('<br>') !!}
+            @include('invoices::partials.lines', ['lines' => [$buyer->getEmail(), $buyer->getPhone()]])
         </div>
     @endif
 </div>

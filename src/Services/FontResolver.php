@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SimpleParkBv\Invoices\Services;
 
 use Illuminate\Support\Facades\Log;
+use SimpleParkBv\Invoices\Support\Paths;
 use SimpleParkBv\Invoices\Support\Settings;
 
 /**
@@ -41,7 +42,7 @@ final class FontResolver
             return null;
         }
 
-        $path = realpath(self::isAbsolutePath($fontFile) ? $fontFile : base_path($fontFile));
+        $path = realpath(Paths::resolve($fontFile));
 
         if ($path === false || ! is_file($path) || ! is_readable($path)) {
             Log::warning("Invoices: the font file '{$fontFile}' cannot be read, the PDF uses the bundled Poppins font instead");
@@ -75,25 +76,9 @@ final class FontResolver
     public static function fontFaces(?string $customFontFile): string
     {
         $family = self::family($customFontFile);
-
-        if ($customFontFile !== null) {
-            $faces = array_map(
-                static fn (array $face): array => [$face[0], $face[1], $customFontFile],
-                self::BUNDLED_FACES,
-            );
-        } elseif ($family === self::BUNDLED_FAMILY) {
-            $faces = array_map(
-                static fn (array $face): array => [$face[0], $face[1], self::fontsPath().'/'.$face[2]],
-                self::BUNDLED_FACES,
-            );
-        } else {
-            // a font dompdf knows by name, such as DejaVu Sans
-            return '';
-        }
-
         $css = '';
 
-        foreach ($faces as [$weight, $style, $path]) {
+        foreach (self::faces($customFontFile) as [$weight, $style, $path]) {
             $url = 'file://'.str_replace(['\\', "'"], ['/', "\\'"], $path);
             $css .= "@font-face { font-family: '{$family}'; src: url('{$url}') format('truetype'); font-weight: {$weight}; font-style: {$style}; }\n";
         }
@@ -101,16 +86,35 @@ final class FontResolver
         return $css;
     }
 
+    /**
+     * Get the faces of the font family: weight, style and the path of the font file.
+     *
+     * A custom font file is used for every weight and style, because dompdf only matches exact faces.
+     * A font dompdf knows by name, such as DejaVu Sans, has no faces.
+     *
+     * @return list<array{int, string, string}>
+     */
+    public static function faces(?string $customFontFile): array
+    {
+        if ($customFontFile !== null) {
+            return array_map(
+                static fn (array $face): array => [$face[0], $face[1], $customFontFile],
+                self::BUNDLED_FACES,
+            );
+        }
+
+        if (self::family($customFontFile) === self::BUNDLED_FAMILY) {
+            return array_map(
+                static fn (array $face): array => [$face[0], $face[1], self::fontsPath().'/'.$face[2]],
+                self::BUNDLED_FACES,
+            );
+        }
+
+        return [];
+    }
+
     private static function fontsPath(): string
     {
         return dirname(__DIR__, 2).'/resources/fonts';
-    }
-
-    /**
-     * Check if the path is absolute on unix or windows.
-     */
-    private static function isAbsolutePath(string $path): bool
-    {
-        return preg_match('#^(?:/|\\\\|[A-Za-z]:[\\\\/])#', $path) === 1;
     }
 }

@@ -21,5 +21,6 @@ return [
     'paid' => 'Het bovenstaande bedrag van :amount is al voldaan, je hoeft dus niets meer te betalen. Voor vragen kan je contact opnemen per e-mail.',
     'nothing_due' => 'Je hoeft voor deze factuur niets te betalen. Voor vragen kan je contact opnemen per e-mail.',
     'credit_transfer_request' => 'We zullen het bovenstaande bedrag van :amount voor :date overmaken op je bankrekening. Voor vragen kan je contact opnemen per e-mail.',
+    'credit_paid' => 'Het bovenstaande bedrag van :amount is al overgemaakt op je bankrekening, je ontvangt het dus niet nog een keer. Voor vragen kan je contact opnemen per e-mail.',
     'concept_message' => 'Dit is een <strong>CONCEPT</strong>. Dit betekent dat deze factuur nog niet officieel is en er nog geen betaling vereist is. Je ontvangt de officiële factuur op een later moment.',
 ];

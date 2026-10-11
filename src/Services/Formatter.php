@@ -98,7 +98,8 @@ final class Formatter
 
     private function separator(string $key, string $default): string
     {
-        $value = __("invoices::format.{$key}", [], $this->language);
+        // without fallback, so a language without format translations gets the defaults, not the separators of the fallback locale
+        $value = app('translator')->get("invoices::format.{$key}", [], $this->language, false);
 
         return is_string($value) && $value !== "invoices::format.{$key}" ? $value : $default;
     }

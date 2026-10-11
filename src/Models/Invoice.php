@@ -62,11 +62,14 @@ final class Invoice extends Document
      */
     public function items(iterable $items): static
     {
-        $this->items = [];
+        // convert every item before replacing, so an invalid item leaves the current items as they are
+        $converted = [];
 
         foreach ($items as $item) {
-            $this->addItem($item);
+            $converted[] = self::toItem($item);
         }
+
+        $this->items = $converted;
 
         return $this;
     }
@@ -79,7 +82,7 @@ final class Invoice extends Document
      */
     public function addItem(InvoiceItem|array $item): static
     {
-        $this->items[] = is_array($item) ? InvoiceItem::make($item) : $item;
+        $this->items[] = self::toItem($item);
 
         return $this;
     }
@@ -316,11 +319,6 @@ final class Invoice extends Document
         return $this->isIssued() && ! $this->paid && $this->getTotals()->getTotalCents() > 0;
     }
 
-    public function getTotals(): Totals
-    {
-        return TaxCalculator::calculate($this->items);
-    }
-
     /**
      * Get the total excluding tax.
      */
@@ -333,9 +331,9 @@ final class Invoice extends Document
      * Get the footer text as HTML, in the document language.
      *
      * The text depends on the state of the invoice: a concept, a custom text, nothing to pay, a credit
-     * invoice, paid, paid by direct debit, or else a request to pay by bank transfer. The texts from the
-     * translations may contain HTML; custom texts are escaped. The placeholders are replaced by the amount,
-     * the due date and the number.
+     * invoice (refunded or not), paid, paid by direct debit, or else a request to pay by bank transfer. The
+     * texts from the translations may contain HTML; custom texts are escaped. The placeholders are replaced
+     * by the amount, the due date and the number.
      */
     public function getFooterMessage(): string
     {
@@ -350,7 +348,7 @@ final class Invoice extends Document
         $message = match (true) {
             $this->footerMessage !== null => e($this->footerMessage),
             $totalCents === 0 => $this->translate('invoice.nothing_due'),
-            $totalCents < 0 => $this->translate('invoice.credit_transfer_request'),
+            $totalCents < 0 => $this->translate($this->paid ? 'invoice.credit_paid' : 'invoice.credit_transfer_request'),
             $this->paid => $this->translate('invoice.paid'),
             $this->paymentMethod === PaymentMethod::DirectDebit => $this->translate('invoice.direct_debit'),
             default => $this->translate('invoice.payment_request'),
@@ -430,6 +428,11 @@ final class Invoice extends Document
         ];
     }
 
+    protected function calculateTotals(): Totals
+    {
+        return TaxCalculator::calculate($this->items);
+    }
+
     protected function defaultTemplate(): string
     {
         return 'invoices::invoice.index';
@@ -492,5 +495,13 @@ final class Invoice extends Document
     protected static function invalidDataException(): string
     {
         return InvalidInvoiceException::class;
+    }
+
+    /**
+     * @param  \SimpleParkBv\Invoices\Models\InvoiceItem|array<string, mixed>  $item
+     */
+    private static function toItem(InvoiceItem|array $item): InvoiceItem
+    {
+        return is_array($item) ? InvoiceItem::make($item) : $item;
     }
 }
