@@ -2,11 +2,7 @@
 @php($seller = $usageReceipt->getSeller())
 
 <div class="usage-receipt__footer">
-    <div class="usage-receipt__footer-disclaimer">
-        <ul>
-            <li>{{ __('invoices::usage-receipt.footer.disclaimer') }}</li>
-        </ul>
-    </div>
+    <div class="usage-receipt__footer-disclaimer">{{ __('invoices::usage-receipt.footer.disclaimer') }}</div>
     <div class="usage-receipt__footer-info">
         <div class="usage-receipt__footer-column">
             <div class="usage-receipt__footer-label">{{ __('invoices::usage-receipt.footer.address') }}</div>
