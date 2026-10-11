@@ -14,7 +14,7 @@ return [
         'category' => 'Category',
         'price' => 'Price',
     ],
-    'tax' => 'VAT',
+    'tax' => 'VAT (:percentage%)',
     'total' => 'Total',
     'note' => 'Note',
     'footer' => [

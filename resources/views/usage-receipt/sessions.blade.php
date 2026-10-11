@@ -33,13 +33,13 @@
         <td class="usage-receipt__lines-value">{{ $line->getFormattedAmount() }}</td>
     </tr>
     @endforeach
-    {{-- tax included in the lines (only shown when a line has a tax percentage) --}}
-    @if($usageReceipt->getLinesTaxGroups()->isNotEmpty())
+    {{-- tax included in the lines, one line per rate (only shown when a line has a tax percentage) --}}
+    @foreach($usageReceipt->getLinesTaxGroups() as $taxPercentage)
     <tr>
-        <td class="usage-receipt__lines-label">{{ __('invoices::usage-receipt.tax') }}</td>
-        <td class="usage-receipt__lines-value">{{ \SimpleParkBv\Invoices\Services\CurrencyFormatter::format($usageReceipt->getLinesTaxAmount()) }}</td>
+        <td class="usage-receipt__lines-label">{{ __('invoices::usage-receipt.tax', ['percentage' => $taxPercentage + 0]) }}</td>
+        <td class="usage-receipt__lines-value">{{ \SimpleParkBv\Invoices\Services\CurrencyFormatter::format($usageReceipt->getLinesTaxAmountForTaxGroup($taxPercentage)) }}</td>
     </tr>
-    @endif
+    @endforeach
 </table>
 @endif
 
