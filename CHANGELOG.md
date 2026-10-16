@@ -5,6 +5,7 @@
 ### Changed
 
 - The tax below the total of a usage receipt reads "21% VAT" / "21% btw" instead of "Of which 21% VAT" / "Waarvan 21% btw".
+- With `itemPrices(false)`, the last column of the sessions is right-aligned, so the table no longer ends in blank space.
 
 ## v4.1.0
 

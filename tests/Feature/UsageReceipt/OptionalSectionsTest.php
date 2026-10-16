@@ -111,8 +111,9 @@ final class OptionalSectionsTest extends TestCase
         // act
         $html = $receipt->toHtml();
 
-        // assert — the total of the sessions is still shown
-        $this->assertStringNotContainsString('<th class="usage-receipt__sessions-header usage-receipt__sessions-header--right"', $html);
+        // assert — the total of the sessions is still shown, and the category takes the right edge of the table
+        $this->assertStringNotContainsString('>Prijs</th>', $html);
+        $this->assertStringContainsString('<th class="usage-receipt__sessions-header usage-receipt__sessions-header--right" style="width: 19%">Categorie</th>', $html);
         $this->assertStringContainsString('usage-receipt__totals-value--total', $html);
     }
 
