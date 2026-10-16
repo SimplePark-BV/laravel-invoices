@@ -27,7 +27,7 @@ final class OptionalSectionsTest extends TestCase
         $this->assertStringNotContainsString('class="document__buyer-name', $html);
         $this->assertStringNotContainsString('class="usage-receipt__ids"', $html);
         $this->assertStringNotContainsString('class="usage-receipt__notes"', $html);
-        $this->assertStringNotContainsString('Waarvan', $html);
+        $this->assertStringNotContainsString('% btw', $html);
         $this->assertStringContainsString('anonymous@example.test', $html);
     }
 

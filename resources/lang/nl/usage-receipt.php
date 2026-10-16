@@ -14,7 +14,7 @@ return [
         'category' => 'Categorie',
         'price' => 'Prijs',
     ],
-    'tax' => 'Waarvan :percentage% btw',
+    'tax' => ':percentage% btw',
     'total' => 'Totaal',
     'note' => 'Notitie',
     'footer' => [

@@ -44,7 +44,7 @@ final class PdfGenerationTest extends TestCase
         $this->assertStringContainsString('Parking costs', $html);
         $this->assertStringContainsString("€\u{00A0}-0,10", $html);
         $this->assertStringContainsString("€\u{00A0}12,75", $html);
-        $this->assertStringContainsString('Waarvan 21% btw', $html);
+        $this->assertStringContainsString('21% btw', $html);
         $this->assertStringContainsString("€\u{00A0}0,04", $html);
 
         // assert: note with its line break, and the footer
@@ -68,7 +68,7 @@ final class PdfGenerationTest extends TestCase
         $html = $receipt->toHtml();
 
         // assert
-        $this->assertGreaterThan(strpos($html, 'class="usage-receipt__totals-label usage-receipt__totals-label--total"'), strpos($html, 'Waarvan 21% btw'));
+        $this->assertGreaterThan(strpos($html, 'class="usage-receipt__totals-label usage-receipt__totals-label--total"'), strpos($html, '21% btw'));
     }
 
     #[Test]
