@@ -73,7 +73,7 @@ final class ReadmeExamplesTest extends TestCase
         // assert
         $this->assertSame('attachment; filename=gebruiksbevestiging-PS-2026-000123.pdf', $response->headers->get('Content-Disposition'));
         $this->assertSame(11.85, $receipt->getTotal());
-        $this->assertStringContainsString('Waarvan 21% btw', $receipt->toHtml());
+        $this->assertStringContainsString('>21% btw</td>', $receipt->toHtml());
     }
 
     #[Test]
