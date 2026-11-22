@@ -74,7 +74,7 @@ final class OptionalSectionsTest extends TestCase
         $html = $receipt->toHtml();
 
         // assert
-        $this->assertSame(1, substr_count($html, 'usage-receipt__ids-row--next'));
+        $this->assertSame(1, substr_count($html, 'class="usage-receipt__ids-row--next"'));
     }
 
     #[Test]
