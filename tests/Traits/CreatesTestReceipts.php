@@ -23,7 +23,8 @@ trait CreatesTestReceipts
     }
 
     /**
-     * Create a usage receipt with every optional section filled: logo, date, ids, buyer details, lines with tax and a note.
+     * Create a usage receipt with every optional section filled: logo, date, ids, a detail, buyer details, lines with tax
+     * and a note.
      *
      * @param  array<string, mixed>  $data
      */
@@ -41,6 +42,7 @@ trait CreatesTestReceipts
             'date' => '2026-10-11 14:30',
             'document_id' => 'PS-2026-000123',
             'user_id' => 'USR-000042',
+            'details' => ['Project' => 'P-1042 Renovatie Zuidas'],
             'logo' => __DIR__.'/../Fixtures/logo.png',
             'items' => [
                 $this->receiptItemData(),

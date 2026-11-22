@@ -53,6 +53,10 @@
     color: var(--surface-high);
 }
 
+.usage-receipt__ids-row--next .usage-receipt__id-column {
+    padding-top: 16px;
+}
+
 /* sessions */
 .usage-receipt__sessions {
     margin-bottom: 40px;

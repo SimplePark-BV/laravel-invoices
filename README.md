@@ -98,6 +98,7 @@ $receipt = UsageReceipt::make()
     ->date('2026-10-11 14:30')
     ->documentId('PS-2026-000123')
     ->userId('USR-000042')
+    ->addDetail('Project', 'P-1042 Renovatie Zuidas')
     ->buyer(['name' => 'Jan de Vries', 'email' => 'jan@example.com'])
     ->items([
         [
@@ -125,6 +126,8 @@ $receipt->lines([
 ```
 
 The buyer of a receipt needs no name. Sessions may end at the moment they start, but not before.
+
+Details such as a project are shown next to the ids, three to a row. Add one with `addDetail($label, $value)`, or set them all with `details([$label => $value])`. A detail without a value is left out.
 
 Hide the price column of the sessions with `itemPrices(false)`, e.g. when the lines already break the total down. The sessions still need a price, because a receipt without lines totals them.
 

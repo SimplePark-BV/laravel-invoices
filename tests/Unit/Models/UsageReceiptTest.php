@@ -42,6 +42,7 @@ final class UsageReceiptTest extends TestCase
             'date' => '2026-10-11',
             'document_id' => 'PS-1',
             'user_id' => 'U-1',
+            'details' => ['Project' => 'Jumbo'],
             'title' => 'Parking receipt',
             'note' => 'Thanks',
             'items' => [$this->receiptItemData()],
@@ -53,6 +54,7 @@ final class UsageReceiptTest extends TestCase
             ->date('2026-10-11')
             ->documentId('PS-1')
             ->userId('U-1')
+            ->addDetail('Project', 'Jumbo')
             ->title('Parking receipt')
             ->note('Thanks')
             ->addItem(UsageReceiptItem::make($this->receiptItemData()))
@@ -233,6 +235,31 @@ final class UsageReceiptTest extends TestCase
     }
 
     #[Test]
+    public function a_detail_without_a_value_is_left_out(): void
+    {
+        // act
+        $receipt = UsageReceipt::make()
+            ->addDetail('Project', '  ')
+            ->addDetail('Cost center', null);
+
+        // assert
+        $this->assertSame([], $receipt->getDetails());
+    }
+
+    #[Test]
+    public function details_replace_the_current_ones(): void
+    {
+        // arrange
+        $receipt = UsageReceipt::make()->addDetail('Project', 'Jumbo');
+
+        // act
+        $receipt->details(['Cost center' => 'KP-12']);
+
+        // assert
+        $this->assertSame(['Cost center' => 'KP-12'], $receipt->getDetails());
+    }
+
+    #[Test]
     public function to_array_returns_every_field(): void
     {
         // arrange
@@ -244,6 +271,7 @@ final class UsageReceiptTest extends TestCase
         // assert
         $this->assertSame('PS-2026-000123', $array['document_id']);
         $this->assertSame('USR-000042', $array['user_id']);
+        $this->assertSame(['Project' => 'P-1042 Renovatie Zuidas'], $array['details']);
         $this->assertNull($array['title']);
         $this->assertSame("Thank you for parking.\nSee you next time!", $array['note']);
         $this->assertSame('d-m-Y H:i', $array['date_time_format']);

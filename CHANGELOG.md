@@ -1,5 +1,15 @@
 # Changelog
 
+## v4.2.0
+
+### Added
+
+- `UsageReceipt::addDetail($label, $value)` and `details()` show details such as a project next to the ids, three to a row. A detail without a value is left out.
+
+### Fixed
+
+- Pages had no background, so a viewer on a dark background showed them dark. Every page of an invoice and a usage receipt is now white from edge to edge.
+
 ## v4.1.1
 
 ### Changed

@@ -11,6 +11,7 @@ body { font-family: '{{ $fontFamily }}', sans-serif; }
     </style>
 </head>
 <body class="@yield('body-class')">
+<div class="document__page"></div>
 @yield('content')
 </body>
 </html>

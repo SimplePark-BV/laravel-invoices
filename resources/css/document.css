@@ -26,6 +26,18 @@ th {
     padding: 0;
 }
 
+/* a white page: without a background a page is transparent, which a viewer on a dark background shows as dark. The
+   background of body leaves the page margins out, so a fixed box behind the content covers every page instead */
+.document__page {
+    position: fixed;
+    top: -1000px;
+    right: -1000px;
+    bottom: -1000px;
+    left: -1000px;
+    z-index: -1;
+    background-color: #FFFFFF;
+}
+
 /* logo */
 .document__logo {
     height: 50px;

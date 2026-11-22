@@ -216,9 +216,10 @@ final class InvoiceTest extends TestCase
 
         // act
         $date->addMonth();
-        $invoice->getDate()?->addMonth();
+        $later = $invoice->getDate()?->addMonth();
 
         // assert
+        $this->assertSame('2026-11-11', $later?->toDateString());
         $this->assertSame('2026-10-11', $invoice->getDate()?->toDateString());
         $this->assertInstanceOf(CarbonImmutable::class, $invoice->getDate());
     }

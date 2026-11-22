@@ -1,22 +1,33 @@
-{{-- document and user ids, only shown when the receipt has at least one --}}
-@php($ids = array_filter([
-    'document_id' => $usageReceipt->getDocumentId(),
-    'user_id' => $usageReceipt->getUserId(),
-], fn (?string $id): bool => $id !== null))
+{{-- the ids and the details, three to a row, only shown when the receipt has at least one --}}
+@php
+    $fields = [];
 
-@if($ids !== [])
+    foreach (['document_id' => $usageReceipt->getDocumentId(), 'user_id' => $usageReceipt->getUserId()] as $key => $id) {
+        if ($id !== null) {
+            $fields[] = [__('invoices::usage-receipt.'.$key), $id];
+        }
+    }
+
+    foreach ($usageReceipt->getDetails() as $label => $value) {
+        $fields[] = [$label, $value];
+    }
+@endphp
+
+@if($fields !== [])
     <table class="usage-receipt__ids">
-        <tr>
-            @foreach($ids as $label => $id)
-                <td class="usage-receipt__id-column document__text">
-                    <div class="usage-receipt__id-label">{{ __('invoices::usage-receipt.'.$label) }}</div>
-                    <div class="usage-receipt__id-value">{{ $id }}</div>
-                </td>
-            @endforeach
-            {{-- pad to three columns, so the columns line up with the footer --}}
-            @for($column = count($ids); $column < 3; $column++)
-                <td class="usage-receipt__id-column"></td>
-            @endfor
-        </tr>
+        @foreach(array_chunk($fields, 3) as $row)
+            <tr @class(['usage-receipt__ids-row--next' => ! $loop->first])>
+                @foreach($row as [$label, $value])
+                    <td class="usage-receipt__id-column document__text">
+                        <div class="usage-receipt__id-label">{{ $label }}</div>
+                        <div class="usage-receipt__id-value">{{ $value }}</div>
+                    </td>
+                @endforeach
+                {{-- pad to three columns, so the columns line up with the footer --}}
+                @for($column = count($row); $column < 3; $column++)
+                    <td class="usage-receipt__id-column"></td>
+                @endfor
+            </tr>
+        @endforeach
     </table>
 @endif

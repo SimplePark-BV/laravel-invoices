@@ -33,6 +33,11 @@ final class UsageReceipt extends Document
 
     private ?string $userId = null;
 
+    /**
+     * @var array<string, string>
+     */
+    private array $details = [];
+
     private ?string $title = null;
 
     private ?string $note = null;
@@ -158,6 +163,43 @@ final class UsageReceipt extends Document
     }
 
     /**
+     * Set the details shown next to the ids, such as a project, as label => value, replacing the current ones.
+     * A detail without a value is left out.
+     *
+     * @param  iterable<string, string|null>  $details
+     * @return $this
+     */
+    public function details(iterable $details): static
+    {
+        $this->details = [];
+
+        foreach ($details as $label => $value) {
+            // a label such as "2026" comes out of an array as an int
+            $this->addDetail((string) $label, $value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add a detail shown next to the ids, such as a project. A detail without a value is left out, and one with the
+     * label of an earlier detail replaces it.
+     *
+     * @return $this
+     */
+    public function addDetail(string $label, ?string $value): static
+    {
+        $label = Text::clean($label);
+        $value = Text::clean($value);
+
+        if ($label !== null && $value !== null) {
+            $this->details[$label] = $value;
+        }
+
+        return $this;
+    }
+
+    /**
      * Set the title, instead of the one from the translations.
      *
      * @return $this
@@ -222,6 +264,14 @@ final class UsageReceipt extends Document
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function getDetails(): array
+    {
+        return $this->details;
+    }
+
+    /**
      * Get the title set with title(), or else the title from the translations, in the document language.
      */
     public function getTitle(): string
@@ -283,6 +333,7 @@ final class UsageReceipt extends Document
             'lines' => array_map(static fn (UsageReceiptLine $line): array => $line->toArray(), $this->lines),
             'document_id' => $this->documentId,
             'user_id' => $this->userId,
+            'details' => $this->details,
             'title' => $this->title,
             'note' => $this->note,
             'date_time_format' => $this->dateTimeFormat,
@@ -346,6 +397,7 @@ final class UsageReceipt extends Document
             'lines' => 'lines',
             'document_id' => 'documentId',
             'user_id' => 'userId',
+            'details' => 'details',
             'title' => 'title',
             'note' => 'note',
             'date_time_format' => 'dateTimeFormat',
