@@ -49,6 +49,7 @@ final class ReadmeExamplesTest extends TestCase
             ->date('2026-10-11 14:30')
             ->documentId('PS-2026-000123')
             ->userId('USR-000042')
+            ->addDetail('Project', 'P-1042 Renovatie Zuidas')
             ->buyer(['name' => 'Jan de Vries', 'email' => 'jan@example.com'])
             ->items([
                 [

@@ -46,6 +46,38 @@ final class OptionalSectionsTest extends TestCase
     }
 
     #[Test]
+    public function a_detail_is_shown_with_the_ids_also_without_ids(): void
+    {
+        // arrange
+        $receipt = $this->createReceipt(['details' => ['Project' => 'P-1042 Renovatie Zuidas']]);
+
+        // act
+        $html = $receipt->toHtml();
+
+        // assert
+        $this->assertStringContainsString('class="usage-receipt__ids"', $html);
+        $this->assertStringContainsString('<div class="usage-receipt__id-label">Project</div>', $html);
+        $this->assertStringContainsString('<div class="usage-receipt__id-value">P-1042 Renovatie Zuidas</div>', $html);
+    }
+
+    #[Test]
+    public function a_fourth_id_or_detail_starts_a_new_row(): void
+    {
+        // arrange
+        $receipt = $this->createReceipt([
+            'document_id' => 'PS-1',
+            'user_id' => 'USR-1',
+            'details' => ['Project' => 'Jumbo', 'Cost center' => 'KP-12'],
+        ]);
+
+        // act
+        $html = $receipt->toHtml();
+
+        // assert
+        $this->assertSame(1, substr_count($html, 'usage-receipt__ids-row--next'));
+    }
+
+    #[Test]
     public function a_note_of_zero_is_shown(): void
     {
         // arrange
